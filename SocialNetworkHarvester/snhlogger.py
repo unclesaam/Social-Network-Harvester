@@ -14,3 +14,14 @@ def init_logger(logger_name, log_file):
     fh.setFormatter(formatter)
     logger.addHandler(fh)
     return logger
+
+
+def init_custom_logger(logger_name, log_file, format):
+    logger = logging.getLogger(logger_name)
+    logger.setLevel(logging.DEBUG)
+    fh = logging.FileHandler(os.path.join(PROJECT_PATH, "log/%s" % log_file), mode="a+")
+    fh.setLevel(LOG_LEVEL)
+    formatter = logging.Formatter(format)
+    fh.setFormatter(formatter)
+    logger.addHandler(fh)
+    return logger

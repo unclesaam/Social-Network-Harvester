@@ -5,7 +5,7 @@ from django.contrib.admin.widgets import FilteredSelectMultiple
 from django.db import models
 
 from snh.models.twittermodel import TwitterHarvester
-from snh.models.twittermodel import TWUser, TWSearch
+from snh.models.twittermodel import TWUser, TWSearch, TWStatus
 
 from snh.models.facebookmodel import FacebookHarvester
 from snh.models.facebookmodel import FBUser
@@ -59,6 +59,27 @@ class TWSearchAdmin(admin.ModelAdmin):
     fields = [
                 u'term', 
             ]
+class TWStatusAdmin(admin.ModelAdmin):
+    list_display = ('user', 'created_at', 'text')
+    search_fields = ('text',)
+    fields = [
+                u'user',
+                #u'fid',
+                u'created_at',
+                u'favorited',
+                u'retweet_count',
+                #u'retweeted',
+                u'source',
+                u'text',
+                u'truncated',
+                u'hash_tags',
+                u'user_mentions',
+                #u'model_update_date',
+                #u'error_on_update',
+            ]
+    filter_horizontal = ('hash_tags','user_mentions')
+
+admin.site.register(TWStatus, TWStatusAdmin)
 
 admin.site.register(TwitterHarvester, TwitterHarvesterAdmin)
 admin.site.register(TWUser, TWUserAdmin)

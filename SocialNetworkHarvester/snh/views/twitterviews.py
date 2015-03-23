@@ -17,6 +17,7 @@ from snh.models.youtubemodel import *
 from snh.models.dailymotionmodel import *
 
 from snh.utils import get_datatables_records
+from datetime import datetime
 
 import snhlogger
 logger = snhlogger.init_logger(__name__, "view.log")
@@ -27,11 +28,17 @@ logger = snhlogger.init_logger(__name__, "view.log")
 @login_required(login_url=u'/login/')
 def tw(request, harvester_id):
     twitter_harvesters = TwitterHarvester.objects.all()
+    user_list = TWUser.objects.all()
+    stags_list =  [(obj, len(obj.status_list.all())) for obj in TWSearch.objects.all()]
+    status_list = TWStatus.objects.all().order_by('-created_at')[:15]
 
     return  render_to_response(u'snh/twitter.html',{
                                                     u'tw_selected':True,
                                                     u'all_harvesters':twitter_harvesters,
                                                     u'harvester_id':harvester_id,
+                                                    u'user_list': user_list,
+                                                    u'stags_list': stags_list,
+                                                    u'status_list':status_list,
                                                   })
 
 @login_required(login_url=u'/login/')

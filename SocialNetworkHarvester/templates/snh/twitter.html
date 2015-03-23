@@ -76,8 +76,8 @@
     </thead>
     <tbody>
     {% for twuser in user_list %}
-    <tr onclick="document.location.href='/'">
-        <td>{{ twuser.name }}</td>
+    <tr>
+        <td>{{ twuser.pk }}</td>
         <td>{{ twuser.screen_name }}</td>
         <td>{{ twuser.description }}</td>
         <td class="center">{{ twuser.followers_count|default_if_none:"0" }}</td>
@@ -94,10 +94,48 @@
     <tr>
         <th>ID</th>
         <th>Term</th>
+        <th>Hit count</th>
     </tr>
     </thead>
     <tbody>
+        {% for twtag, len in stags_list %}
+        <tr>
+            <th>{{ twtag.pk }}</th>
+            <th>{{ twtag.term }}</th>
+            <th>{{ len }}</th>
+        </tr>
+        {% endfor %}
     </tbody>
 </table>
 
+<h3>List of recent statuses</h3>
+<table id="statuses_table" class="pretty" width="100%">
+    <thead>
+    <tr>
+        <th>Id</th>
+        <th>Author</th>
+        <th>Date</th>
+        <th>Text</th>
+        <th>Retweet count</th>
+        <th>Hashtags</th>
+    </tr>
+    </thead>
+    <tbody>
+        {% for status in status_list %}
+        <tr>
+            <th>{{ status.pk }}</th>
+            <th>{{ status.user }}</th>
+            <th>{{ status.created_at }}</th>
+            <th>{{ status.text }}</th>
+            <th>{{ status.retweet_count }}</th>
+            <th>
+                {% for hashtag in status.hash_tags.all %}
+                #{{ hashtag }},
+                {% endfor %}
+            </th>
+        </tr>
+        {% endfor %}
+    </tr>
+    </tbody>
+</table>
 {% endblock %}

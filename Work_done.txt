@@ -1,0 +1,69 @@
+Ceci est un journal du travail effectué dans le cadre de la mise à niveau de la plateforme Aspira. Auteur: Samuel Cloutier
+
+22 fevrier 2015:
+- Installation d'un environnement virtuel python 2.7.9 avec les modules requis à la plateforme ASPIRA
+- Installation locale d'un serveur MySQL afin de déservir la base de données locale
+- Premier lancement local du serveur avec Django
+- Tentative de créer un premier objet twitter-scrapper (sans succès, pas assez de comprehension du fonctionnement)
+- Fin de la journée
+
+2 mars 2015: 
+- Étude du fonctionnement original de python-twitter. Le module requis ne semble pas être le même que celui en local. Le module "Twython" n'existe pas.
+- Recherche en ligne des différences au niveau du nouvel API de twitter
+- Test du module récent en utilisant Aspira, avec un compte twitter fais pour la cause, avec une appli. Aucun tweet harvesté, sans surprise.
+- Fin de la journée (1h)
+
+6 mars 2015:
+- Fork du repository Git et installation de gitHub for windows
+- Étude du fonctionnement de la base de donnés et des twitter-views
+- Test du module python-twitter à part sans Aspira
+- run des tests pré-assemblés du module (les tests sont outdatés et doivent être faits un à un)
+- Fin de journée (3h)
+
+9 mars 2015:
+- comprehension du fonctionnement des customs-commands de manage.py (crontw, cronfb, etc.)
+- Étude du fonctionnement du protocole d'authentification OAuth 1.0
+- Correction des problèmes de mise à jours du status des scrappers (remaining hits, hourly limit, etc.)
+- Débuggage général des methodes dans twitterch.py et twittermodel.py (a terminer)
+- fin de journée (7h)
+
+10 mars 2015:
+- Debuggage des problèmes reliés aux types de données de la DB.
+- Potentiel besoin d'ajouter des fields. Sera à considérer si ultimement nécéssaire
+- fin de journée (2h)
+
+11 mars 2015: 
+- Mise en place d'un logger pour le débuging des fichiers (différent du logger déjà présent)
+- Réglé petit problème dans le template twitter.html
+- fin de journée (1h)
+
+14 mars 2015:
+- Il sera préférable à long terme de n'utiliser que le module Twython pour les api calls. Celui-ci est beaucoup plus complet et pourrait éventuellement supporter le stream API. Je considère donc de créer de nouveaux modèles pour Twitter, avec une toute nouvelle procédure de scrapping.
+- En attendant, réparation provisoire de l'ancien protocole twitter. (fonctionnel, mais non-optimal et avec quelque bugs)
+- Ajout de la liste des récents status postés dans la page d'acceuil Twitter
+- ajout d'une section "Tw statuses" à la page admin
+-fin de journée (8h)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

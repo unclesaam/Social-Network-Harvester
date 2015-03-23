@@ -10,14 +10,18 @@ from twython import Twython
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 from snh.models.common import *
 
+import snhlogger
+
+
+#########################################################
+debugging = 1
+if debugging: 
+    print "DEBBUGING ENABLED IN %s"%__name__
+    debugLogger = snhlogger.init_custom_logger('debug'+__name__, "debugLogger.log", '%(message)s')
+#########################################################
+
 def gie(d, k):
     return d[k] if k in d else None 
-
-def t2p(twitter_time):
-    if twitter_time:
-        return time.strftime('%Y-%m-%d %H:%M:%S', time.strptime(twitter_time,'%a %b %d %H:%M:%S +0000 %Y'))
-    else:
-        return None
 
 class TwitterHarvester(AbstractHaverster):
 
@@ -45,6 +49,8 @@ class TwitterHarvester(AbstractHaverster):
     haverst_deque = None
 
     def get_client(self):
+        if debugging: debugLogger.info( "<TWHarvester>%s::get_client()"%self.harvester_name)
+
         if not self.client:
             self.client = pytw.Api(consumer_key=self.consumer_key,
                                         consumer_secret=self.consumer_secret,
@@ -54,30 +60,37 @@ class TwitterHarvester(AbstractHaverster):
         return self.client
 
     def get_tt_client(self):
+        if debugging: debugLogger.info( "<TWHarvester>%s::get_tt_client()"%self.harvester_name)
+
         if not self.tt_client:
-            self.tt_client = Twython(  twitter_token=self.consumer_key,
-                                        twitter_secret=self.consumer_secret,
-                                        oauth_token=self.access_token_key,
-                                        oauth_token_secret=self.access_token_key)
+            self.tt_client = Twython(self.consumer_key,self.consumer_secret,self.access_token_key,self.access_token_secret)
 
         return self.tt_client
 
+    """
+    update the remaining searches the instance is allowed to do before annoying Twitter
+    """
     def update_client_stats(self):
+        if debugging: debugLogger.info( "<TWHarvester>%s::update_client_stats()"%self.harvester_name)
+
         c = self.get_client()
-        rate = c.GetRateLimitStatus()
-        self.remaining_hits = gie(rate, "remaining_hits")
-        self.reset_time_in_seconds = gie(rate, "reset_time_in_seconds")
-        self.hourly_limit = gie(rate, "hourly_limit")
-        self.reset_time = t2p(gie(rate, "reset_time"))
+        rate = c.GetRateLimitStatus("search")["resources"]["search"]["/search/tweets"]
+
+        self.remaining_hits = rate["remaining"]
+        self.reset_time_in_seconds = rate["reset"]
+        self.hourly_limit = rate["limit"] 
+        self.reset_time = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(rate["reset"]))
         self.save()
 
     def end_current_harvest(self):
+        if debugging: debugLogger.info( "<TWHarvester>%s::end_current_harvest()"%self.harvester_name)
         self.update_client_stats()
         if self.current_harvested_user:
             self.last_harvested_user = self.current_harvested_user
         super(TwitterHarvester, self).end_current_harvest()
 
     def api_call(self, method, params):
+        if debugging: debugLogger.info( "<TWHarvester>%s::api_call(method: %s, params: %s"%(self.harvester_name, method, params))
         super(TwitterHarvester, self).api_call(method, params)
         c = self.get_client()   
         metp = getattr(c, method)
@@ -90,6 +103,7 @@ class TwitterHarvester(AbstractHaverster):
         return self.current_harvested_user
 
     def get_next_user_to_harvest(self):
+        if debugging: debugLogger.info( "<TWHarvester>%s::get_next_user_to_harvest()"%self.harvester_name)
 
         if self.current_harvested_user:
             self.last_harvested_user = self.current_harvested_user
@@ -106,6 +120,7 @@ class TwitterHarvester(AbstractHaverster):
         return self.current_harvested_user
 
     def build_harvester_sequence(self):
+        if debugging: debugLogger.info( "<TWHarvester>%s::build_harvester_sequence()"%self.harvester_name)
         self.haverst_deque = deque()
         all_users = self.twusers_to_harvest.all()
 
@@ -122,6 +137,7 @@ class TwitterHarvester(AbstractHaverster):
             self.haverst_deque.extend(all_users)
 
     def get_stats(self):
+        if debugging: debugLogger.info( "<TWHarvester>%s::get_stats()"%self.harvester_name)
         parent_stats = super(TwitterHarvester, self).get_stats()
         parent_stats["concrete"] = {
                                     "remaining_hits":self.remaining_hits,
@@ -157,7 +173,7 @@ class TWUser(models.Model):
         app_label = "snh"
 
     def __unicode__(self):
-        return self.screen_name
+        return self.screen_name.encode('ascii', 'ignore')
 
     def related_label(self):
         return u"%s (%s)" % (self.screen_name, self.pmk_id)
@@ -201,6 +217,8 @@ class TWUser(models.Model):
     last_harvested_status = models.ForeignKey('TWStatus',  related_name='TWStatus.last_harvested_status', null=True)
 
     def update_from_rawtwitter(self, twitter_model, twython=False):
+        if debugging: debugLogger.info( "<TWUser>%s::update_from_rawtwitter(twitter_model: %s)"%(self.screen_name, type(twitter_model)))
+
         model_changed = False
         props_to_check = {
                             u"fid":u"id",
@@ -279,6 +297,8 @@ class TWUser(models.Model):
             self.save()
 
     def update_from_twitter(self, twitter_model):
+        if debugging: debugLogger.info( "<TWUser>%s::update_from_twitter(twitter_model: %s)"%(self.screen_name, type(twitter_model)))
+
         model_changed = False
         props_to_check = {
                             u"fid":u"id",
@@ -346,19 +366,35 @@ class TWUser(models.Model):
             self.save()
 
     def get_latest_status(self):
+        if debugging: print "%s::get_latest_status"%(self.screen_name)
 
         latest_status = None
         statuses = TWStatus.objects.filter(user=self).order_by("created_at")
         for latest_status in statuses: break
         return latest_status
         
+
+
+
+
+
+
+
 class TWStatus(models.Model):
 
     class Meta:
         app_label = "snh"
+        verbose_name_plural = "Tw statuses"
+        verbose_name = "Tw status"
 
     def __unicode__(self):
-        return self.text
+        if self.text:
+            if len(self.text) > 60:
+                return "%s..."%self.text[:60]
+            else:
+                return self.text
+        else:
+            return "status from %s"%self.user
 
     pmk_id =  models.AutoField(primary_key=True)
 
@@ -381,6 +417,8 @@ class TWStatus(models.Model):
     error_on_update = models.BooleanField()
 
     def get_existing_user(self, param):
+        if debugging: debugLogger.info( "<TWStatus>'%s'::get_existing_user(param: %s)"%(self, param))
+
         user = None
         try:
             user = TWUser.objects.get(**param)
@@ -391,6 +429,8 @@ class TWStatus(models.Model):
         return user
 
     def update_from_rawtwitter(self, twitter_model, user, twython=False):
+        if debugging: debugLogger.info( "<TWStatus>'%s'::update_from_rawtwitter(twitter_model: %s, user: %s)"%(self, type(twitter_model), user))
+
         model_changed = False
         props_to_check = {
                             u"fid":u"id",
@@ -408,16 +448,16 @@ class TWStatus(models.Model):
 
         for prop in props_to_check:
             prop_name = props_to_check[prop]
-            if prop_name in twitter_model:
-                tw_prop_val = twitter_model[prop_name]
+            if hasattr(twitter_model, prop_name):
+                tw_prop_val = getattr(twitter_model, prop_name)
                 if self.__dict__[prop] != tw_prop_val:
                     self.__dict__[prop] = tw_prop_val
                     model_changed = True
 
         for prop in date_to_check:
-            if prop in twitter_model:
-                tw_prop_val = twitter_model[prop]
-                format = '%a, %d %b %Y %H:%M:%S +0000'              
+            if hasattr(twitter_model, prop):
+                tw_prop_val = getattr(twitter_model, prop)
+                format = '%a %b %d %H:%M:%S +0000 %Y'              
                 if twython:
                     format = '%a %b %d %H:%M:%S +0000 %Y'
                 date_val = datetime.strptime(tw_prop_val,format)
@@ -426,8 +466,8 @@ class TWStatus(models.Model):
                     model_changed = True
 
 
-        if "entities" in twitter_model:
-            entities = twitter_model["entities"]
+        if hasattr(twitter_model, "entities"):
+            entities = getattr(twitter_model, "entities")
             if "hashtags" in entities:
                 tw_prop_val = entities["hashtags"]
                 for twtag in tw_prop_val:
@@ -448,17 +488,17 @@ class TWStatus(models.Model):
                             self.hash_tags.add(tag)
                             model_changed = True
 
-            if "urls" in entities:
-                tw_prop_val = entities["urls"]
+            if hasattr(entities, "urls"):
+                tw_prop_val = getattr(entities, "urls")
                 for twurl in tw_prop_val:
                     url = None
                     try:
-                        url = URL.objects.get(original_url__exact=twurl["url"])
+                        url = URL.objects.get(original_url__exact=twurl.url)
                     except:
                         pass
 
                     if url is None:
-                        url = URL(original_url=twurl["url"])
+                        url = URL(original_url=twurl.url)
                         url.save()
                         self.text_urls.add(url)
                         model_changed = True
@@ -468,18 +508,18 @@ class TWStatus(models.Model):
                             self.text_urls.add(url)
                             model_changed = True                        
 
-            if "user_mentions" in entities:
-                tw_prop_val = entities["user_mentions"]
+            if hasattr(entities, "user_mentions"):
+                tw_prop_val = getattr(entities, "user_mentions")
                 for tw_mention in tw_prop_val:
                     usermention = None
                     try:
-                        usermention = self.get_existing_user({"fid__exact":tw_mention["id"]})
+                        usermention = self.get_existing_user({"fid__exact":tw_mention.id})
                         if not usermention:
-                            usermention = self.get_existing_user({"screen_name__exact":tw_mention["screen_name"]})
+                            usermention = self.get_existing_user({"screen_name__exact":tw_mention.screen_name})
                         if not usermention:
                             usermention = TWUser(
-                                            fid=tw_mention["id"],
-                                            screen_name=tw_mention["screen_name"],
+                                            fid=tw_mention.id,
+                                            screen_name=tw_mention.screen_name,
                                          )
                         usermention.update_from_rawtwitter(tw_mention,twython)
                         usermention.save()
@@ -488,7 +528,7 @@ class TWStatus(models.Model):
 
                     if usermention is None:
                         usermention = TWUser(
-                                        fid=tw_mention["id"],
+                                        fid=tw_mention.id,
                                      )
                         usermention.update_from_rawtwitter(tw_mention, twython)
                         usermention.save()
@@ -505,6 +545,8 @@ class TWStatus(models.Model):
             self.save()
 
     def update_from_twitter(self, twitter_model, user):
+        if debugging: debugLogger.info( "<TWStatus>'%s'::update_from_twitter(twitter_model: %s, user: %s)"%(self, type(twitter_model), user))
+        
         model_changed = False
         props_to_check = {
                             u"fid":u"id",
