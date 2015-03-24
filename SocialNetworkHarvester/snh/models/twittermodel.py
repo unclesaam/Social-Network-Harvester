@@ -11,10 +11,11 @@ from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 from snh.models.common import *
 
 import snhlogger
+import re
 
 
 #########################################################
-debugging = 1
+debugging = 0
 if debugging: 
     print "DEBBUGING ENABLED IN %s"%__name__
     debugLogger = snhlogger.init_custom_logger('debug'+__name__, "debugLogger.log", '%(message)s')
@@ -398,7 +399,7 @@ class TWStatus(models.Model):
 
     pmk_id =  models.AutoField(primary_key=True)
 
-    user = models.ForeignKey('TWUser')
+    user = models.ForeignKey('TWUser', related_name='postedStatuses')
 
     fid = models.BigIntegerField(null=True, unique=True)
     created_at = models.DateTimeField(null=True)
@@ -411,7 +412,7 @@ class TWStatus(models.Model):
 
     text_urls = models.ManyToManyField('URL', related_name='twstatus_text_urls')
     hash_tags = models.ManyToManyField('Tag', related_name='twstatus_tag')
-    user_mentions = models.ManyToManyField('TWUser', related_name='twstatus_user_mention')
+    user_mentions = models.ManyToManyField('TWUser', related_name='mentionedInStatuses')
 
     model_update_date = models.DateTimeField(null=True)
     error_on_update = models.BooleanField()
@@ -540,9 +541,15 @@ class TWStatus(models.Model):
                             model_changed = True    
 
         if model_changed:
+            text = re.sub(r'(\\\\x..)', '', self.text) #removing emojis from texts
+            self.text = self.text.encode('ascii', 'ignore')
             self.model_update_date = datetime.utcnow()
             self.error_on_update = False
-            self.save()
+            try:
+                self.save()
+            except:
+                print self.text.encode('ascii', 'ignore')
+
 
     def update_from_twitter(self, twitter_model, user):
         if debugging: debugLogger.info( "<TWStatus>'%s'::update_from_twitter(twitter_model: %s, user: %s)"%(self, type(twitter_model), user))

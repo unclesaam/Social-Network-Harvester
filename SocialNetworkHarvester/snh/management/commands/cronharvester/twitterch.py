@@ -14,7 +14,7 @@ import os
 
 
 #########################################################
-debugging = 1
+debugging = 0
 if debugging: 
     print "DEBBUGING ENABLED IN %s"%__name__
     debugLogger = snhlogger.init_custom_logger('debug'+__name__, "debugLogger.log", '%(message)s')
@@ -215,7 +215,7 @@ def call_search(harvester, term, page, since_id=None):
             params = {   
                         u"term":uniterm, 
                         u"since_id":since_id, 
-                        u"count": 10,
+                        u"count": 100,
                         "include_entities":"True"
                         }
             logger.info(u"Getting new page:%d retry:%d, params:%s" % (page,retry,params))

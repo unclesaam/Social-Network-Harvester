@@ -2,7 +2,7 @@
 
 from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
-from django.shortcuts import render_to_response, get_object_or_404, get_list_or_404, redirect
+from django.shortcuts import render_to_response, get_object_or_404, get_list_or_404, redirect, HttpResponseRedirect
 from django.core.exceptions import ObjectDoesNotExist
 from django import template
 from django.template.defaultfilters import stringfilter
@@ -28,28 +28,42 @@ logger = snhlogger.init_logger(__name__, "view.log")
 @login_required(login_url=u'/login/')
 def tw(request, harvester_id):
     twitter_harvesters = TwitterHarvester.objects.all()
-    user_list = TWUser.objects.all()
-    stags_list =  [(obj, len(obj.status_list.all())) for obj in TWSearch.objects.all()]
-    status_list = TWStatus.objects.all().order_by('-created_at')[:15]
-
+    if harvester_id == '0': 
+        user_list = TWUser.objects.all()
+        stags_list = [(obj, len(obj.status_list.all())) for obj in TWSearch.objects.all()]
+    else:
+        harvester = get_object_or_404(TwitterHarvester, pk=harvester_id)
+        user_list = harvester.twusers_to_harvest.all()
+        stags_list = [(obj, len(obj.status_list.all())) for obj in harvester.twsearch_to_harvest.all()]
     return  render_to_response(u'snh/twitter.html',{
                                                     u'tw_selected':True,
                                                     u'all_harvesters':twitter_harvesters,
                                                     u'harvester_id':harvester_id,
                                                     u'user_list': user_list,
                                                     u'stags_list': stags_list,
-                                                    u'status_list':status_list,
                                                   })
 
 @login_required(login_url=u'/login/')
 def tw_user_detail(request, harvester_id, screen_name):
     twitter_harvesters = TwitterHarvester.objects.all()
     user = get_list_or_404(TWUser, screen_name=screen_name)[0]
+
+    statuses = user.postedStatuses.all()
+    status_list = []
+    for status in statuses:
+        source_title = re.search(r'>(?P<title>.*)</a>', status.source).group('title')
+        source_href = re.search(r'href="(?P<href>.*)" rel=', status.source).group('href')
+        status_list.append((status, source_title, source_href))
+
+    mention_list = user.mentionedInStatuses.all()
+
     return  render_to_response(u'snh/twitter_detail.html',{
                                                     u'tw_selected':True,
                                                     u'all_harvesters':twitter_harvesters,
                                                     u'harvester_id':harvester_id,
                                                     u'user':user,
+                                                    u'status_list': status_list,
+                                                    u'mention_list': mention_list,
                                                   })
 @login_required(login_url=u'/login/')
 def tw_search_detail(request, harvester_id, search_id):

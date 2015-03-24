@@ -44,7 +44,10 @@ Ceci est un journal du travail effectué dans le cadre de la mise à niveau de la 
 - ajout d'une section "Tw statuses" à la page admin
 -fin de journée (8h)
 
-
+23 mars 2015:
+- Installation des modules requis au scrapping de facebook (remplacement du module resource par psutil)
+- Réparation générale des templates de twitter
+- Fin de journée (5h)
 
 
 
