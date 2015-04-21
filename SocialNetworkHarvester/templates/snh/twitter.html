@@ -12,8 +12,8 @@
 		        "bServerSide": bServerSide, 
 		        "sAjaxSource": "{% url snh.views.get_tw_list 'web' harvester_id %}",
                 "fnRowCallback": function( nRow, aData, iDisplayIndex ) {
-                    $('td:eq(0)', nRow).html( '<a href="/tw_user_detail/'+{{harvester_id}}+'/'+aData[1]+'">'+aData[0]+'</a>' );
-                    $('td:eq(1)', nRow).html( '<a href="/tw_user_detail/'+{{harvester_id}}+'/'+aData[1]+'">'+aData[1]+'</a>' );
+                    $('td:eq(0)', nRow).html( '<a href="/tw_user_detail/'+{{harvester_id}}+'/'+aData[2]+'">'+aData[0]+'</a>' );
+                    $('td:eq(1)', nRow).html( '<a href="/tw_user_detail/'+{{harvester_id}}+'/'+aData[2]+'">'+aData[1]+'</a>' );
                 },
                 "oTableTools": {
                   "aButtons": [ {
@@ -75,18 +75,6 @@
     </tr>
     </thead>
     <tbody>
-    {% for twuser in user_list %}
-    <tr>
-        <td>{{ twuser.pk }}</td>
-        <td>{{ twuser.name }}</td>
-        <td><a href="/tw_user_detail/{{ harvester_id }}/{{ twuser.screen_name }}/">{{ twuser.screen_name }}</a></td>
-        <td>{{ twuser.description }}</td>
-        <td class="center">{{ twuser.followers_count|default_if_none:"0" }}</td>
-        <td class="center">{{ twuser.friends_count|default_if_none:"0" }}</td>
-        <td class="center">{{ twuser.statuses_count|default_if_none:"0" }}</td>
-        <td class="center">{{ twuser.listed_count|default_if_none:"0" }}</td>
-    </tr>
-    {% endfor %}
     </tbody>
 </table>
 <h3>List of search tag</h3>
@@ -99,13 +87,6 @@
     </tr>
     </thead>
     <tbody>
-        {% for twtag, len in stags_list %}
-        <tr>
-            <td>{{ twtag.pk }}</td>
-            <td><a href="/tw_search_detail/{{ harvester_id }}/{{ twtag.pk }}/">{{ twtag.term }}</a></td>
-            <td>{{ len }}</td>
-        </tr>
-        {% endfor %}
     </tbody>
 </table>
 {% endblock %}

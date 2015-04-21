@@ -417,6 +417,17 @@ class TWStatus(models.Model):
     model_update_date = models.DateTimeField(null=True)
     error_on_update = models.BooleanField()
 
+    """
+    digest_source
+    return a list of self, the name of the source app and its url
+    """
+    def digest_source(self):
+        if self.source:
+            source_title = re.search(r'>(?P<title>.*)</a>', self.source).group('title')
+            source_href = re.search(r'href="(?P<href>.*)" rel=', self.source).group('href')
+            return (self, source_title, source_href)
+        return (self, None, None)
+
     def get_existing_user(self, param):
         if debugging: debugLogger.info( "<TWStatus>'%s'::get_existing_user(param: %s)"%(self, param))
 
@@ -648,6 +659,8 @@ class TWStatus(models.Model):
                     model_changed = True
 
         if model_changed:
+            text = re.sub(r'(\\\\x..)', '', self.text) #removing emojis from texts
+            self.text = self.text.encode('ascii', 'ignore')
             self.model_update_date = datetime.utcnow()
             self.error_on_update = False
             self.save()

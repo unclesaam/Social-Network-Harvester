@@ -55,6 +55,15 @@
         </tr>
     </thead>
     <tbody>
+        {% for status, appName, href in status_list %}
+        <tr>
+            <td>{{ status.created_at }}</td>
+            <td><a href="/tw_status_detail/{{ harvester_id }}/{{ status.fid }}/">{{ status.fid }}</a></td>
+            <td><a href="/tw_user_detail/{{ harvester_id }}/{{ status.user }}">{{ status.user }}</a></td>
+            <td>{{ status.text }}</td>
+            <td><a href="{{ href }}">{{ appName }}</a></td>
+        </tr>
+        {% endfor %}
     </tbody>
 </table>
 

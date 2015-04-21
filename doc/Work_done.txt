@@ -45,13 +45,22 @@ Ceci est un journal du travail effectué dans le cadre de la mise à niveau de la 
 -fin de journée (8h)
 
 23 mars 2015:
-- Installation des modules requis au scrapping de facebook (remplacement du module resource par psutil)
+- Recherche de problèmes avec les scrappers de Facebook (module "resource" supporté seulement sous Unix)
 - Réparation générale des templates de twitter
 - Fin de journée (5h)
 
+24 mars 2015:
+- Installation des modules requis au scrapping de facebook (remplacement du module resource par psutil)
+- Étude du fonctionnement de Fandjango et du Graph API de FB
+- Fin de journée (1h)
 
+3 avril 2015:
+- Set up de fandjango, test des fonctionnalités
+- Installation d'Apache (about time, I know...)
+- Mise en place d'un certificat SSL via apache (got to learn first)
+- Fin de journée (3h)
 
-
+14 avril 2015:
 
 
 

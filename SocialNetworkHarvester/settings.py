@@ -30,12 +30,10 @@ DATABASES = {
     }
 }
 
-FACEBOOK_APPLICATION_ID = 'xxx'
-FACEBOOK_APPLICATION_SECRET_KEY = 'xxx'
-FACEBOOK_APPLICATION_NAMESPACE = 'xxx'
-FACEBOOK_APPLICATION_ID = 'xxxxx'
-FACEBOOK_APPLICATION_SECRET_KEY = 'xxxx'
-FACEBOOK_APPLICATION_NAMESPACE = 'xxxx'
+FACEBOOK_APPLICATION_ID = '336495213215911'
+FACEBOOK_APPLICATION_SECRET_KEY = '7c7df5de5cf80ca403cb7959d7423f5b'
+FACEBOOK_APPLICATION_NAMESPACE = 'aspiratest'
+'''
 FACEBOOK_APPLICATION_INITIAL_PERMISSIONS = [
                                             'user_about_me','friends_about_me',
                                             'user_activities','friends_activities',
@@ -78,8 +76,8 @@ FACEBOOK_APPLICATION_INITIAL_PERMISSIONS = [
                                             'rsvp_event',
                                             #'publish_actions',
                                             ]
-
-#FACEBOOK_APPLICATION_INITIAL_PERMISSIONS = ['read_stream', 'publish_stream','friends_online_presence','friends_status','read_friendlists']
+'''
+FACEBOOK_APPLICATION_INITIAL_PERMISSIONS = ['read_stream', 'publish_stream','friends_online_presence','friends_status','read_friendlists']
 
 # Local time zone for this installation. Choices can be found here:
 # http://en.wikipedia.org/wiki/List_of_tz_zones_by_name

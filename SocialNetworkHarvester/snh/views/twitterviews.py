@@ -22,6 +22,7 @@ from datetime import datetime
 import snhlogger
 logger = snhlogger.init_logger(__name__, "view.log")
 
+
 #
 # TWITTER
 #
@@ -48,14 +49,8 @@ def tw_user_detail(request, harvester_id, screen_name):
     twitter_harvesters = TwitterHarvester.objects.all()
     user = get_list_or_404(TWUser, screen_name=screen_name)[0]
 
-    statuses = user.postedStatuses.all()
-    status_list = []
-    for status in statuses:
-        source_title = re.search(r'>(?P<title>.*)</a>', status.source).group('title')
-        source_href = re.search(r'href="(?P<href>.*)" rel=', status.source).group('href')
-        status_list.append((status, source_title, source_href))
-
-    mention_list = user.mentionedInStatuses.all()
+    status_list = [status.digest_source() for status in user.postedStatuses.all()]
+    mention_list = [status.digest_source() for status in user.mentionedInStatuses.all()]
 
     return  render_to_response(u'snh/twitter_detail.html',{
                                                     u'tw_selected':True,
@@ -69,11 +64,15 @@ def tw_user_detail(request, harvester_id, screen_name):
 def tw_search_detail(request, harvester_id, search_id):
     twitter_harvesters = TwitterHarvester.objects.all()
     search = get_list_or_404(TWSearch, pmk_id=search_id)[0]
+
+    status_list = [status.digest_source() for status in search.status_list.all()]
+
     return  render_to_response(u'snh/twitter_search_detail.html',{
                                                     u'tw_selected':True,
                                                     u'all_harvesters':twitter_harvesters,
                                                     u'harvester_id':harvester_id,
                                                     u'search':search,
+                                                    u'status_list':status_list,
                                                   })
 @login_required(login_url=u'/login/')
 def tw_status_detail(request, harvester_id, status_id):

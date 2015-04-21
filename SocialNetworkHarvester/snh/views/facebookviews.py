@@ -34,16 +34,19 @@ logger = snhlogger.init_logger(__name__, "view.log")
 @login_required(login_url=u'/login/')
 @facebook_authorization_required
 def request_fb_token(request):
-    fanu = FanUser.objects.all()[0]
+    fanu = FanUser.objects.all()
+    if not fanu:
+        return HttpResponse("You need to configure a Fandjango user first, none are detected on this system!")
     userfb = None
-    if fanu:
-        userfb = fanu.graph.get(u"me")
+    userfb = fanu[0].graph.get(u"me")
     return  render_to_response(u'snh/test_token.html',{u'user': userfb})
 
 @login_required(login_url=u'/login/')
 def test_fb_token(request):
-    fanu = FanUser.objects.all()[0]
-    return  render_to_response(u'snh/test_token.html',{u'fanu':fanu})
+    fanu = FanUser.objects.all()
+    if not fanu:
+        return HttpResponse("You need to configure a Fandjango user first, none are detected on this system!")
+    return  render_to_response(u'snh/test_token.html',{u'fanu':fanu[0]})
 
 #
 # FACEBOOK
@@ -123,8 +126,8 @@ def get_fb_list(request, call_type, harvester_id):
 @login_required(login_url=u'/login/')
 def get_fb_post_list(request, call_type, userfid):
     querySet = None
+    
     #columnIndexNameMap is required for correct sorting behavior
-
     columnIndexNameMap = {
                             0 : u'created_time',
                             1 : u'fid',
@@ -155,8 +158,8 @@ def get_fb_post_list(request, call_type, userfid):
 @login_required(login_url=u'/login/')
 def get_fb_otherpost_list(request, call_type, userfid):
     querySet = None
+    
     #columnIndexNameMap is required for correct sorting behavior
-
     columnIndexNameMap = {
                             0 : u'created_time',
                             1 : u'fid',
@@ -187,8 +190,8 @@ def get_fb_otherpost_list(request, call_type, userfid):
 @login_required(login_url=u'/login/')
 def get_fb_comment_list(request, call_type, userfid):
     querySet = None
+    
     #columnIndexNameMap is required for correct sorting behavior
-
     columnIndexNameMap = {
                             0 : u'created_time',
                             1 : u'ffrom__username',
@@ -213,8 +216,8 @@ def get_fb_comment_list(request, call_type, userfid):
 @login_required(login_url=u'/login/')
 def get_fb_postcomment_list(request, call_type, postfid):
     querySet = None
+    
     #columnIndexNameMap is required for correct sorting behavior
-
     columnIndexNameMap = {
                             0 : u'created_time',
                             1 : u'ffrom__username',

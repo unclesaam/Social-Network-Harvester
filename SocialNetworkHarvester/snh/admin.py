@@ -15,21 +15,21 @@ from snh.models.dailymotionmodel import DMUser
 
 from snh.models.youtubemodel import YoutubeHarvester
 from snh.models.youtubemodel import YTUser
+
 #############
 class TwitterHarvesterAdmin(admin.ModelAdmin):
-
     fieldsets = (
         ('', {
             'fields': (
-                            u'harvester_name', 
-                            u'is_active', 
-                            u'consumer_key',
-                            u'consumer_secret',
-                            u'access_token_key',
-                            u'access_token_secret',
-                            u'max_retry_on_fail',
-                            u'harvest_window_from',
-                            u'harvest_window_to',
+                u'harvester_name', 
+                u'is_active', 
+                u'consumer_key',
+                u'consumer_secret',
+                u'access_token_key',
+                u'access_token_secret',
+                u'max_retry_on_fail',
+                u'harvest_window_from',
+                u'harvest_window_to',
                         ),
         }),
         ('Users to harvest', {
@@ -50,10 +50,37 @@ class TwitterHarvesterAdmin(admin.ModelAdmin):
     }
 
 class TWUserAdmin(admin.ModelAdmin):
-    fields = [
-                u'screen_name', 
-                u'error_triggered', 
-            ]
+    search_fields = ('screen_name',)
+    readonly_fields = (
+                            'screen_name',
+                            'lang', 
+                            'description',
+                            'location', 
+                            'favourites_count', 
+                            'followers_count', 
+                            'friends_count', 
+                            'statuses_count'
+                        )
+    fieldsets = (   (None, {
+                        'fields': (
+                            'error_triggered', 
+                            'model_update_date'
+                        )
+                    }),
+                    ('Détails', {
+                        'fields': (
+                            'screen_name',
+                            'lang', 
+                            'description',
+                            'location', 
+                            'favourites_count', 
+                            'followers_count', 
+                            'friends_count', 
+                            'statuses_count'
+                        )
+                    }),
+                )
+
 
 class TWSearchAdmin(admin.ModelAdmin):
     fields = [
@@ -89,7 +116,7 @@ admin.site.register(TWSearch, TWSearchAdmin)
 class FacebookHarvesterAdmin(admin.ModelAdmin):
 
     fieldsets = (
-        ('', {
+        (None, {
             'fields': (
                             u'harvester_name', 
                             u'is_active', 

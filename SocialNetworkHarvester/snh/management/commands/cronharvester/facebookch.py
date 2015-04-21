@@ -5,11 +5,12 @@ import time
 import Queue
 import threading
 import urlparse
-import resource
+import psutil
+import datetime
 
 from django.core.exceptions import ObjectDoesNotExist
 from facepy.exceptions import FacepyError
-from fandjango.models import User as FanUser
+from fandjango.models import User as FanUser, OAuthToken
 from snh.models.facebookmodel import *
 
 import snhlogger
@@ -146,8 +147,8 @@ def generic_batch_processor_v2(harvester, bman_list):
     error_sum = 0
 
     while bman_list:
-        usage = resource.getrusage(resource.RUSAGE_SELF)
-        logger.info(u"New batch. Size:%d for %s Mem:%s MB" % (len(bman_list), harvester,unicode(getattr(usage, "ru_maxrss")/(1024.0))))
+        usage = psutil.virtual_memory
+        logger.info(u"New batch. Size:%d for %s Mem:%s MB" % (len(bman_list), harvester, int(usage[4])/(1024.0)))
 
         if (E_UNEX in error_map and error_map[E_UNEX] / float(bman_total) > fail_ratio) or error_sum > 4:
             step_size = int(step_size / step_factor) if int(step_size / step_factor) > 1 else 1
@@ -162,7 +163,7 @@ def generic_batch_processor_v2(harvester, bman_list):
             
             if not(E_UNEX in error_map and error_map[E_UNEX] / float(bman_total) > fail_ratio) or not (E_USER_QUOTA in error_map):
                 actual_fail_ratio = error_map[E_UNEX] / float(bman_total) if E_UNEX in error_map else 0
-                usage = resource.getrusage(resource.RUSAGE_SELF)
+                usage = psutil.virtual_memory
                 logger.info(u"bman_chunk (%d/%d) chunk_total:%s InQueue:%d fail_ratio:%s > %s Mem:%s KB" % (counter, bman_total, len(bman_chunk), len(next_bman_list), actual_fail_ratio, fail_ratio, getattr(usage, "ru_maxrss")/(1024.0)))
 
                 if E_QUOTA in error_map:
@@ -188,9 +189,9 @@ def generic_batch_processor_v2(harvester, bman_list):
         bman_list = next_bman_list
         next_bman_list = []
 
-    usage = resource.getrusage(resource.RUSAGE_SELF)
+    usage = psutil.virtual_memory
     readable_failed_list = [failed_list[j]["request"]["relative_url"] for j in range(0, len(failed_list))]
-    logger.debug(u"END harvesting. Mem:%s MB" % (getattr(usage, "ru_maxrss")/(1024.0)))
+    logger.debug(u"END harvesting. Mem:%s MB" % int(usage[4])/(1024.0))
     logger.debug(u"Failed list: %s" % (readable_failed_list))
 
 def get_feed_paging(page):
@@ -244,8 +245,8 @@ def update_user_batch(harvester):
         else:
             logger.info(u"Skipping user update: %s(%s) because user has triggered the error flag." % (unicode(snhuser), snhuser.fid if snhuser.fid else "0"))
 
-    usage = resource.getrusage(resource.RUSAGE_SELF)
-    logger.info(u"Will harvest users for %s Mem:%s MB" % (harvester,unicode(getattr(usage, "ru_maxrss")/(1024.0))))
+    usage = psutil.virtual_memory
+    logger.info(u"Will harvest users for %s Mem:%s MB" % (harvester,int(usage[4])/(1024.0)))
     generic_batch_processor_v2(harvester, batch_man)
 
 def update_user_status_from_batch(harvester, snhuser, status):
@@ -264,8 +265,8 @@ def update_user_feed_from_batch(harvester, snhuser, fbfeed_page):
     too_old = False
 
     if feed_count:
-        usage = resource.getrusage(resource.RUSAGE_SELF)
-        logger.debug(u"Updating %d feeds: %s Mem:%s MB" % (feed_count, harvester, unicode(getattr(usage, "ru_maxrss")/(1024.0))))
+        usage = psutil.virtual_memory
+        logger.debug(u"Updating %d feeds: %s Mem:%s MB" % (feed_count, harvester, int(usage[4])/(1024.0)))
 
         for feed in fbfeed_page["data"]:
             if feed["created_time"]:
@@ -327,8 +328,8 @@ def update_user_statuses_batch(harvester):
         else:
             logger.info(u"Skipping status update: %s(%s) because user has triggered the error flag." % (unicode(snhuser), snhuser.fid if snhuser.fid else "0"))
 
-    usage = resource.getrusage(resource.RUSAGE_SELF)
-    logger.info(u"Will harvest statuses for %s Mem:%s MB" % (harvester,unicode(getattr(usage, "ru_maxrss")/(1024.0))))
+    usage = psutil.virtual_memory
+    logger.info(u"Will harvest statuses for %s Mem:%s MB" % (harvester, int(usage[4])/(1024.0)))
     generic_batch_processor_v2(harvester, batch_man)
 
 def update_user_comments(harvester, fbcomments):
@@ -367,8 +368,8 @@ def update_user_comments_from_batch(harvester, statusid, fbcomments_page):
 
         paging, new_page = get_comment_paging(fbcomments_page)
         
-        usage = resource.getrusage(resource.RUSAGE_SELF)
-        logger.debug(u"Updating %d comments. New: %s Paging: %s Mem:%s MB" % (comment_count, new_page, paging, unicode(getattr(usage, "ru_maxrss")/(1024.0))))
+        usage = psutil.virtual_memory
+        logger.debug(u"Updating %d comments. New: %s Paging: %s Mem:%s MB" % (comment_count, new_page, paging, int(usage[4])/(1024.0)))
 
         if new_page:
             d = {"method": "GET", "relative_url": u"%s/comments?limit=300&%s" % (statusid, paging)}
@@ -393,8 +394,8 @@ def update_likes_from_batch(harvester, statusid, fblikes_page):
 
         paging, new_page = get_comment_paging(fblikes_page)
 
-        usage = resource.getrusage(resource.RUSAGE_SELF)
-        logger.debug(u"Updating %d likes. statusid:%s paging:%s Mem:%s MB" % (likes_count, statusid, paging, unicode(getattr(usage, "ru_maxrss")/(1024.0))))
+        usage = psutil.virtual_memory
+        logger.debug(u"Updating %d likes. statusid:%s paging:%s Mem:%s MB" % (likes_count, statusid, paging, int(usage[4])/(1024.0)))
         
         if new_page:
             d = {"method": "GET", "relative_url": u"%s/likes?limit=300&%s" % (statusid, paging)}
@@ -563,7 +564,7 @@ def run_harvester_v3(harvester):
     except:
         logger.exception(u"EXCEPTION: %s" % harvester)
     finally:
-        usage = resource.getrusage(resource.RUSAGE_SELF)
+        usage = psutil.virtual_memory
         harvester.end_current_harvest()
-        logger.info(u"End: %s Stats:%s Mem:%s MB" % (harvester,unicode(harvester.get_stats()),unicode(getattr(usage, "ru_maxrss")/(1024.0))))
+        logger.info(u"End: %s Stats:%s Mem:%s MB" % (harvester,unicode(harvester.get_stats()), int(usage[4])/(1024.0)))
 
