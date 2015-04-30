@@ -4,6 +4,7 @@ from django.http import HttpResponse
 from django.utils.cache import add_never_cache_headers
 from django.utils import simplejson
 import csv, codecs, cStringIO
+from xml.etree import ElementTree
 
 import snhlogger
 logger = snhlogger.init_logger(__name__, "view.log")
@@ -151,3 +152,26 @@ def get_datatables_records(request, querySet, columnIndexNameMap, call_type='web
         response = generate_csv_response(response_dict)
 
     return response
+
+def xml_formater(base):
+    """
+    Return a string formated as if it were an XML structure, Assuming 
+    the base string has has the standard XML syntax
+    """
+    def indent(elem, level=0):
+        i = "\n" + level*"  "
+        if len(elem):
+            if not elem.text or not elem.text.strip():
+                elem.text = i + "  "
+            if not elem.tail or not elem.tail.strip():
+                elem.tail = i
+            for elem in elem:
+                indent(elem, level+1)
+            if not elem.tail or not elem.tail.strip():
+                elem.tail = i
+        else:
+            if level and (not elem.tail or not elem.tail.strip()):
+                elem.tail = i
+    root = ElementTree.fromstring(base)
+    indent(root)
+    return ElementTree.tostring(root, encoding="us-ascii", method="xml")

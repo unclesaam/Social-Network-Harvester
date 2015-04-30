@@ -4,17 +4,10 @@ from django.contrib import admin
 from django.contrib.admin.widgets import FilteredSelectMultiple
 from django.db import models
 
-from snh.models.twittermodel import TwitterHarvester
-from snh.models.twittermodel import TWUser, TWSearch, TWStatus
-
-from snh.models.facebookmodel import FacebookHarvester
-from snh.models.facebookmodel import FBUser
-
-from snh.models.dailymotionmodel import DailyMotionHarvester
-from snh.models.dailymotionmodel import DMUser
-
-from snh.models.youtubemodel import YoutubeHarvester
-from snh.models.youtubemodel import YTUser
+from snh.models.twittermodel import TWUser, TWSearch, TWStatus, TwitterHarvester
+from snh.models.facebookmodel import FBUser, FacebookHarvester
+from snh.models.dailymotionmodel import DMUser, DailyMotionHarvester
+from snh.models.youtubemodel import YTUser, YTVideo, YoutubeHarvester
 
 #############
 class TwitterHarvesterAdmin(admin.ModelAdmin):
@@ -215,10 +208,67 @@ class YoutubeHarvesterAdmin(admin.ModelAdmin):
     }
 
 class YTUserAdmin(admin.ModelAdmin):
-    fields = [
-                u'username', 
-            ]
+    readonly_fields = (
+            'subscriber_count',
+            'video_watch_count',
+            'view_count'
+    )
+    fieldsets = (   
+        (None,    {
+            u'fields': (
+                u'username',
+                )
+            }
+        ),
+        (u'Détails', {
+            u'fields': (  
+                u'subscriber_count',
+                u'video_watch_count',
+                u'view_count'
+                )
+            }
+        )
+    )
+
+class YTVideoAdmin(admin.ModelAdmin):
+    readonly_fields = (
+            'user',
+            'fid',
+            'url',
+            'player_url',
+            'swf_url',
+            'title',
+            'published',
+            'updated',
+            'recorded',
+            'description',
+            'category',
+            'favorite_count',
+            'view_count',
+            'duration',
+    )
+    fieldsets = (   
+        (None,    {
+            u'fields': (
+                'user',
+                'fid',
+                'url',
+                'player_url',
+                'swf_url',
+                'title',
+                'published',
+                'updated',
+                'recorded',
+                'description',
+                'category',
+                'favorite_count',
+                'view_count',
+                'duration',
+                )
+            }
+        ),
+    )
 
 admin.site.register(YoutubeHarvester, YoutubeHarvesterAdmin)
 admin.site.register(YTUser, YTUserAdmin)
-
+admin.site.register(YTVideo, YTVideoAdmin)

@@ -8,6 +8,14 @@ import gdata.youtube.service
 
 from django.db import models
 from snh.models.common import *
+import snhlogger
+#########################################################
+debugging = 1
+if debugging: 
+    print "DEBBUGING ENABLED IN %s"%__name__
+    debugLogger = snhlogger.init_custom_logger('debug'+__name__, "debugLogger.log", '(%(filename)-15s) %(message)s')
+    debugLogger.info("            "*100)
+#########################################################
 
 class YoutubeHarvester(AbstractHaverster):
 
@@ -37,7 +45,7 @@ class YoutubeHarvester(AbstractHaverster):
         if self.client is None:
             self.client = gdata.youtube.service.YouTubeService()
             self.client.developer_key = self.dev_key
-            print self.dev_key         
+            #print self.dev_key         
         super(YoutubeHarvester, self).api_call(method, params)
         time.sleep(0.7)
         metp = getattr(self.client, method)
@@ -51,7 +59,7 @@ class YoutubeHarvester(AbstractHaverster):
         return self.current_harvested_user
 
     def get_next_user_to_harvest(self):
-
+        if debugging: debugLogger.info("%s::get_next_user_to_harvest()", self)
         if self.current_harvested_user:
             self.last_harvested_user = self.current_harvested_user
 
@@ -67,6 +75,7 @@ class YoutubeHarvester(AbstractHaverster):
         return self.current_harvested_user
 
     def build_harvester_sequence(self):
+        if debugging: debugLogger.info("%s::build_harvester_sequence()", self)
         self.haverst_deque = deque()
         all_users = self.ytusers_to_harvest.all()
 
@@ -83,6 +92,7 @@ class YoutubeHarvester(AbstractHaverster):
             self.haverst_deque.extend(all_users)
 
     def get_stats(self):
+        if debugging: debugLogger.info("%s::get_stats()", self)
         parent_stats = super(YoutubeHarvester, self).get_stats()
         parent_stats["concrete"] = {}
         return parent_stats
@@ -93,7 +103,7 @@ class YTUser(models.Model):
         app_label = "snh"
 
     def __unicode__(self):
-        return self.username
+        return self.title if self.title else self.username or u'Unamed User'
 
     def related_label(self):
         return u"%s (%s)" % (self.username, self.pmk_id)
@@ -107,6 +117,7 @@ class YTUser(models.Model):
     gender = models.CharField(max_length=255, null=True)
     location = models.CharField(max_length=255, null=True)
 
+    title = models.CharField(max_length=255, null=True)
     username = models.CharField(max_length=255, null=True)
     first_name = models.CharField(max_length=255, null=True)
     last_name = models.CharField(max_length=255, null=True)
@@ -132,7 +143,8 @@ class YTUser(models.Model):
     video_watch_count = models.IntegerField(null=True)
     view_count = models.IntegerField(null=True)
 
-    def update_from_youtube(self, yt_user):
+    def update_from_youtube(self, yt_user): #User
+        if debugging: debugLogger.info("<'%s'>::update_from_youtube()", self)
         model_changed = False
         text_to_check = {
                             u"gender":u"gender",
@@ -141,7 +153,7 @@ class YTUser(models.Model):
                             u"first_name":u"first_name",
                             u"last_name":u"last_name",
                             u"relationship":u"relationship",
-                            u"description":u"description",
+                            u"description":u"content",
                             u"company":u"company",
                             u"occupation":u"occupation",
                             u"school":u"school",
@@ -162,7 +174,7 @@ class YTUser(models.Model):
                 yt_user.age.text and \
                 self.age != int(yt_user.age.text):
             self.age = int(yt_user.age.text)
-            #print "age change %d" % self.age 
+            #if debugging: debugLogger.info("    age change %d" % self.age )
             model_changed = True
 
         yt_last_web_access = yt_user.statistics.last_web_access
@@ -175,21 +187,21 @@ class YTUser(models.Model):
                 yt_user.statistics.subscriber_count and \
                 self.subscriber_count != int(yt_user.statistics.subscriber_count):
             self.subscriber_count = int(yt_user.statistics.subscriber_count)
-            #rint "subscriber_count change %d" % self.subscriber_count 
+            #if debugging: debugLogger.info("    subscriber_count change %d" % self.subscriber_count)
             model_changed = True
 
         if yt_user.statistics and \
                 yt_user.statistics.video_watch_count and \
                 self.video_watch_count != int(yt_user.statistics.video_watch_count):
             self.video_watch_count = int(yt_user.statistics.video_watch_count)
-            #print "video_watch_count change %d" % self.video_watch_count 
+            #if debugging: debugLogger.info("    video_watch_count change %d" % self.video_watch_count)
             model_changed = True
 
         if yt_user.statistics and \
                 yt_user.statistics.view_count and \
                 self.view_count != int(yt_user.statistics.view_count):
             self.view_count = int(yt_user.statistics.view_count)
-            #print "view_count change %d" % self.view_count 
+            #if debugging: debugLogger.info("    view_count change %d" % self.view_count )
             model_changed = True
 
         for prop in text_to_check:
@@ -198,13 +210,12 @@ class YTUser(models.Model):
                     yt_user.__dict__[text_to_check[prop]].text and \
                     self.__dict__[prop] != unicode(yt_user.__dict__[text_to_check[prop]].text, 'UTF-8'):
 
-                self.__dict__[prop] = unicode(yt_user.__dict__[text_to_check[prop]].text, 'UTF-8')
-                #print "prop changed. %s = %s" % (prop, self.__dict__[prop]) 
+                self.__dict__[prop] = unicode(yt_user.__dict__[text_to_check[prop]].text, 'UTF-8') 
+                #if debugging: debugLogger.info("    prop changed. %s = %s" % (prop, self.__dict__[prop]) )
                 model_changed = True
             
         if model_changed:
             self.model_update_date = datetime.utcnow()
-            #print self.pmk_id, self.fid, self, self.__dict__, yt_user
             self.save()
 
         return model_changed
@@ -215,7 +226,7 @@ class YTVideo(models.Model):
         app_label = "snh"
 
     def __unicode__(self):
-        return self.title
+        return self.title[:20] if self.title else 'Untitled video'
 
     pmk_id =  models.AutoField(primary_key=True)
     
@@ -239,7 +250,8 @@ class YTVideo(models.Model):
 
     video_file_path = models.TextField(null=True)
 
-    def update_from_youtube(self, snh_user, yt_video):
+    def update_from_youtube(self, snh_user, yt_video): #Video
+        if debugging: debugLogger.info("<'%s'>::update_from_youtube()", self)
         model_changed = False
         text_to_check = {
                             u"title":u"title",
@@ -354,7 +366,7 @@ class YTComment(models.Model):
         app_label = "snh"
 
     def __unicode__(self):
-        return self.title
+        return self.message[:20] if self.message else u'Empty message'
 
     pmk_id =  models.AutoField(primary_key=True)
 
@@ -367,7 +379,8 @@ class YTComment(models.Model):
     published = models.DateTimeField(null=True)
     updated = models.DateTimeField(null=True)
 
-    def update_from_youtube(self, snh_video, snh_user, yt_comment):
+    def update_from_youtube(self, snh_video, snh_user, yt_comment): #Comment
+        if debugging: debugLogger.info("<'%s'>::update_from_youtube()", self)
         model_changed = False
         text_to_check = {
                             u"message":u"message",

@@ -100,6 +100,7 @@
     <tr>
         <th>ID</th>
         <th>username</th>
+        <th>title</th>
         <th>name</th>
         <th>relationship</th>
         <th>description</th>
@@ -116,19 +117,22 @@
     </thead>
     <tbody>
     <tr>
-        <td><a href="/yt_user_detail/{{ harvester_id }}/fid/{{user.fid}}">{{ user.fid|default_if_none:"0" }}</a></td>
-        <td><a href="/yt_user_detail/{{ harvester_id }}/fid/{{user.fid}}">{{ user.username|default_if_none:"" }}</a></td>
-        <td><a href="/yt_user_detail/{{ harvester_id }}/fid/{{user.fid}}">{{ user.first_name|default_if_none:"" }}&nbsp;{{ user.last_name|default_if_none:"" }}</a></td>
-        <td>{{ user.relationship|default_if_none:"" }}</td>
-        <td>{{ user.description|default_if_none:"0" }}</td>
-        <td>{{ user.age|default_if_none:"" }}</td>
-        <td>{{ user.gender|default_if_none:"" }}</td>
-        <td>{{ user.location|default_if_none:"0" }}</td>
-        <td>{{ user.company|default_if_none:"0" }}</td>
-        <td>{{ user.last_web_access|default_if_none:"0" }}</td>
-        <td>{{ user.subscribers_count|default_if_none:"0" }}</td>
-        <td>{{ user.video_watch_count|default_if_none:"0" }}</td>
-        <td>{{ user.view_count|default_if_none:"0" }}</td>
+        <a href="/yt_user_detail/{{ harvester_id }}/fid/{{user.fid}}">
+            <td>{{ user.fid|default_if_none:"0" }}</td>
+            <td>{{ user.username|default_if_none:"" }}</td>
+            <td>{{ user.title }}</td>
+            <td>{{ user.first_name|default_if_none:"" }}&nbsp;{{ user.last_name|default_if_none:"" }}</td>
+            <td>{{ user.relationship|default_if_none:"" }}</td>
+            <td>{{ user.description|default_if_none:"0" }}</td>
+            <td>{{ user.age|default_if_none:"" }}</td>
+            <td>{{ user.gender|default_if_none:"" }}</td>
+            <td>{{ user.location|default_if_none:"0" }}</td>
+            <td>{{ user.company|default_if_none:"0" }}</td>
+            <td>{{ user.last_web_access|default_if_none:"0" }}</td>
+            <td>{{ user.subscribers_count|default_if_none:"0" }}</td>
+            <td>{{ user.video_watch_count|default_if_none:"0" }}</td>
+            <td>{{ user.view_count|default_if_none:"0" }}</td>
+        </a>
     </tr>
     </tbody>
 </table>

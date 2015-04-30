@@ -60,22 +60,21 @@ Ceci est un journal du travail effectué dans le cadre de la mise à niveau de la 
 - Mise en place d'un certificat SSL via apache (got to learn first)
 - Fin de journée (3h)
 
-14 avril 2015:
+27 avril 2015:
+- Fouillage dans la doc de google data, afin de faire fonctionner youtube
+- Création d'un harvester, app sur mon compte,  etc.
+- Test des fonctionnalités et débugging
+- fin de journee (5h)
 
+28 avril 2015:
+- Continuation du 27 avril.
+- Débug de la procédure d'ajout de nouveaux users
+- Grattage de tete general
+- fin de journée (5h)
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+29 - 30 avril 2015:
+- Le scrapping de youtube fonctionne (presque) sans bugs.
+- TODO:
+	- debugger "video watch count"  et "view count" qui ne s'updatent pas
+	- Mettre a jour le youtube player dans la page des videos
+	- Patching des erreurs occasionneles (unicode errors, etc.)
