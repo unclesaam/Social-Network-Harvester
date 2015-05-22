@@ -1,80 +1,129 @@
-Ceci est un journal du travail effectuÈ dans le cadre de la mise ‡ niveau de la plateforme Aspira. Auteur: Samuel Cloutier
+Ceci est un journal du travail effectu√© dans le cadre de la mise √† niveau de la plateforme Aspira. Auteur: Samuel Cloutier
 
 22 fevrier 2015:
-- Installation d'un environnement virtuel python 2.7.9 avec les modules requis ‡ la plateforme ASPIRA
-- Installation locale d'un serveur MySQL afin de dÈservir la base de donnÈes locale
+- Installation d'un environnement virtuel python 2.7.9 avec les modules requis √† la plateforme ASPIRA
+- Installation locale d'un serveur MySQL afin de d√©servir la base de donn√©es locale
 - Premier lancement local du serveur avec Django
-- Tentative de crÈer un premier objet twitter-scrapper (sans succËs, pas assez de comprehension du fonctionnement)
-- Fin de la journÈe
+- Tentative de cr√©er un premier objet twitter-scrapper (sans succ√®s, pas assez de comprehension du fonctionnement)
+- Fin de la journ√©e
 
 2 mars 2015: 
-- …tude du fonctionnement original de python-twitter. Le module requis ne semble pas Ítre le mÍme que celui en local. Le module "Twython" n'existe pas.
-- Recherche en ligne des diffÈrences au niveau du nouvel API de twitter
-- Test du module rÈcent en utilisant Aspira, avec un compte twitter fais pour la cause, avec une appli. Aucun tweet harvestÈ, sans surprise.
-- Fin de la journÈe (1h)
+- √âtude du fonctionnement original de python-twitter. Le module requis ne semble pas √™tre le m√™me que celui en local. Le module "Twython" n'existe pas.
+- Recherche en ligne des diff√©rences au niveau du nouvel API de twitter
+- Test du module r√©cent en utilisant Aspira, avec un compte twitter fais pour la cause, avec une appli. Aucun tweet harvest√©, sans surprise.
+- Fin de la journ√©e (1h)
 
 6 mars 2015:
 - Fork du repository Git et installation de gitHub for windows
-- …tude du fonctionnement de la base de donnÈs et des twitter-views
-- Test du module python-twitter ‡ part sans Aspira
-- run des tests prÈ-assemblÈs du module (les tests sont outdatÈs et doivent Ítre faits un ‡ un)
-- Fin de journÈe (3h)
+- √âtude du fonctionnement de la base de donn√©s et des twitter-views
+- Test du module python-twitter √† part sans Aspira
+- run des tests pr√©-assembl√©s du module (les tests sont outdat√©s et doivent √™tre faits un √† un)
+- Fin de journ√©e (3h)
 
 9 mars 2015:
 - comprehension du fonctionnement des customs-commands de manage.py (crontw, cronfb, etc.)
-- …tude du fonctionnement du protocole d'authentification OAuth 1.0
-- Correction des problËmes de mise ‡ jours du status des scrappers (remaining hits, hourly limit, etc.)
-- DÈbuggage gÈnÈral des methodes dans twitterch.py et twittermodel.py (a terminer)
-- fin de journÈe (7h)
+- √âtude du fonctionnement du protocole d'authentification OAuth 1.0
+- Correction des probl√®mes de mise √† jours du status des scrappers (remaining hits, hourly limit, etc.)
+- D√©buggage g√©n√©ral des methodes dans twitterch.py et twittermodel.py (a terminer)
+- fin de journ√©e (7h)
 
 10 mars 2015:
-- Debuggage des problËmes reliÈs aux types de donnÈes de la DB.
-- Potentiel besoin d'ajouter des fields. Sera ‡ considÈrer si ultimement nÈcÈssaire
-- fin de journÈe (2h)
+- Debuggage des probl√®mes reli√©s aux types de donn√©es de la DB.
+- Potentiel besoin d'ajouter des fields. Sera √† consid√©rer si ultimement n√©c√©ssaire
+- fin de journ√©e (2h)
 
 11 mars 2015: 
-- Mise en place d'un logger pour le dÈbuging des fichiers (diffÈrent du logger dÈj‡ prÈsent)
-- RÈglÈ petit problËme dans le template twitter.html
-- fin de journÈe (1h)
+- Mise en place d'un logger pour le d√©buging des fichiers (diff√©rent du logger d√©j√† pr√©sent)
+- R√©gl√© petit probl√®me dans le template twitter.html
+- fin de journ√©e (1h)
 
 14 mars 2015:
-- Il sera prÈfÈrable ‡ long terme de n'utiliser que le module Twython pour les api calls. Celui-ci est beaucoup plus complet et pourrait Èventuellement supporter le stream API. Je considËre donc de crÈer de nouveaux modËles pour Twitter, avec une toute nouvelle procÈdure de scrapping.
-- En attendant, rÈparation provisoire de l'ancien protocole twitter. (fonctionnel, mais non-optimal et avec quelque bugs)
-- Ajout de la liste des rÈcents status postÈs dans la page d'acceuil Twitter
-- ajout d'une section "Tw statuses" ‡ la page admin
--fin de journÈe (8h)
+- Il sera pr√©f√©rable √† long terme de n'utiliser que le module Twython pour les api calls. Celui-ci est beaucoup plus complet et pourrait √©ventuellement supporter le stream API. Je consid√®re donc de cr√©er de nouveaux mod√®les pour Twitter, avec une toute nouvelle proc√©dure de scrapping.
+- En attendant, r√©paration provisoire de l'ancien protocole twitter. (fonctionnel, mais non-optimal et avec quelque bugs)
+- Ajout de la liste des r√©cents status post√©s dans la page d'acceuil Twitter
+- ajout d'une section "Tw statuses" √† la page admin
+-fin de journ√©e (8h)
 
 23 mars 2015:
-- Recherche de problËmes avec les scrappers de Facebook (module "resource" supportÈ seulement sous Unix)
-- RÈparation gÈnÈrale des templates de twitter
-- Fin de journÈe (5h)
+- Recherche de probl√®mes avec les scrappers de Facebook (module "resource" support√© seulement sous Unix)
+- R√©paration g√©n√©rale des templates de twitter
+- Fin de journ√©e (5h)
 
 24 mars 2015:
 - Installation des modules requis au scrapping de facebook (remplacement du module resource par psutil)
-- …tude du fonctionnement de Fandjango et du Graph API de FB
-- Fin de journÈe (1h)
+- √âtude du fonctionnement de Fandjango et du Graph API de FB
+- Fin de journ√©e (1h)
 
 3 avril 2015:
-- Set up de fandjango, test des fonctionnalitÈs
+- Set up de fandjango, test des fonctionnalit√©s
 - Installation d'Apache (about time, I know...)
 - Mise en place d'un certificat SSL via apache (got to learn first)
-- Fin de journÈe (3h)
+- Fin de journ√©e (3h)
 
 27 avril 2015:
 - Fouillage dans la doc de google data, afin de faire fonctionner youtube
-- CrÈation d'un harvester, app sur mon compte,  etc.
-- Test des fonctionnalitÈs et dÈbugging
+- Cr√©ation d'un harvester, app sur mon compte,  etc.
+- Test des fonctionnalit√©s et d√©bugging
 - fin de journee (5h)
 
 28 avril 2015:
 - Continuation du 27 avril.
-- DÈbug de la procÈdure d'ajout de nouveaux users
+- D√©bug de la proc√©dure d'ajout de nouveaux users
 - Grattage de tete general
-- fin de journÈe (5h)
+- fin de journ√©e (5h)
 
-29 - 30 avril 2015:
+29 - 30  et 31 avril 2015:
 - Le scrapping de youtube fonctionne (presque) sans bugs.
 - TODO:
 	- debugger "video watch count"  et "view count" qui ne s'updatent pas
-	- Mettre a jour le youtube player dans la page des videos
-	- Patching des erreurs occasionneles (unicode errors, etc.)
+	- Mettre a jour le youtube player dans la page des videos (download des videos dans la db??)
+	- Patching des erreurs occasionnelles (unicode errors, etc.)
+- fins de journ√©es (5h) (5h) (5h)
+
+1 avril 2015:
+- Rencontre avec Pier-Yves a propos de son b√©b√©:
+- Questions a poser:
+	- Comment utiliser FanDjango?
+	- Fandjango user
+	- diff√©rentes versions de run_harvester ?
+	- Download des videos youtube?
+	- Serveur test Aspira
+- Points retenus de la rencontre:
+	- ID Facebook change risque de rendre la base de donn√©es actuelle obsolete au niveau des IDs
+	- FanUser peut √™tre import√© de l'ancienne base de donn√©s
+	- Probable n√©c√©ssit√© de recodder l'acces au token Facebook au complet
+	- Connection au VPN du FSS requise pour acc√©der au SNH
+- Listage des t√¢ches a effectuer dans le cadre du stage
+
+4 avril 2015:
+- Installation de mon moniteur au bureau du GRCP
+- Tentative d'obtention d'un token Facebook a partir d'un serveur de developpement
+- debuggage et compr√©hension de Fandjango
+- Fin de journ√©e (5h)
+
+5 avril 2015:
+- Setup de django en mode SSL afin de pouvoir communiquer avec Facebook en https (difficult√©s rencontr√©es)
+- Essai de fowarder les connections entrantes en utilisant stunel, sans succ√®s.
+- Essaie d'installer des modules django qui le font a ma place: Tous sont en python3... Je pense en customiser un pour mes besoins en python27
+- Fin de journ√©e (5h)
+
+6, 7, 8 avril 2015:
+- Impl√©mentation du syst√®me de connection d'utilisateur Facebook (app, token, etc.)
+- Changement du protocole d'appels au API par le harvester (retrait de fandjango)
+- Essais et tests, impl√©mentation manuelle des appels "batch"
+- fins de journ√©es (5h) (3h) (5h)
+
+18 avril 2015:
+- R√©daction de demande d'acc√®s d'autorisations √©tendues pour l'app Facebook
+- Am√©lioration de ma structure de debuggage
+- Debuggage partiel de Facebook
+- Fin de journ√©e (6h)
+
+19 avril 2015:
+- Setup de la connection Web-VPN avec AnyConnect
+- D√©bugging de Facebook, still...
+- Fin de journ√©e (5h)
+
+20 - 21 avril 2015:
+- D√©bugging de Facebook, fonctionnel, mise au point de d√©tails
+- Fin de journ√©e (6h), (6h)

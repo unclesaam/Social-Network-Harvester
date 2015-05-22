@@ -5,9 +5,11 @@ from django.contrib.admin.widgets import FilteredSelectMultiple
 from django.db import models
 
 from snh.models.twittermodel import TWUser, TWSearch, TWStatus, TwitterHarvester
-from snh.models.facebookmodel import FBUser, FacebookHarvester
+from snh.models.facebookmodel import FBUser, FacebookHarvester, FBPost, FBComment
 from snh.models.dailymotionmodel import DMUser, DailyMotionHarvester
 from snh.models.youtubemodel import YTUser, YTVideo, YoutubeHarvester
+from django.contrib.auth.models import User as BaseUser
+from fandjango.models import User as FanUser, OAuthToken
 
 #############
 class TwitterHarvesterAdmin(admin.ModelAdmin):
@@ -112,6 +114,7 @@ class FacebookHarvesterAdmin(admin.ModelAdmin):
         (None, {
             'fields': (
                             u'harvester_name', 
+                            u'app_id',
                             u'is_active', 
                             u'update_likes',
                             u'max_retry_on_fail',
@@ -134,13 +137,63 @@ class FacebookHarvesterAdmin(admin.ModelAdmin):
 
 
 class FBUserAdmin(admin.ModelAdmin):
+    list_per_page = 500
     fields = [
+                u'fid',
                 u'username', 
                 u'error_triggered', 
             ]
 
+class FBPostAdmin(admin.ModelAdmin):
+    list_per_page = 500
+    fields = [
+                'user',
+                'fid',
+                'message',
+                'message_tags_raw',
+                'picture',
+                'link',
+                'name',
+                'caption',
+                'description',
+                'source',
+                'properties_raw',
+                'icon',
+                'privacy_raw',
+                'ftype',
+                'likes_from',
+                'likes_count',
+                'comments_count',
+                'shares_count',
+                'place_raw',
+                'story',
+                'story_tags_raw',
+                'object_id',
+                'application_raw',
+                'created_time',
+                'updated_time',
+                'error_on_update',
+            ]
+
+class FBCommentAdmin(admin.ModelAdmin):
+    list_per_page = 500
+    fields = [
+                'fid',
+                'ffrom',
+                'message',
+                'created_time',
+                'likes',
+                'user_likes',
+                'ftype',
+                'post',
+                'error_on_update',
+            ]
+
 admin.site.register(FacebookHarvester, FacebookHarvesterAdmin)
 admin.site.register(FBUser, FBUserAdmin)
+admin.site.register(FBPost, FBPostAdmin)
+admin.site.register(FBComment, FBCommentAdmin)
+
 
 ##############
 class DailyMotionHarvesterAdmin(admin.ModelAdmin):

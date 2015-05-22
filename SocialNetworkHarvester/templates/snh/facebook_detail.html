@@ -21,7 +21,7 @@
         $('td:eq(6)', nRow).html( _wordwrap(msg) );
 
         //longlink
-        ($('td:eq(7)', nRow).html() == "None") ? link = "" : link = '<a href="'+aData[7]+'">'+ _wordwrap(aData[7]) +'</a>';
+        ($('td:eq(7)', nRow).html() == "None") ? link = "" : link = '<a href="'+aData[7]+'" target="_blank">'+ _wordwrap(aData[7]) +'</a>';
         $('td:eq(7)', nRow).html( link );
         
         //longlink

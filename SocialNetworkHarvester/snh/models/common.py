@@ -3,6 +3,10 @@
 from datetime import datetime
 from django.db import models
 
+from settings import DEBUGCONTROL, dLogger
+debugging = DEBUGCONTROL['commonmodel']
+if debugging: print "DEBBUGING ENABLED IN %s"%__name__
+
 class AbstractHaverster(models.Model):
 
     class Meta:
@@ -67,6 +71,18 @@ class AbstractHaverster(models.Model):
         raise NotImplementedError( "Should have implemented this" )
 
     def get_stats(self):
+        if debugging: 
+            dLogger.log("--- END OF PROCEDURE ---")
+            dLogger.log('<Harvester: \'%s\'>::get_stats()'%self)
+            #dLogger.log('    harvester_type: %s'%self.harvester_type)
+            #dLogger.log('    harvester_name: %s'%self.harvester_name)
+            #dLogger.log('    is_active: %s'%self.is_active)
+            #dLogger.log('    harvest_in_progress: %s'%self.harvest_in_progress)
+            #dLogger.log('    last_harvest_start_time: %s'%self.last_harvest_start_time)
+            #dLogger.log('    last_harvest_end_time: %s'%self.last_harvest_end_time)
+            #dLogger.log('    last_user_harvest_was_aborted: %s'%self.last_user_harvest_was_aborted)
+            #dLogger.log('    current_harvest_start_time: %s'%self.current_harvest_start_time)
+            
         return {"abstract":
                     {
                     "harvester_type":self.harvester_type,

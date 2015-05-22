@@ -1,21 +1,27 @@
 # coding=UTF-8
 from collections import deque
-from datetime import datetime
+import datetime
 import time
+import re
+import json
 
-from django.db import models
+from django.db import models, IntegrityError
 from snh.models.common import *
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
-from django.db import IntegrityError
 
 import snhlogger
 logger = snhlogger.init_logger(__name__, "facebook_model.log")
+
+from settings import DEBUGCONTROL, dLogger
+debugging = DEBUGCONTROL['facebookmodel']
+if debugging: print "DEBBUGING ENABLED IN %s"%__name__
 
 class FacebookHarvester(AbstractHaverster):
 
     class Meta:
         app_label = "snh"
 
+    app_id = models.CharField(max_length=255) #TODO: permettre que chaque Harvester aie sa propre app.
     client = None
     fbusers_to_harvest = models.ManyToManyField('FBUser', related_name='fbusers_to_harvest')
     update_likes = models.BooleanField()
@@ -32,12 +38,20 @@ class FacebookHarvester(AbstractHaverster):
     def end_current_harvest(self):
         super(FacebookHarvester, self).end_current_harvest()
 
+    @dLogger.debug
     def api_call(self, method, params):
+        if debugging: 
+            dLogger.log("<FacebookHarvester>::api_call()")
+            dLogger.log("    method: %s"%(method))
+            dLogger.log("    params: %s"%(params))
+
         super(FacebookHarvester, self).api_call(method, params)
         c = self.get_client()   
         metp = getattr(c, method)
         ret = metp(**params)
+        #if debugging: dLogger.log("    ret: %s"%(ret))
         return ret 
+
 
     def get_last_harvested_user(self):
         return None
@@ -48,11 +62,40 @@ class FacebookHarvester(AbstractHaverster):
     def get_next_user_to_harvest(self):
         return None
 
+    @dLogger.debug
     def get_stats(self):
         parent_stats = super(FacebookHarvester, self).get_stats()
         return parent_stats
 
+
+class FacebookSessionKey(models.Model):
+    ''' Stores a key returned by the authentification of a user through the Facebook javascript sdk.
+        Normally, there should be only one instance of FacebookSessionKey per server.
+    '''
+    user_access_token = models.CharField(max_length=255, null=True)
+    updated_time = models.DateTimeField(null=True)
+
+    class Meta:
+        app_label = "snh" 
+
+    def get_access_token(self):
+        return self.user_access_token
+
+    @dLogger.debug
+    def set_access_token(self, accessToken):
+        if debugging: dLogger.log("<FacebookSessionKey>::set_access_token()")
+        self.user_access_token = accessToken
+        self.updated_time = datetime.utcnow()
+        self.save()
+
+    def get_last_update_time(self):
+        return self.updated_time
+
+
 class FBResult(models.Model):
+    ''' FBResult is used to temporarily store the raw data obtained from Facebook graph API batch methods.
+        Can either contain a FBPost, FBComment or FBPost.likes raw page to be analysed later.
+    '''
     class Meta:
         app_label = "snh"
 
@@ -80,7 +123,7 @@ class FBUser(models.Model):
 
     fid = models.CharField(max_length=255, null=True, unique=True)
     name = models.CharField(max_length=255, null=True)
-    username = models.CharField(max_length=255, null=True, unique=True)
+    username = models.CharField(max_length=255, null=True, blank=True)
     website = models.ForeignKey('URL', related_name="fbuser.website", null=True)
     link = models.ForeignKey('URL', related_name="fbuser.link", null=True)
 
@@ -122,7 +165,10 @@ class FBUser(models.Model):
     error_triggered = models.BooleanField()
     error_on_update = models.BooleanField()
 
+    @dLogger.debug
     def update_url_fk(self, self_prop, face_prop, facebook_model):
+        if debugging: dLogger.log("<FBUser: %s>::update_url_fk(%s)"%(self.name, face_prop))
+
         model_changed = False
         if face_prop in facebook_model:
             prop_val = facebook_model[face_prop]
@@ -139,9 +185,17 @@ class FBUser(models.Model):
 
                 self_prop = url
                 model_changed = True
+        if debugging: dLogger.log("    has changed: %s"%model_changed)
         return model_changed, self_prop
 
+    @dLogger.debug
     def update_from_facebook(self, fb_user):
+        if debugging: 
+            dLogger.log("<FBUser: %s>::update_from_facebook()"%self.name)
+            #dLogger.log("    fb_user: %s"%fb_user)
+
+        if 'body' in fb_user:
+            fb_user = json.loads(fb_user['body'])
         model_changed = False
         props_to_check = {
                             u"fid":u"id",
@@ -184,10 +238,13 @@ class FBUser(models.Model):
         date_to_check = {}
 
         for prop in props_to_check:
+            #if debugging: dLogger.log("    props_to_check[prop]: %s"%props_to_check[prop])
             if props_to_check[prop] in fb_user and unicode(self.__dict__[prop]) != unicode(fb_user[props_to_check[prop]]):
+                #if debugging: dLogger.log("    fb_user[props_to_check[%s]]: %s"%(props_to_check[prop], fb_user[props_to_check[prop]]))
                 self.__dict__[prop] = fb_user[props_to_check[prop]]
                 #print "prop changed. %s = %s" % (prop, self.__dict__[prop])
                 model_changed = True
+                if debugging: dLogger.log("    %s has been updated"%prop)
 
         for prop in date_to_check:
             if date_to_check[prop] in fb_user and self.__dict__[prop] != fb_user[date_to_check[prop]]:
@@ -216,6 +273,7 @@ class FBUser(models.Model):
             self.error_on_update = False
             #print self.pmk_id, self.fid, self
             self.save()
+            if debugging: dLogger.log("    updated data!")
 
         return model_changed
 
@@ -225,7 +283,7 @@ class FBPost(models.Model):
         app_label = "snh"
 
     def __unicode__(self):
-        return self.ftype
+        return "%s - %s"%(self.user, self.ftype)
 
     pmk_id =  models.AutoField(primary_key=True)
     user = models.ForeignKey('FBUser')
@@ -259,7 +317,10 @@ class FBPost(models.Model):
     updated_time = models.DateTimeField(null=True)
     error_on_update = models.BooleanField()
 
+    @dLogger.debug
     def get_existing_user(self, param):
+        if debugging: dLogger.log("<FBPost: %s>::get_existing_user()"%self.fid)
+
         user = None
         try:
             user = FBUser.objects.get(**param)
@@ -269,9 +330,13 @@ class FBPost(models.Model):
         except ObjectDoesNotExist:
             logger.debug(u">>>>DOES NOT EXISTS")
             pass
+        if debugging: dLogger.log("    user returned: %s"%user)
         return user
 
+    @dLogger.debug
     def update_url_fk(self, self_prop, face_prop, facebook_model):
+        if debugging: dLogger.log("<FBPost: %s>::update_url_fk()"%self.fid)
+
         model_changed = False
         if face_prop in facebook_model:
             prop_val = facebook_model[face_prop]
@@ -290,7 +355,10 @@ class FBPost(models.Model):
                 model_changed = True
         return model_changed, self_prop
 
+    @dLogger.debug
     def update_user_fk(self, self_prop, face_prop, facebook_model):
+        if debugging: dLogger.log("<FBPost: %s>::update_user_fk()"%self.fid)
+
         model_changed = False
         if face_prop in facebook_model:
             prop_val = facebook_model[face_prop]
@@ -314,8 +382,10 @@ class FBPost(models.Model):
 
         return model_changed, self_prop
 
-
+    @dLogger.debug
     def update_likes_from_facebook(self, likes):
+        if debugging: dLogger.log("<FBPost: %s>::update_likes_from_facebook()"%self.fid)
+
         model_changed = False
 
         for fbuser in likes:
@@ -343,10 +413,16 @@ class FBPost(models.Model):
             self.model_update_date = datetime.utcnow()
             self.error_on_update = False
             self.save()
+            if debugging: dLogger.log("    updated data!")
    
         return model_changed
 
+    @dLogger.debug
     def update_from_facebook(self, facebook_model, user):
+        if debugging: 
+            dLogger.log("<FBPost: %s>::update_from_facebook()"%self.fid)
+            #dLogger.log("    facebook_model: %s"%facebook_model)
+
         model_changed = False
         props_to_check = {
                             u"fid":u"id",
@@ -377,9 +453,12 @@ class FBPost(models.Model):
         self.user = user
 
         for prop in props_to_check:
+            #if debugging: dLogger.log("    prop: %s"%prop)
             if props_to_check[prop] in facebook_model and self.__dict__[prop] != facebook_model[props_to_check[prop]]:
+                #if debugging: dLogger.log("    facebook_model[%s]: %s"%(props_to_check[prop], facebook_model[props_to_check[prop]]))
                 self.__dict__[prop] = facebook_model[props_to_check[prop]]
                 model_changed = True
+                if debugging: dLogger.log("    %s has been updated"%prop)
 
         for prop in subitem_to_check:
             subprop = subitem_to_check[prop]
@@ -459,7 +538,10 @@ class FBComment(models.Model):
 
     error_on_update = models.BooleanField()
 
+    @dLogger.debug
     def get_existing_user(self, param):
+        if debugging: dLogger.log("<FBComment: %s>::get_existing_user()"%self.fid)
+
         user = None
         try:
             user = FBUser.objects.get(**param)
@@ -469,7 +551,10 @@ class FBComment(models.Model):
             pass
         return user
 
+    @dLogger.debug
     def update_user_fk(self, self_prop, face_prop, facebook_model):
+        if debugging: dLogger.log("<FBComment: %s>::update_user_fk()"%self.fid)
+
         model_changed = False
         if face_prop in facebook_model:
             prop_val = facebook_model[face_prop]
@@ -493,15 +578,19 @@ class FBComment(models.Model):
 
         return model_changed, self_prop
 
+    @dLogger.debug
     def update_from_facebook(self, facebook_model, status):
+        if debugging: dLogger.log("<FBComment: %s>::update_from_facebook()"%self.fid)
+
         model_changed = False
         props_to_check = {
                             u"fid":u"id",
                             u"message":u"message",
-                            u"likes":u"likes",
+                            u"likes":u"like_count",
                             u"user_likes":u"user_likes",
                             u"ftype":u"type",
                             }
+
 
         date_to_check = [u"created_time"]
 
@@ -513,8 +602,9 @@ class FBComment(models.Model):
 
         for prop in props_to_check:
             if props_to_check[prop] in facebook_model and self.__dict__[prop] != facebook_model[props_to_check[prop]]:
-                self.__dict__[prop] = facebook_model[props_to_check[prop]]
+                self.__dict__[prop] = unicode(facebook_model[props_to_check[prop]])
                 model_changed = True
+                if debugging: dLogger.log("    %s has been updated"%prop)
         
         for prop in date_to_check:
             fb_val = facebook_model[prop]
@@ -529,10 +619,21 @@ class FBComment(models.Model):
             model_changed = True
 
         if model_changed:
+
             self.model_update_date = datetime.utcnow()
             self.error_on_update = False
             #logger.debug(u"FBComment exist and changed! %s" % (self.fid))
-            self.save()
+            try:
+                self.save()
+                if debugging: dLogger.log("    updated data!")
+            except :
+                if debugging: 
+                    dLogger.log("    message from model: %s"%facebook_model['message'])
+                    self.message = facebook_model['message']
+                    dLogger.log("    message before conversion: %s"%self.message)
+                self.message = unicode(self.message)
+                if debugging: dLogger.log("    message after conversion: %s"%unicode(self.message))
+                self.save()
         #else:
         #    logger.debug(u">>>>>>>>>>>>>>>>>>FBComment exist and unchanged! %s" % (self.fid))
             

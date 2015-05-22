@@ -123,18 +123,22 @@
     </tbody>
 </table>
 <br>
+
 <center>
+<!-- OLD VERSION (outdated?)
 <a  
 	 href="{{ video_url }}"
 	 style="display:block;width:520px;height:330px"  
 	 id="player"> 
 </a> 
 <a href="{{ video_url }}">Download</a> 
-<!-- this will install flowplayer inside previous A- tag. -->
 <script>
 	flowplayer("player", "/static/flowplayer-3.2.10.swf");
 </script>
+-->
+<iframe height='500px' width='700px' src="http://www.youtube.com/embed/{{ video.fid }}">Youtube Video Frame</iframe>
 </center>
+
 <h3>Comments</h3>
 <div  id='ytvideocomment_chart' style='margin:0 auto; width: 1024px; height: 240px;'></div>
 <table id="comments_table" class="pretty">

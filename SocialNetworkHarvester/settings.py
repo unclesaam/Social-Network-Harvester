@@ -3,12 +3,25 @@
 import os
 import logging
 import sys
+from DebugLogger import DebugLogger
 
 PROJECT_PATH = os.path.abspath(os.path.split(__file__)[0])
 LOG_LEVEL = logging.DEBUG
 
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
+
+dLogger = DebugLogger('debug'+__name__, os.path.join(PROJECT_PATH,"log/debugLogger.log"), '%(message)s')
+DEBUGCONTROL = {'commonmodel':      True,
+                'facebookmodel':    True,
+                'dailymotionmodel': False,
+                'twittermodel':     False,
+                'youtubemodel':     False,
+                'facebookch':       True,
+                'twitterch':        False,
+                'dailymotionch':    False,
+                'youtubech':        False
+                }
 
 ADMINS = (
     # ('Your Name', 'your_email@example.com'),
@@ -33,51 +46,6 @@ DATABASES = {
 FACEBOOK_APPLICATION_ID = '336495213215911'
 FACEBOOK_APPLICATION_SECRET_KEY = '7c7df5de5cf80ca403cb7959d7423f5b'
 FACEBOOK_APPLICATION_NAMESPACE = 'aspiratest'
-'''
-FACEBOOK_APPLICATION_INITIAL_PERMISSIONS = [
-                                            'user_about_me','friends_about_me',
-                                            'user_activities','friends_activities',
-                                            'user_birthday','friends_birthday',
-                                            'user_checkins','friends_checkins',
-                                            'user_education_history','friends_education_history',
-                                            'user_events','friends_events',
-                                            'user_groups','friends_groups',
-                                            'user_hometown','friends_hometown',
-                                            'user_interests','friends_interests',
-                                            'user_likes','friends_likes',
-                                            'user_location','friends_location',
-                                            'user_notes','friends_notes',
-                                            #'user_photo_video_tags','friends_photo_video_tags',
-                                            'user_photos','friends_photos',
-                                            'user_questions','friends_questions',
-                                            'user_relationships','friends_relationships',
-                                            'user_relationship_details','friends_relationship_details',
-                                            'user_religion_politics','friends_religion_politics',
-                                            'user_status','friends_status',
-                                            'user_videos','friends_videos',
-                                            'user_website','friends_website',
-                                            'user_work_history','friends_work_history',
-                                            'email',
-                                            'read_friendlists',
-                                            'read_insights',
-                                            'read_mailbox',
-                                            'read_requests',
-                                            'read_stream',
-                                            'xmpp_login',
-                                            'ads_management',
-                                            'create_event',
-                                            'manage_friendlists',
-                                            'manage_notifications',
-                                            #'offline_access',
-                                            'user_online_presence',
-                                            'friends_online_presence',
-                                            'publish_checkins',
-                                            'publish_stream',
-                                            'rsvp_event',
-                                            #'publish_actions',
-                                            ]
-'''
-FACEBOOK_APPLICATION_INITIAL_PERMISSIONS = ['read_stream', 'publish_stream','friends_online_presence','friends_status','read_friendlists']
 
 # Local time zone for this installation. Choices can be found here:
 # http://en.wikipedia.org/wiki/List_of_tz_zones_by_name
@@ -153,6 +121,7 @@ TEMPLATE_LOADERS = (
 )
 
 MIDDLEWARE_CLASSES = (
+    #'sslify.middleware.SSLifyMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'fandjango.middleware.FacebookMiddleware',
@@ -161,6 +130,8 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.messages.middleware.MessageMiddleware',
 
 )
+
+#SSLIFY_PORT = 80
 
 ROOT_URLCONF = 'urls'
 
@@ -184,10 +155,7 @@ INSTALLED_APPS = (
     'snh',
     'grappelli.dashboard',
     'grappelli',
-    # Uncomment the next line to enable the admin:
     'django.contrib.admin',
-    # Uncomment the next line to enable admin documentation:
-    # 'django.contrib.admindocs',
 )
 
 GRAPPELLI_ADMIN_TITLE = "<a href='/admin'>SNH Admin</a> | <a href='/'>Consultation</a> | <a href='/test_fb_token'>Test Facebook token</a>"

@@ -13,16 +13,13 @@ import snhlogger
 import os
 
 
-#########################################################
-debugging = 0
-if debugging: 
-    print "DEBBUGING ENABLED IN %s"%__name__
-    debugLogger = snhlogger.init_custom_logger('debug'+__name__, "debugLogger.log", '%(message)s')
-    debugLogger.info("            "*200)
-#########################################################
+from settings import DEBUGCONTROL
+debugging = DEBUGCONTROL['twitterch'], dLogger
+if DEBUGCONTROL['twitterch']: print "DEBBUGING ENABLED IN %s"%__name__
 
 logger = snhlogger.init_logger(__name__, "twitter.log")
 
+@dLogger.debug
 def run_twitter_harvester():
     harvester_list = TwitterHarvester.objects.all()
 
@@ -43,8 +40,9 @@ def run_twitter_harvester():
         if harvester.is_active:        
             run_harvester_search(harvester)
 
+@dLogger.debug
 def get_latest_statuses_page(harvester, user, page):
-    if debugging: debugLogger.info( "twitterch::get_latest_statuses_page(harvester: %s, user: %s, page: %s)"%(harvester, user.screen_name, page))
+    if debugging: dLogger.log( "twitterch::get_latest_statuses_page(harvester: %s, user: %s, page: %s)"%(harvester, user.screen_name, page))
 
     since_max = [u"since_id", None]
     if user.was_aborted and user.last_harvested_status:
@@ -61,22 +59,25 @@ def get_latest_statuses_page(harvester, user, page):
                                                 })
     return latest_statuses_page
 
+@dLogger.debug
 def sleeper(retry_count):
-    if debugging: debugLogger.info( "twitterch::sleeper(retry_count: %s)"%retry_count)
+    if debugging: dLogger.log( "twitterch::sleeper(retry_count: %s)"%retry_count)
     retry_delay = 1
     wait_delay = retry_count*retry_delay
     wait_delay = 60 if wait_delay > 60 else wait_delay
     time.sleep(wait_delay)
 
+@dLogger.debug
 def manage_exception(retry_count, harvester, user, page):
-    if debugging: debugLogger.info( "twitterch::manage_exception(retry_count: %s, harvester: %s, user: %s, page: %s)"%(retry_count, harvester, user, page))
+    if debugging: dLogger.log( "twitterch::manage_exception(retry_count: %s, harvester: %s, user: %s, page: %s)"%(retry_count, harvester, user, page))
     msg = u"Exception for the harvester %s for %s at page %d. Retry:%d" % (harvester, unicode(user), page, retry_count)
     logger.exception(msg)
     retry_count += 1
     return (retry_count, retry_count > harvester.max_retry_on_fail)
 
+@dLogger.debug
 def manage_twitter_exception(retry_count, harvester, user, page, tex):
-    if debugging: debugLogger.info( "twitterch::manage_twitter_exception(retry_count: %s, harvester: %s, user: %s, page: %s, tex: %s)"%(retry_count, 
+    if debugging: dLogger.log( "twitterch::manage_twitter_exception(retry_count: %s, harvester: %s, user: %s, page: %s, tex: %s)"%(retry_count, 
                                                                 harvester, user.screen_name, page, type(tex)))
 
     retry_count += 1
@@ -105,8 +106,9 @@ def manage_twitter_exception(retry_count, harvester, user, page, tex):
 
     return (retry_count, need_a_break)
 
+@dLogger.debug
 def get_latest_statuses(harvester, user):
-    if debugging: debugLogger.info( "twitterch::get_latest_statuses(harvester: %s, user: %s)"%(harvester, user.screen_name))
+    if debugging: dLogger.log( "twitterch::get_latest_statuses(harvester: %s, user: %s)"%(harvester, user.screen_name))
 
     page = 1
     retry = 0
@@ -140,20 +142,22 @@ def get_latest_statuses(harvester, user):
 
     return latest_statuses
 
+@dLogger.debug
 def update_user_status(status, user):
-    if debugging: debugLogger.info( "twitterch::update_user_status(status: '%s...', user: %s)"%(status.text[:60], user.screen_name))
+    if debugging: dLogger.log( "twitterch::update_user_status(status: '%s...', user: %s)"%(status.text[:60], user.screen_name))
     try:
         tw_status = TWStatus.objects.get(fid__exact=status.id)
     except ObjectDoesNotExist:
         tw_status = TWStatus(user=user)
         tw_status.save()
-        #if debugging: debugLogger.info( "New <TWStatus> created('%s...')"%(tw_status))
+        #if debugging: dLogger.log( "New <TWStatus> created('%s...')"%(tw_status))
     tw_status.update_from_twitter(status,user)
     user.last_harvested_status = tw_status
     user.save()
 
+@dLogger.debug
 def get_existing_user(param):
-    if debugging: debugLogger.info( "twitterch::get_existing_user(param: %s)"%(param))
+    if debugging: dLogger.log( "twitterch::get_existing_user(param: %s)"%(param))
     user = None
     try:
         user = TWUser.objects.get(**param)
@@ -164,8 +168,9 @@ def get_existing_user(param):
         pass
     return user
 
+@dLogger.debug
 def status_from_search(harvester, tw_status):
-    if debugging: debugLogger.info( "twitterch::status_from_search(harvester: %s, tw_status: %s)"%(harvester, tw_status))
+    if debugging: dLogger.log( "twitterch::status_from_search(harvester: %s, tw_status: %s)"%(harvester, tw_status))
     user = None
     snh_status = None
     twUser = tw_status.user
@@ -196,16 +201,18 @@ def status_from_search(harvester, tw_status):
 
     return snh_status
 
+@dLogger.debug
 def update_search(snh_search, snh_status):
-    if debugging: debugLogger.info( "twitterch::update_search(snh_search: %s, snh_status: %s)"%(snh_search, snh_status))
+    if debugging: dLogger.log( "twitterch::update_search(snh_search: %s, snh_status: %s)"%(snh_search, snh_status))
 
     if snh_status and snh_search.status_list.filter(fid__exact=snh_status.fid).count() == 0:
         snh_search.status_list.add(snh_status)
         snh_search.latest_status_harvested = snh_status
         snh_search.save()
 
+@dLogger.debug
 def call_search(harvester, term, page, since_id=None):
-    if debugging: debugLogger.info( "twitterch::call_search(harvester: %s, term: %s, page: %s)"%(harvester, term, page))
+    if debugging: dLogger.log( "twitterch::call_search(harvester: %s, term: %s, page: %s)"%(harvester, term, page))
     retry = 0
     status_list = None
     next_page = False
@@ -237,8 +244,9 @@ def call_search(harvester, term, page, since_id=None):
     logger.info(u"Next page for %s: %s Hits to go: %d, len:%d" % (term, harvester, harvester.remaining_hits,len(status_list)))
     return status_list, next_page
 
+@dLogger.debug
 def search_term(harvester, twsearch):
-    if debugging: debugLogger.info( "twitterch::search_term(harvester: %s, twsearch: %s)"%(harvester, twsearch))
+    if debugging: dLogger.log( "twitterch::search_term(harvester: %s, twsearch: %s)"%(harvester, twsearch))
 
     page = 1
     too_old = False
@@ -264,8 +272,9 @@ def search_term(harvester, twsearch):
         if next_page:
             status_list, next_page = call_search(harvester, twsearch.term, page, since_id)
 
+@dLogger.debug
 def para_search_term(harvester, all_twsearch):
-    if debugging: debugLogger.info( "twitterch::para_search_term(harvester: %s, all_twsearch: %s)"%(harvester, all_twsearch))
+    if debugging: dLogger.log( "twitterch::para_search_term(harvester: %s, all_twsearch: %s)"%(harvester, all_twsearch))
     
     searches = []
     for twsearch in all_twsearch:
@@ -312,17 +321,18 @@ def para_search_term(harvester, all_twsearch):
                  
                 logger.info(u"last status date: %s" % status_time)
 
-
+@dLogger.debug
 def update_user_twython(twuser, user):
-    if debugging: debugLogger.info( "twitterch::update_user_twython(twuser: %s, user: %s)"%(twuser['screen_name'], user))
+    if debugging: dLogger.log( "twitterch::update_user_twython(twuser: %s, user: %s)"%(twuser['screen_name'], user))
     try:
         user.update_from_rawtwitter(twuser,twython=True)
     except:
         msg = u"Cannot update user info for %s:(%d)" % (unicode(twuser), user.fid if user.fid else 0)
         logger.exception(msg)       
 
+@dLogger.debug
 def update_users_twython(harvester):
-    if debugging: debugLogger.info( "twitterch::update_users_twython(harvester: %s)"%harvester)
+    if debugging: dLogger.log( "twitterch::update_users_twython(harvester: %s)"%harvester)
     all_users = harvester.twusers_to_harvest.all()
     screen_names = []
     user_screen_name = {}
@@ -344,8 +354,9 @@ def update_users_twython(harvester):
             user = user_screen_name[screen_name]
             update_user_twython(twuser, user)
 
+@dLogger.debug
 def run_harvester_v2(harvester):
-    if debugging: debugLogger.info( "twitterch::run_harvester_v2(harvester: %s)"%(harvester))
+    if debugging: dLogger.log( "twitterch::run_harvester_v2(harvester: %s)"%(harvester))
 
     harvester.start_new_harvest()
     logger.info(u"START REST: %s Stats:%s" % (harvester,unicode(harvester.get_stats())))
@@ -377,8 +388,9 @@ def run_harvester_v2(harvester):
     
     logger.info(u"End REST: %s Stats:%s" % (harvester,unicode(harvester.get_stats())))
 
+@dLogger.debug
 def run_harvester_search(harvester):
-    if debugging: debugLogger.info ("twitterch::run_harvester_search(harvester: %s)"%(harvester))
+    if debugging: dLogger.log ("twitterch::run_harvester_search(harvester: %s)"%(harvester))
             
     if True:
         harvester.start_new_harvest()

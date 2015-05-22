@@ -3,6 +3,7 @@
 
 from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
+from django.views.decorators.csrf import csrf_exempt
 from django.shortcuts import render_to_response, get_object_or_404, get_list_or_404, redirect
 from django.core.exceptions import ObjectDoesNotExist
 from django import template
@@ -25,28 +26,46 @@ from snh.models.dailymotionmodel import *
 
 from snh.utils import get_datatables_records
 
+from settings import FACEBOOK_APPLICATION_ID
+
 import snhlogger
 logger = snhlogger.init_logger(__name__, "view.log")
+
+
+#########################################################
+debugging = 1
+if debugging: 
+    print "DEBBUGING ENABLED IN %s"%__name__
+    debugLogger = snhlogger.init_custom_logger('debug'+__name__, "debugLogger.log", '(%(filename)-17s) %(message)s')
+#########################################################
 
 #
 # FACEBOOK TOKEN
 #
 @login_required(login_url=u'/login/')
-@facebook_authorization_required
 def request_fb_token(request):
-    fanu = FanUser.objects.all()
-    if not fanu:
-        return HttpResponse("You need to configure a Fandjango user first, none are detected on this system!")
-    userfb = None
-    userfb = fanu[0].graph.get(u"me")
+    #fanu = FanUser.objects.all()
+    #userfb = None
+    #userfb = fanu[0].graph.get(u"me")
     return  render_to_response(u'snh/test_token.html',{u'user': userfb})
 
 @login_required(login_url=u'/login/')
 def test_fb_token(request):
-    fanu = FanUser.objects.all()
-    if not fanu:
-        return HttpResponse("You need to configure a Fandjango user first, none are detected on this system!")
-    return  render_to_response(u'snh/test_token.html',{u'fanu':fanu[0]})
+    #fanu = FanUser.objects.all()
+    return  render_to_response(u'snh/test_token.html',{'appId': FACEBOOK_APPLICATION_ID})
+
+@csrf_exempt
+@login_required(login_url=u'/login/')
+def fb_update_client_token(request):
+    if debugging: debugLogger.info('fb_update_client_token()')
+    token = request.POST['token']
+    currentSessionKey = FacebookSessionKey.objects.all()
+    if not currentSessionKey:
+        currentSessionKey = FacebookSessionKey.objects.create()
+    else:
+        currentSessionKey = currentSessionKey[0]
+    currentSessionKey.set_access_token(token)
+
 
 #
 # FACEBOOK

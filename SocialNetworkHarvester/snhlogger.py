@@ -5,6 +5,8 @@ import os
 import logging
 from settings import PROJECT_PATH, LOG_LEVEL
 
+INDENT_LEVEL = 0
+
 def init_logger(logger_name, log_file):
     logger = logging.getLogger(logger_name)
     logger.setLevel(logging.DEBUG)

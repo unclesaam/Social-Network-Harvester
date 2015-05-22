@@ -10,6 +10,12 @@ from snh.models.dailymotionmodel import *
 import snhlogger
 logger = snhlogger.init_logger(__name__, "dailymotion.log")
 
+from settings import DEBUGCONTROL
+debugging = DEBUGCONTROL['dailymotionch']
+if DEBUGCONTROL['dailymotionch']: 
+    print "DEBBUGING ENABLED IN %s"%__name__
+    debugLogger = snhlogger.init_custom_logger('debug'+__name__, "debugLogger.log", '(%(filename)-17s) %(message)s')
+
 def run_dailymotion_harvester():
     harvester_list = DailyMotionHarvester.objects.all()
     for harvester in harvester_list:

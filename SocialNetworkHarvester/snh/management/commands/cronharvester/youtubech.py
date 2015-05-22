@@ -13,16 +13,14 @@ from snh.utils import xml_formater
 
 from gdata.youtube.client import RequestError, YouTubeError
 
-#########################################################
-debugging = 1
-if debugging: 
-    print "DEBBUGING ENABLED IN %s"%__name__
-    debugLogger = snhlogger.init_custom_logger('debug'+__name__, "debugLogger.log", '(%(filename)-15s) %(message)s')
-#########################################################
+from settings import DEBUGCONTROL
+debugging = DEBUGCONTROL['youtubech'], dLogger
+if DEBUGCONTROL['youtubech']: print "DEBBUGING ENABLED IN %s"%__name__
 
 logger = snhlogger.init_logger(__name__, "youtube.log")
 logger.info(" "*500)
 
+@dLogger.debug
 def run_youtube_harvester():
     harvester_list = YoutubeHarvester.objects.all()
     for harvester in harvester_list:
@@ -53,8 +51,9 @@ def get_existing_user(param):
         pass
     return user
 
+@dLogger.debug
 def update_user(harvester, userid):
-    if debugging: debugLogger.info("<'%s'>::update_user()", userid)
+    if debugging: dLogger.log("<YTUser: '%s'>::update_user()", userid)
     snh_user = None
 
     try:
@@ -78,7 +77,7 @@ def update_user(harvester, userid):
         snh_user.update_from_youtube(ytuser)
     except gdata.service.RequestError, e:
 
-        if debugging: debugLogger.info("    error received: %s", e)
+        if debugging: dLogger.log("    error received: %s", e)
 
         msg = u"RequestError on user %s. Trying to update anyway" % (userid)
         logger.info(msg)
@@ -98,8 +97,9 @@ def update_user(harvester, userid):
         logger.exception(msg)
     return snh_user
 
+@dLogger.debug
 def update_users(harvester):
-    if debugging: debugLogger.info("update_users()")
+    if debugging: dLogger.log("update_users()")
 
     all_users = harvester.ytusers_to_harvest.all()
 
@@ -113,8 +113,9 @@ def update_users(harvester):
     usage = psutil.virtual_memory()
     logger.info(u"User harvest completed %s Mem:%s MB" % (harvester, int(usage[4])/(1024.0)))
 
+@dLogger.debug
 def update_video(snhuser, ytvideo):
-    if debugging: debugLogger.info("<'%s'>::update_video()", ytvideo.title.text)
+    if debugging: dLogger.log("<YTVideo: '%s'>::update_video()", ytvideo.title.text)
     split_uri = ytvideo.id.text.split("/")
     fid = split_uri[len(split_uri)-1] 
     snhvideo = None
@@ -130,8 +131,9 @@ def update_video(snhuser, ytvideo):
         logger.exception(msg)
     return snhvideo
 
+@dLogger.debug
 def update_comment(harvester, snhvideo, ytcomment):
-    if debugging: debugLogger.info("<'%s'>::update_comment()", snhvideo)
+    if debugging: dLogger.log("<YTComment: '%s'>::update_comment()", snhvideo)
     author = ytcomment.author[0]
     author_fid = author.uri.text.split('/')[-1]
     snhuser = update_user(harvester, author_fid)
@@ -153,17 +155,19 @@ def update_comment(harvester, snhvideo, ytcomment):
 
     return snhcomment
 
+@dLogger.debug
 def update_all_comment_helper(harvester, snhvideo, comment_list):
-    if debugging: debugLogger.info("<'%s'>::update_all_comment_helper()", snhvideo)
+    if debugging: dLogger.log("<YTVideo: '%s'>::update_all_comment_helper()", snhvideo)
     for comment in comment_list.entry:
-        #if debugging: debugLogger.info('    comment to update: <"%s">'%str(comment.author))
+        #if debugging: dLogger.log('    comment to update: <"%s">'%str(comment.author))
         update_comment(harvester, snhvideo, comment)
     
     get_next_comment_uri = comment_list.GetNextLink().href if comment_list.GetNextLink() else None
     return get_next_comment_uri
 
+@dLogger.debug
 def update_all_comment(harvester,snhvideo):
-    if debugging: debugLogger.info("<'%s'>::update_all_comment()", snhvideo)
+    if debugging: dLogger.log("<YTVideo: '%s'>::update_all_comment()", snhvideo)
     try:
         comment_list = harvester.api_call("GetYouTubeVideoCommentFeed",{"video_id":snhvideo.fid})
         get_next_comment_uri = update_all_comment_helper(harvester, snhvideo, comment_list)
@@ -174,16 +178,16 @@ def update_all_comment(harvester,snhvideo):
         usage = psutil.virtual_memory()
         logger.info(u"    Comment harvest completed for this video: %s %s Mem:%s MB" % (snhvideo.fid, harvester,int(usage[4])/(1024.0)))
     except YouTubeError as err:
-        debugLogger.info(u"    YouTubeError received for this video: %s (%s)" % (snhvideo.fid, err))
+        dLogger.log(u"    YouTubeError received for this video: %s (%s)" % (snhvideo.fid, err))
     except RequestError as err:
-        debugLogger.info(u"    RequestError received for this video: %s (%s)" % (snhvideo.fid, err))
+        dLogger.log(u"    RequestError received for this video: %s (%s)" % (snhvideo.fid, err))
     except Exception as err:
-        debugLogger.info(u"    Unknown Error received for this video: %s (%s)" %(snhvideo.fid, err))
+        dLogger.log(u"    Unknown Error received for this video: %s (%s)" %(snhvideo.fid, err))
 
 
-
+@dLogger.debug
 def update_all_videos(harvester):
-    if debugging: debugLogger.info("update_all_videos()")
+    if debugging: dLogger.log("update_all_videos()")
     all_users = harvester.ytusers_to_harvest.all()
 
     for snhuser in all_users:
@@ -210,8 +214,9 @@ def update_all_videos(harvester):
     usage = psutil.virtual_memory()
     logger.info(u"Video harvest completed %s Mem:%s MB" % (harvester, int(usage[4])/(1024.0)))
 
+@dLogger.debug
 def run_harvester_v1(harvester):
-    if debugging: debugLogger.info("run_harvester_v1()")
+    if debugging: dLogger.log("run_harvester_v1()")
     harvester.start_new_harvest()
     try:
 
