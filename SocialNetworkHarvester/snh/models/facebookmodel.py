@@ -4,6 +4,7 @@ import datetime
 import time
 import re
 import json
+import MySQLdb
 
 from django.db import models, IntegrityError
 from snh.models.common import *
@@ -91,7 +92,6 @@ class FacebookSessionKey(models.Model):
     def get_last_update_time(self):
         return self.updated_time
 
-
 class FBResult(models.Model):
     ''' FBResult is used to temporarily store the raw data obtained from Facebook graph API batch methods.
         Can either contain a FBPost, FBComment or FBPost.likes raw page to be analysed later.
@@ -167,7 +167,7 @@ class FBUser(models.Model):
 
     @dLogger.debug
     def update_url_fk(self, self_prop, face_prop, facebook_model):
-        if debugging: dLogger.log("<FBUser: %s>::update_url_fk(%s)"%(self.name, face_prop))
+        #if debugging: dLogger.log("<FBUser: %s>::update_url_fk(%s)"%(self.name, face_prop))
 
         model_changed = False
         if face_prop in facebook_model:
@@ -185,7 +185,7 @@ class FBUser(models.Model):
 
                 self_prop = url
                 model_changed = True
-        if debugging: dLogger.log("    has changed: %s"%model_changed)
+        #if debugging: dLogger.log("    has changed: %s"%model_changed)
         return model_changed, self_prop
 
     @dLogger.debug
@@ -528,10 +528,10 @@ class FBComment(models.Model):
 
     fid = models.CharField(max_length=255, null=True, unique=True)
     ffrom = models.ForeignKey('FBUser', related_name="fbcomment.ffrom", null=True)
-    message = models.TextField(null=True)
+    message = models.TextField(max_length=255, null=True)
     created_time = models.DateTimeField(null=True)
     likes = models.IntegerField(null=True)
-    user_likes = models.IntegerField(null=True)
+    user_likes = models.BooleanField(default=False)
     ftype = models.CharField(max_length=255, null=True)
 
     post = models.ForeignKey('FBPost', null=True)
@@ -602,9 +602,9 @@ class FBComment(models.Model):
 
         for prop in props_to_check:
             if props_to_check[prop] in facebook_model and self.__dict__[prop] != facebook_model[props_to_check[prop]]:
-                self.__dict__[prop] = unicode(facebook_model[props_to_check[prop]])
-                model_changed = True
-                if debugging: dLogger.log("    %s has been updated"%prop)
+                    self.__dict__[prop] = facebook_model[props_to_check[prop]]
+                    model_changed = True
+                    if debugging: dLogger.log("    %s has been updated"%prop)
         
         for prop in date_to_check:
             fb_val = facebook_model[prop]
@@ -619,21 +619,18 @@ class FBComment(models.Model):
             model_changed = True
 
         if model_changed:
-
             self.model_update_date = datetime.utcnow()
             self.error_on_update = False
             #logger.debug(u"FBComment exist and changed! %s" % (self.fid))
             try:
                 self.save()
                 if debugging: dLogger.log("    updated data!")
-            except :
-                if debugging: 
-                    dLogger.log("    message from model: %s"%facebook_model['message'])
-                    self.message = facebook_model['message']
-                    dLogger.log("    message before conversion: %s"%self.message)
-                self.message = unicode(self.message)
-                if debugging: dLogger.log("    message after conversion: %s"%unicode(self.message))
+            except MySQLdb.OperationalError:
+                self.message = facebook_model['message'].encode('unicode-escape')
+                if debugging: dLogger.log("    Message needed unicode-escaping: '%s' (user: %s)"%(self.message, self.ffrom))
                 self.save()
+
+
         #else:
         #    logger.debug(u">>>>>>>>>>>>>>>>>>FBComment exist and unchanged! %s" % (self.fid))
             

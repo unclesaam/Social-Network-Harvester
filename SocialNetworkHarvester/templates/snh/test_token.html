@@ -57,9 +57,16 @@
             document.getElementById('me').innerHTML = '<b>'+response.first_name+' '+response.last_name+'</b>';
           });
           document.getElementById('logoutButton').style.display = 'inline';
-          accessToken = FB.getAuthResponse()['accessToken']
-          document.getElementById('token').value = accessToken;
-          $.post("/fb_update_client_token", {token: accessToken})
+        }
+
+        function renewAccessToken(){
+          try{
+            accessToken = FB.getAuthResponse()['accessToken']
+            document.getElementById('token').value = accessToken;
+            $.post("/fb_update_client_token", {token: accessToken})
+          } catch(TypeError) {
+            document.getElementById('token').value = 'Log in to Facebook first!';
+          }
         }
 
         function logOut(){
@@ -85,8 +92,8 @@
             <div id="me">
             </div>
             <br>
-            OAuth Token:
-            <textarea id='token'></textarea>
+            Current OAuth Token: <a href='#' onclick='renewAccessToken()'>Renew token</a><br>
+            <textarea id='token' style="height:100px;width:300px;">{{ currentToken }}</textarea>
             <br>
             <a href='#' onclick='logOut()' id='logoutButton' style='display: none;'>
               <div id="logoutButtonInner">Log out</div>

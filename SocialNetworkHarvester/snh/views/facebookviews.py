@@ -32,32 +32,27 @@ import snhlogger
 logger = snhlogger.init_logger(__name__, "view.log")
 
 
-#########################################################
-debugging = 1
-if debugging: 
-    print "DEBBUGING ENABLED IN %s"%__name__
-    debugLogger = snhlogger.init_custom_logger('debug'+__name__, "debugLogger.log", '(%(filename)-17s) %(message)s')
-#########################################################
-
 #
 # FACEBOOK TOKEN
 #
 @login_required(login_url=u'/login/')
 def request_fb_token(request):
-    #fanu = FanUser.objects.all()
-    #userfb = None
-    #userfb = fanu[0].graph.get(u"me")
     return  render_to_response(u'snh/test_token.html',{u'user': userfb})
 
 @login_required(login_url=u'/login/')
 def test_fb_token(request):
-    #fanu = FanUser.objects.all()
-    return  render_to_response(u'snh/test_token.html',{'appId': FACEBOOK_APPLICATION_ID})
+    token = FacebookSessionKey.objects.all()
+    if not token:
+        token = FacebookSessionKey.objects.create()
+    else: token = token[0]
+    print token.get_access_token()
+    return  render_to_response(u'snh/test_token.html',
+        {   'appId': FACEBOOK_APPLICATION_ID,
+            'currentToken': token.get_access_token()})
 
 @csrf_exempt
 @login_required(login_url=u'/login/')
 def fb_update_client_token(request):
-    if debugging: debugLogger.info('fb_update_client_token()')
     token = request.POST['token']
     currentSessionKey = FacebookSessionKey.objects.all()
     if not currentSessionKey:

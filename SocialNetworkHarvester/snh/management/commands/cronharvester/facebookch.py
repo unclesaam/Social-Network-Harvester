@@ -20,7 +20,7 @@ from snh.models.facebookmodel import *
 import snhlogger
 logger = snhlogger.init_logger(__name__, "facebook.log")
 
-from settings import DEBUGCONTROL, dLogger
+from settings import DEBUGCONTROL, dLogger, FACEBOOK_APPLICATION_ID, FACEBOOK_APPLICATION_SECRET_KEY
 debugging = DEBUGCONTROL['facebookch']
 if debugging: print "DEBBUGING ENABLED IN %s"%__name__
 
@@ -42,9 +42,11 @@ def run_facebook_harvester():
     harvester_list = FacebookHarvester.objects.all()
     sessionKey = FacebookSessionKey.objects.all()
     if not sessionKey:
-        raise('A user needs to be connected to facebook through the SNH admin page first.')
+        raise(Exception('A user needs to be connected to facebook through the SNH admin page first.'))
     for harvester in harvester_list:
         client = facebook.GraphAPI(access_token=sessionKey[0].get_access_token())
+        extendedToken = client.extend_access_token(app_id=FACEBOOK_APPLICATION_ID, app_secret=FACEBOOK_APPLICATION_SECRET_KEY)
+        sessionKey[0].set_access_token(extendedToken['access_token']) # Insure that the token will be valid for another two months
         harvester.set_client(client)
         logger.info(u"The harvester %s is %s" % 
                                                 (unicode(harvester), 
@@ -259,7 +261,9 @@ def get_comment_paging(page):
 
 @dLogger.debug
 def update_user_from_batch(harvester, snhuser, fbuser):
-    if debugging: dLogger.log("update_user_from_batch()")
+    if debugging: 
+        dLogger.log("update_user_from_batch()")
+        #dLogger.log("fbuser: %s"%fbuser)
 
     snhuser.update_from_facebook(fbuser)
     return None
@@ -304,10 +308,20 @@ def update_user_status_from_batch(harvester, snhuser, status):
 def update_user_feed_from_batch(harvester, snhuser, fbfeed_page):
     if debugging: 
         dLogger.log("update_user_feed_from_batch()")
-       #dLogger.log("    fbfeed_page['body']: %s"%fbfeed_page['body'])
+        #dLogger.log("    fbfeed_page['body']: %s"%fbfeed_page['body'])
+        #dLogger.log('fbfeed_page: %s'%fbfeed_page)
+    
 
     next_bman = []
     fbfeed_page = json.loads(fbfeed_page['body'])
+
+    # reduces the size of the batch call in case Facebook is mad at us and retry
+    if 'error' in fbfeed_page and fbfeed_page['error']['code'] == -3:
+        if debugging: dLogger.log("ERROR: %s"%fbfeed_page['error']['message'])
+        d = {"method": "GET", "relative_url": str("%s/feed?limit=100" % (snhuser.fid))}
+        next_bman.append({"snh_obj":snhuser, "retry":0, "request":d, "callback":update_user_feed_from_batch})
+        return next_bman
+
     if 'data' in fbfeed_page:
         feed_count = len(fbfeed_page['data'])
     else:
@@ -365,7 +379,7 @@ def update_user_feed_from_batch(harvester, snhuser, fbfeed_page):
 
         if not too_old and new_page:
             d = {"method": "GET", "relative_url": str("%s/feed?limit=250&%s=%s" % (snhuser.fid, paging[0], paging[1]))}
-            if debugging: dLogger.log("    d: %s"%d)
+            #if debugging: dLogger.log("    d: %s"%d)
             next_bman.append({"snh_obj":snhuser, "retry":0, "request":d, "callback":update_user_feed_from_batch})
     #else:
     #    logger.debug(u"Empty feed!! %s" % (fbfeed_page))
@@ -493,7 +507,7 @@ class ThreadStatus(threading.Thread):
                 user = FBUser.objects.get(fid=fbpost.parent)
                 rez = eval(fbpost.result)
                 snh_status = self.update_user_status(rez,user)
-                #fbpost.delete()
+                fbpost.delete()
                 if debugging: dLogger.log("    %s Posts left in queue"%self.queue.qsize())
                 #signals to queue job is done
             except ObjectDoesNotExist:
@@ -564,7 +578,7 @@ class ThreadComment(threading.Thread):
                     post = FBPost.objects.get(fid=fbcomment.parent)
                     self.update_comment_status(eval(fbcomment.result), post)
 
-                    #fbcomment.delete()
+                    fbcomment.delete()
 
                     if debugging: dLogger.log("    %s Comments left in queue"%self.queue.qsize())
                 else:
@@ -577,7 +591,6 @@ class ThreadComment(threading.Thread):
                 msg = u"ThreadComment %s. Error." % self
                 logger.exception(msg)    
                 if debugging: dLogger.exception(msg)  
-                self._Thread__stop()       
             finally:
                 self.queue.task_done()
         logger.info(u"ThreadComment %s. End." % self)
@@ -586,8 +599,8 @@ class ThreadComment(threading.Thread):
     def update_comment_status(self, comment, post):
         if debugging: 
             dLogger.log("<ThreadComment#%s>::update_comment_status()"%self.ident)
-            dLogger.log("    comment: %s"%comment)
-            dLogger.log("    message: %s"%unicode(comment['message']))
+            #dLogger.log("    comment: %s"%comment)
+            #dLogger.log("    message: %s"%unicode(comment['message']))
 
         fbcomment = None
         try:
@@ -659,7 +672,7 @@ def compute_results(harvester):
         logger.info(u"Starting results computation")
         compute_new_post(harvester) 
         compute_new_comment(harvester)
-        #FBResult.objects.filter(harvester=harvester).delete()
+        FBResult.objects.filter(harvester=harvester).delete()
         logger.info(u"Results computation complete in %ss" % (time.time() - start))
 
 def run_harvester_v3(harvester):
@@ -669,9 +682,9 @@ def run_harvester_v3(harvester):
     harvester.start_new_harvest()
     try:
         #launch result computation in case where the previous harvest was interrupted
-        #compute_results(harvester)
-        #update_user_batch(harvester)
-        #update_user_statuses_batch(harvester)
+        compute_results(harvester)
+        update_user_batch(harvester)
+        update_user_statuses_batch(harvester)
         compute_results(harvester)
     except:
         logger.exception(u"EXCEPTION: %s" % harvester)

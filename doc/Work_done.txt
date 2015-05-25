@@ -127,3 +127,12 @@ Ceci est un journal du travail effectué dans le cadre de la mise à niveau de l
 20 - 21 avril 2015:
 - Débugging de Facebook, fonctionnel, mise au point de détails
 - Fin de journée (6h), (6h)
+
+22 avril 2015:
+- Fix d'un problème avec Unicode dans la DB SQL causant certain comments à être rejetés (caratères non-UTF-8)
+- Remise au point de la compatibilité des méthodes Update_from_facebook() afin de collecter le plus de data possible.
+- fin de journée (6h)
+
+25 avril 2015:
+- Graph API throttle les requests lorsque l'app en fait trop. Ma limite est tombée de 250 à moins de 50 par call.
+- Ajustement automatique de la limite lorsqu'une erreur du genre survient.
