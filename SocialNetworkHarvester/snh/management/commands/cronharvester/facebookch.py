@@ -635,7 +635,7 @@ def compute_new_post(harvester):
     for post in all_posts:
         queue.put(post["fid"])
 
-    for i in range(1):
+    for i in range(3):
         t = ThreadStatus(queue)
         t.setDaemon(True)
         t.start()
@@ -654,7 +654,7 @@ def compute_new_comment(harvester):
     for comment in all_comments:
         commentqueue.put(comment["fid"])
 
-    for i in range(1):
+    for i in range(3):
         t = ThreadComment(commentqueue)
         t.setDaemon(True)
         t.start()

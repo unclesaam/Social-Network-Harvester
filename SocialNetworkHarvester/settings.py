@@ -8,16 +8,16 @@ from DebugLogger import DebugLogger
 PROJECT_PATH = os.path.abspath(os.path.split(__file__)[0])
 LOG_LEVEL = logging.DEBUG
 
-DEBUG = True
+DEBUG = False
 TEMPLATE_DEBUG = DEBUG
 
 dLogger = DebugLogger('debug'+__name__, os.path.join(PROJECT_PATH,"log/debugLogger.log"), '%(message)s')
-DEBUGCONTROL = {'commonmodel':      True,
-                'facebookmodel':    True,
+DEBUGCONTROL = {'commonmodel':      False,
+                'facebookmodel':    False,
                 'dailymotionmodel': False,
                 'twittermodel':     False,
                 'youtubemodel':     False,
-                'facebookch':       True,
+                'facebookch':       False,
                 'twitterch':        False,
                 'dailymotionch':    False,
                 'youtubech':        False
@@ -32,11 +32,11 @@ MANAGERS = ADMINS
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'snh_schema',                
-        'USER': 'snh',                       
-        'PASSWORD': '123123',                
+        'NAME': 'aspira_test',                
+        'USER': 'root',                       
+        'PASSWORD': 'dyson2014',                
         'HOST': '127.0.0.1',                 
-        'PORT': '3307',                          
+        'PORT': '3306',                          
         'OPTIONS': {
             "init_command": "SET foreign_key_checks = 0;",
         }

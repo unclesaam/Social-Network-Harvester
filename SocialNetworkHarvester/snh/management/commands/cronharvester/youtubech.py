@@ -53,7 +53,7 @@ def get_existing_user(param):
 
 @dLogger.debug
 def update_user(harvester, userid):
-    if debugging: dLogger.log("<YTUser: '%s'>::update_user()", userid)
+    if debugging: dLogger.log("<YTUser: '%s'>::update_user()"%userid)
     snh_user = None
 
     try:
@@ -77,7 +77,7 @@ def update_user(harvester, userid):
         snh_user.update_from_youtube(ytuser)
     except gdata.service.RequestError, e:
 
-        if debugging: dLogger.log("    error received: %s", e)
+        if debugging: dLogger.log("    error received: %s"%e)
 
         msg = u"RequestError on user %s. Trying to update anyway" % (userid)
         logger.info(msg)
@@ -115,7 +115,7 @@ def update_users(harvester):
 
 @dLogger.debug
 def update_video(snhuser, ytvideo):
-    if debugging: dLogger.log("<YTVideo: '%s'>::update_video()", ytvideo.title.text)
+    if debugging: dLogger.log("<YTVideo: '%s'>::update_video()"%ytvideo.title.text)
     split_uri = ytvideo.id.text.split("/")
     fid = split_uri[len(split_uri)-1] 
     snhvideo = None
@@ -133,7 +133,7 @@ def update_video(snhuser, ytvideo):
 
 @dLogger.debug
 def update_comment(harvester, snhvideo, ytcomment):
-    if debugging: dLogger.log("<YTComment: '%s'>::update_comment()", snhvideo)
+    if debugging: dLogger.log("<YTComment: '%s'>::update_comment()"%snhvideo)
     author = ytcomment.author[0]
     author_fid = author.uri.text.split('/')[-1]
     snhuser = update_user(harvester, author_fid)
@@ -157,7 +157,7 @@ def update_comment(harvester, snhvideo, ytcomment):
 
 @dLogger.debug
 def update_all_comment_helper(harvester, snhvideo, comment_list):
-    if debugging: dLogger.log("<YTVideo: '%s'>::update_all_comment_helper()", snhvideo)
+    if debugging: dLogger.log("<YTVideo: '%s'>::update_all_comment_helper()"%snhvideo)
     for comment in comment_list.entry:
         #if debugging: dLogger.log('    comment to update: <"%s">'%str(comment.author))
         update_comment(harvester, snhvideo, comment)
@@ -167,7 +167,7 @@ def update_all_comment_helper(harvester, snhvideo, comment_list):
 
 @dLogger.debug
 def update_all_comment(harvester,snhvideo):
-    if debugging: dLogger.log("<YTVideo: '%s'>::update_all_comment()", snhvideo)
+    if debugging: dLogger.log("<YTVideo: '%s'>::update_all_comment()"%snhvideo)
     try:
         comment_list = harvester.api_call("GetYouTubeVideoCommentFeed",{"video_id":snhvideo.fid})
         get_next_comment_uri = update_all_comment_helper(harvester, snhvideo, comment_list)
