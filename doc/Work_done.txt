@@ -80,7 +80,7 @@ Ceci est un journal du travail effectué dans le cadre de la mise à niveau de l
 	- Patching des erreurs occasionnelles (unicode errors, etc.)
 - fins de journées (5h) (5h) (5h)
 
-1 mai 2015:
+1 avril 2015:
 - Rencontre avec Pier-Yves a propos de son bébé:
 - Questions a poser:
 	- Comment utiliser FanDjango?
@@ -95,58 +95,44 @@ Ceci est un journal du travail effectué dans le cadre de la mise à niveau de l
 	- Connection au VPN du FSS requise pour accéder au SNH
 - Listage des tâches a effectuer dans le cadre du stage
 
-4 mai 2015:
+4 avril 2015:
 - Installation de mon moniteur au bureau du GRCP
 - Tentative d'obtention d'un token Facebook a partir d'un serveur de developpement
 - debuggage et compréhension de Fandjango
 - Fin de journée (5h)
 
-5 mai 2015:
+5 avril 2015:
 - Setup de django en mode SSL afin de pouvoir communiquer avec Facebook en https (difficultés rencontrées)
 - Essai de fowarder les connections entrantes en utilisant stunel, sans succès.
 - Essaie d'installer des modules django qui le font a ma place: Tous sont en python3... Je pense en customiser un pour mes besoins en python27
 - Fin de journée (5h)
 
-6, 7, 8 mai 2015:
+6, 7, 8 avril 2015:
 - Implémentation du système de connection d'utilisateur Facebook (app, token, etc.)
 - Changement du protocole d'appels au API par le harvester (retrait de fandjango)
 - Essais et tests, implémentation manuelle des appels "batch"
 - fins de journées (5h) (3h) (5h)
 
-18 mai 2015:
+18 avril 2015:
 - Rédaction de demande d'accès d'autorisations étendues pour l'app Facebook
 - Amélioration de ma structure de debuggage
 - Debuggage partiel de Facebook
 - Fin de journée (6h)
 
-19 mai 2015:
+19 avril 2015:
 - Setup de la connection Web-VPN avec AnyConnect
 - Débugging de Facebook, still...
 - Fin de journée (5h)
 
-20 - 21 mai 2015:
+20 - 21 avril 2015:
 - Débugging de Facebook, fonctionnel, mise au point de détails
 - Fin de journée (6h), (6h)
 
-22 mai 2015:
+22 avril 2015:
 - Fix d'un problème avec Unicode dans la DB SQL causant certain comments à être rejetés (caratères non-UTF-8)
 - Remise au point de la compatibilité des méthodes Update_from_facebook() afin de collecter le plus de data possible.
 - fin de journée (6h)
 
-25 mai 2015:
+25 avril 2015:
 - Graph API throttle les requests lorsque l'app en fait trop. Ma limite est tombée de 250 à moins de 50 par call.
 - Ajustement automatique de la limite lorsqu'une erreur du genre survient.
-- Acces au serveur-test du SNH. Tentative de setup de la base de donné MySQL, afins d'y avoir acces à distance, faire des backups, etc.
-- fin de journée (7h)
-
-26 mai 2015:
-- Connection à distance à la base de données du serveur-test. 
-- Setup adéquat de Apache sur le serveur-test et debuggage du serveur
-- Serveur-test en ligne!
-- fin de journée (8h)
-
-28 mai 2015:
-- Setup des harvesters sur le serveur-test (Youtube, Facebook et Twiter) et tests
-- Mise en place des cron-jobs
-- tests
-- fin de journée (6h)
