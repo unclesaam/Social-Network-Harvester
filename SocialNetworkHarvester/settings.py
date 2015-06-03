@@ -8,7 +8,7 @@ from DebugLogger import DebugLogger
 PROJECT_PATH = os.path.abspath(os.path.split(__file__)[0])
 LOG_LEVEL = logging.DEBUG
 
-DEBUG = False
+DEBUG = True
 TEMPLATE_DEBUG = DEBUG
 
 dLogger = DebugLogger('debug'+__name__, os.path.join(PROJECT_PATH,"log/debugLogger.log"), '%(message)s')

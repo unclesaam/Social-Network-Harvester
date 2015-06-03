@@ -54,7 +54,8 @@ class TWUserAdmin(admin.ModelAdmin):
                             'favourites_count', 
                             'followers_count', 
                             'friends_count', 
-                            'statuses_count'
+                            'statuses_count',
+                            'harvester'
                         )
     fieldsets = (   (None, {
                         'fields': (
@@ -64,6 +65,7 @@ class TWUserAdmin(admin.ModelAdmin):
                     }),
                     ('Détails', {
                         'fields': (
+                            'harvester',
                             'lang',
                             'model_update_date',
                             'description',
@@ -72,6 +74,7 @@ class TWUserAdmin(admin.ModelAdmin):
                             'followers_count', 
                             'friends_count', 
                             'statuses_count'
+
                         )
                     }),
                 )

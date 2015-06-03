@@ -21,6 +21,8 @@ from datetime import datetime
 
 import snhlogger
 logger = snhlogger.init_logger(__name__, "view.log")
+import time
+import types
 
 
 #
@@ -51,7 +53,6 @@ def tw_user_detail(request, harvester_id, screen_name):
 
     status_list = [status.digest_source() for status in user.postedStatuses.all()]
     mention_list = [status.digest_source() for status in user.mentionedInStatuses.all()]
-
     return  render_to_response(u'snh/twitter_detail.html',{
                                                     u'tw_selected':True,
                                                     u'all_harvesters':twitter_harvesters,
@@ -83,6 +84,7 @@ def tw_status_detail(request, harvester_id, status_id):
                                                             u'all_harvesters':twitter_harvesters,
                                                             u'harvester_id':harvester_id,
                                                             u'twuser': status.user, 
+                                                            u'user_url':user.url or '',
                                                             u'status':status, 
                                                             u'mentions':status.user_mentions.all(),
                                                             u'urls':status.text_urls.all(),
@@ -197,30 +199,38 @@ def get_tw_searchdetail_list(request, call_type, search_id):
 
 @login_required(login_url=u'/login/')
 def get_status_chart(request, harvester_id, screen_name):
+    try:
+        user = get_list_or_404(TWUser, screen_name=screen_name)[0]
+        count = TWStatus.objects.filter(user=user).count()
 
-    user = get_list_or_404(TWUser, screen_name=screen_name)[0]
-    count = TWStatus.objects.filter(user=user).count()
+        fromto = TWStatus.objects.filter(user=user).order_by(u"created_at")
+        base = fromto[0].created_at if count != 0 else dt.datetime.now()
+        order = 1
+        while fromto[0].created_at == None and order < len(fromto):
+            base = fromto[order].created_at
+            order += 1
+        to = fromto[count-1].created_at if count != 0 else dt.datetime.now()
 
-    fromto = TWStatus.objects.filter(user=user).order_by(u"created_at")
-    base = fromto[0].created_at if count != 0 else dt.datetime.now()
-    to = fromto[count-1].created_at if count != 0 else dt.datetime.now()
+        logger.debug("to: %s"%to)
+        logger.debug("base: %s"%base)
+        days = (to - base).days + 1
+        dateList = [ base + dt.timedelta(days=x) for x in range(0,days) ]
+        description = {"date_val": ("date", "Date"),
+                       "status_count": ("number", "Status count"),
+                      }
+        data = []
+        for date in dateList:
+            c = TWStatus.objects.filter(user=user).filter(created_at__year=date.year,created_at__month=date.month,created_at__day=date.day).count()
+            data.append({"date_val":date, "status_count":c})
 
-    days = (to - base).days + 1
-    dateList = [ base + dt.timedelta(days=x) for x in range(0,days) ]
-    description = {"date_val": ("date", "Date"),
-                   "status_count": ("number", "Status count"),
-                  }
-    data = []
-    for date in dateList:
-        c = TWStatus.objects.filter(user=user).filter(created_at__year=date.year,created_at__month=date.month,created_at__day=date.day).count()
-        data.append({"date_val":date, "status_count":c})
+        data_table = gviz_api.DataTable(description)
+        data_table.LoadData(data)
+        logger.debug(data_table.ToJSon())
 
-    data_table = gviz_api.DataTable(description)
-    data_table.LoadData(data)
-    logger.debug(data_table.ToJSon())
-
-    response =  HttpResponse(data_table.ToJSon(), mimetype='application/javascript')
-    return response
+        response =  HttpResponse(data_table.ToJSon(), mimetype='application/javascript')
+        return response
+    except:
+        logger.exception('AN ERROR HAS OCCURED WHILE RENDERING A STATUS CHART')
 
 @login_required(login_url=u'/login/')
 def get_at_chart(request, harvester_id, screen_name):

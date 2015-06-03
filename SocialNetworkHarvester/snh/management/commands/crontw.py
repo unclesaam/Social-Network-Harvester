@@ -9,6 +9,7 @@ from cronharvester import twitterch
 
 import snhlogger
 logger = snhlogger.init_logger(__name__, "twitter.log")
+from settings import dLogger
 
 class Command(BaseCommand):
     help = 'Search the Twitter\'s API for new content'
@@ -24,6 +25,7 @@ class Command(BaseCommand):
             print "Global failure. exception logged in 'twitter.log'"
             msg = u"Highest exception for the twitter cron. Not good."
             logger.exception(msg)
+            dLogger.exception('TOP LEVEL ERROR:')
 
         logger.info("The harvest has end for the Twitter harvesters."+"     "*200)
 

@@ -7,10 +7,7 @@ class DebugLogger():
     indent_level = -indentation
 
     def __init__(self, loggerName, filePath, format):
-        if filePath == 'default':
-            filePath = "C:\Users\Sam\Documents\ASPIRA\Social-Network-Harvester\SocialNetworkHarvester\log\debugLogger.log"
-
-#	open(filePath, 'w').close()
+    	open(filePath, 'w').close()
         self.logger = logging.getLogger(loggerName)
         self.logger.setLevel(logging.DEBUG)
         fh = logging.FileHandler(filePath, mode="a+")

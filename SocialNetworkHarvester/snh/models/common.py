@@ -72,7 +72,6 @@ class AbstractHaverster(models.Model):
 
     def get_stats(self):
         if debugging: 
-            dLogger.log("--- END OF PROCEDURE ---")
             dLogger.log('<Harvester: \'%s\'>::get_stats()'%self)
             #dLogger.log('    harvester_type: %s'%self.harvester_type)
             #dLogger.log('    harvester_name: %s'%self.harvester_name)
@@ -107,7 +106,7 @@ class URL(models.Model):
         app_label = "snh"
 
     def __unicode__(self):
-        return self.original_url
+        return self.original_url or 'None'
 
     pmk_id =  models.AutoField(primary_key=True)
     original_url = models.TextField(null=True)

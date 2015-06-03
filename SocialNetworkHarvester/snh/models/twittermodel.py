@@ -14,8 +14,8 @@ import snhlogger
 import re
 
 
-from settings import DEBUGCONTROL
-debugging = DEBUGCONTROL['twittermodel'], dLogger
+from settings import DEBUGCONTROL, dLogger
+debugging = DEBUGCONTROL['twittermodel']
 if DEBUGCONTROL['twittermodel']: print "DEBBUGING ENABLED IN %s"%__name__
 
 def gie(d, k):
@@ -33,7 +33,12 @@ class TwitterHarvester(AbstractHaverster):
     access_token_key = models.CharField(max_length=255,null=True)
     access_token_secret = models.CharField(max_length=255,null=True)
 
-    remaining_hits = models.IntegerField(null=True)
+    #remaining_hits = models.IntegerField(null=True)
+
+    remaining_search_hits = models.IntegerField(null=True)
+    remaining_user_timeline_hits = models.IntegerField(null=True)
+    remaining_user_lookup_hits = models.IntegerField(null=True)
+
     reset_time_in_seconds = models.IntegerField(null=True)
     hourly_limit = models.IntegerField(null=True)
     reset_time = models.DateTimeField(null=True)
@@ -41,14 +46,19 @@ class TwitterHarvester(AbstractHaverster):
     twusers_to_harvest = models.ManyToManyField('TWUser', related_name='twusers_to_harvest')
     twsearch_to_harvest = models.ManyToManyField('TWSearch', related_name='twitterharvester.twsearch_to_harvest')
 
+    #harvested user: Retrieving all statuses posted from user, plus it's infos
     last_harvested_user = models.ForeignKey('TWUser',  related_name='last_harvested_user', null=True)
     current_harvested_user = models.ForeignKey('TWUser', related_name='current_harvested_user',  null=True)
+    #updated user: Only update a user's infos
+    last_updated_user = models.ForeignKey('TWUser', related_name='is_last_updated_user', null=True)
+    current_updated_user = models.ForeignKey('TWUser', related_name='is_current_updated_user', null=True)
 
     haverst_deque = None
+    update_deque = None
 
     @dLogger.debug
     def get_client(self):
-        if debugging: dLogger.log( "<TWHarvester>%s::get_client()"%self.harvester_name)
+        #if debugging: dLogger.log("get_client()")
 
         if not self.client:
             self.client = pytw.Api(consumer_key=self.consumer_key,
@@ -60,32 +70,42 @@ class TwitterHarvester(AbstractHaverster):
 
     @dLogger.debug
     def get_tt_client(self):
-        if debugging: dLogger.log( "<TWHarvester>%s::get_tt_client()"%self.harvester_name)
+        if debugging: dLogger.log("get_tt_client()")
 
         if not self.tt_client:
             self.tt_client = Twython(self.consumer_key,self.consumer_secret,self.access_token_key,self.access_token_secret)
 
         return self.tt_client
 
-    """
-    update the remaining searches the instance is allowed to do before annoying Twitter
-    """
     @dLogger.debug
     def update_client_stats(self):
-        if debugging: dLogger.log( "<TWHarvester>%s::update_client_stats()"%self.harvester_name)
+        """updates the remaining api calls the instance is allowed to do before annoying Twitter
+        """
+
+        if debugging: dLogger.log("update_client_stats()")
 
         c = self.get_client()
-        rate = c.GetRateLimitStatus("search")["resources"]["search"]["/search/tweets"]
 
-        self.remaining_hits = rate["remaining"]
-        self.reset_time_in_seconds = rate["reset"]
-        self.hourly_limit = rate["limit"] 
-        self.reset_time = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(rate["reset"]))
+        rates = c.GetRateLimitStatus("search,statuses,users")["resources"]
+        searchRates = rates["search"]["/search/tweets"]
+        userLookupRates = rates["users"]["/users/lookup"]
+        statusTimelineRates = rates["statuses"]["/statuses/user_timeline"]
+
+        self.remaining_search_hits = searchRates["remaining"]
+        self.remaining_user_timeline_hits = statusTimelineRates["remaining"]
+        self.remaining_user_lookup_hits = userLookupRates["remaining"]
+
+        self.reset_time_in_seconds = max(searchRates["reset"],
+                                        userLookupRates["reset"],
+                                        statusTimelineRates["reset"],
+                                        )
+        self.hourly_limit = searchRates["limit"] # Since all three limits are the same
+        self.reset_time = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(self.reset_time_in_seconds))
         self.save()
 
     @dLogger.debug
     def end_current_harvest(self):
-        if debugging: dLogger.log( "<TWHarvester>%s::end_current_harvest()"%self.harvester_name)
+        if debugging: dLogger.log("end_current_harvest()")
         self.update_client_stats()
         if self.current_harvested_user:
             self.last_harvested_user = self.current_harvested_user
@@ -93,11 +113,16 @@ class TwitterHarvester(AbstractHaverster):
 
     @dLogger.debug
     def api_call(self, method, params):
-        if debugging: dLogger.log( "<TWHarvester>%s::api_call(method: %s, params: %s"%(self.harvester_name, method, params))
+        if debugging: 
+            dLogger.log( "api_call()")
+            dLogger.log( "    method: %s"%method)
+            dLogger.log( "    params: %s"%params)
         super(TwitterHarvester, self).api_call(method, params)
         c = self.get_client()   
         metp = getattr(c, method)
-        return metp(**params)
+        response = metp(**params)
+        #if debugging: dLogger.log('    response: %s'%response)
+        return response
 
     def get_last_harvested_user(self):
         return self.last_harvested_user
@@ -107,7 +132,9 @@ class TwitterHarvester(AbstractHaverster):
 
     @dLogger.debug
     def get_next_user_to_harvest(self):
-        if debugging: dLogger.log( "<TWHarvester>%s::get_next_user_to_harvest()"%self.harvester_name)
+        if debugging: 
+            dLogger.log( "get_next_user_to_harvest()")
+            #dLogger.log( "    current_harvested_user: %s"%self.current_harvested_user)
 
         if self.current_harvested_user:
             self.last_harvested_user = self.current_harvested_user
@@ -120,33 +147,75 @@ class TwitterHarvester(AbstractHaverster):
         except IndexError:
             self.current_harvested_user = None
 
-        self.update_client_stats()
+        #self.update_client_stats()
         return self.current_harvested_user
 
     @dLogger.debug
     def build_harvester_sequence(self):
-        if debugging: dLogger.log( "<TWHarvester>%s::build_harvester_sequence()"%self.harvester_name)
+        if debugging: dLogger.log( "build_harvester_sequence()")
         self.haverst_deque = deque()
-        all_users = self.twusers_to_harvest.all()
+        all_users = list(self.twusers_to_harvest.all())
 
         if self.last_harvested_user:
-            count = 0
-            for user in all_users:
-                if user == self.last_harvested_user:
-                    break
-                count = count + 1
+            startIndex = all_users.index(self.last_harvested_user)
             retry_last_on_fail = 1 if self.retry_user_after_abortion and self.last_user_harvest_was_aborted else 0
-            self.haverst_deque.extend(all_users[count+retry_last_on_fail:])
-            self.haverst_deque.extend(all_users[:count+retry_last_on_fail])
+            self.haverst_deque.extend(all_users[startIndex+retry_last_on_fail:])
+            self.haverst_deque.extend(all_users[:startIndex+retry_last_on_fail])
         else:
             self.haverst_deque.extend(all_users)
 
     @dLogger.debug
+    def get_next_user_batch_to_update(self):
+        ''' Create a deque of lists, each containing <step_size> TWUsers.
+        '''
+        if debugging: 
+            dLogger.log( "get_next_user_batch_to_update()")
+
+        if self.current_updated_user:
+            self.last_updated_user = self.current_updated_user
+
+        if self.update_deque is None:
+            all_users = self.build_updater_sequence()
+            step_size = 100
+            batch_list = [all_users[i:i+step_size] for i in range(0, len(all_users), step_size)]
+            self.update_deque = deque(batch_list)
+
+        try:
+            user_batch = self.update_deque.pop()
+        except IndexError:
+            user_batch = None
+
+        return user_batch
+
+    @dLogger.debug
+    def build_updater_sequence(self):
+        ''' Create a list of all the TWUsers created by the harvester
+            If there was an unfinished update before, the last updated user 
+            will be the first in the list. The other ones following him/her.
+        '''
+        if debugging: dLogger.log( "build_updater_sequence()")
+        all_users = self.created_users.all()
+        ordered_users = []
+        if self.last_updated_user:
+            startIndex = all_users.index(self.last_updated_user)
+            ordered_users = ordered_users.join(all_users[startIndex:])
+            ordered_users = ordered_users.join(all_users[:startIndex-1])
+        else:
+            ordered_users = all_users
+        #if debugging: dLogger.log( "    ordered_users: %s"%ordered_users)
+        return ordered_users
+
+    @dLogger.debug
     def get_stats(self):
-        if debugging: dLogger.log( "<TWHarvester>%s::get_stats()"%self.harvester_name)
+        if debugging: 
+            dLogger.log( "get_stats()")
+            dLogger.log( "    remaining_hits (search)(timeline)(user): (%s)(%s)(%s)"%(self.remaining_search_hits, self.remaining_user_timeline_hits, self.remaining_user_lookup_hits))
+            dLogger.log( "    reset_time: %s"%self.reset_time)
+            dLogger.log( "    last_harvested_user: %s"%self.last_harvested_user)
+            dLogger.log( "    current_harvested_user: %s"%self.last_harvested_user)
         parent_stats = super(TwitterHarvester, self).get_stats()
         parent_stats["concrete"] = {
-                                    "remaining_hits":self.remaining_hits,
+                                    "remaining_hits (search)(timeline)(user)":(self.remaining_search_hits, self.remaining_user_timeline_hits, self.remaining_user_lookup_hits),
                                     "reset_time_in_seconds":self.reset_time_in_seconds,
                                     "hourly_limit":self.hourly_limit,
                                     "reset_time":self.reset_time,
@@ -179,7 +248,7 @@ class TWUser(models.Model):
         app_label = "snh"
 
     def __unicode__(self):
-        return self.screen_name.encode('ascii', 'ignore')
+        return self.screen_name.encode('utf-8')
 
     def related_label(self):
         return u"%s (%s)" % (self.screen_name, self.pmk_id)
@@ -192,12 +261,13 @@ class TWUser(models.Model):
     lang = models.CharField(max_length=255, null=True)
     description = models.TextField(null=True)
     url = models.ForeignKey('URL', related_name="twuser.url", null=True)
+    harvester = models.ForeignKey('TwitterHarvester', related_name='created_users', null=True)
 
     location = models.TextField(null=True)
     time_zone = models.TextField(null=True)
     utc_offset = models.IntegerField(null=True)
 
-    protected = models.BooleanField()
+    protected = models.BooleanField(default=False)
 
     favourites_count = models.IntegerField(null=True)
     followers_count = models.IntegerField(null=True)
@@ -224,7 +294,9 @@ class TWUser(models.Model):
 
     @dLogger.debug
     def update_from_rawtwitter(self, twitter_model, twython=False):
-        if debugging: dLogger.log( "<TWUser>%s::update_from_rawtwitter(twitter_model: %s)"%(self.screen_name, type(twitter_model)))
+        if debugging: 
+            dLogger.log("%s::update_from_rawtwitter()"%self)
+
 
         model_changed = False
         props_to_check = {
@@ -250,7 +322,7 @@ class TWUser(models.Model):
                             }
 
         date_to_check = ["created_at"]
-
+        if 'protected' not in twitter_model: twitter_model['protected'] = False
         for prop in props_to_check:
             prop_name = props_to_check[prop]
             if prop_name in twitter_model:
@@ -305,7 +377,9 @@ class TWUser(models.Model):
 
     @dLogger.debug
     def update_from_twitter(self, twitter_model):
-        if debugging: dLogger.log( "<TWUser>%s::update_from_twitter(twitter_model: %s)"%(self.screen_name, type(twitter_model)))
+        if debugging: 
+            dLogger.log("<TWUser %s>::update_from_twitter()"%self)
+            #dLogger.log("    twitter_model: %s"%twitter_model)
 
         model_changed = False
         props_to_check = {
@@ -339,15 +413,21 @@ class TWUser(models.Model):
                 if self.__dict__[prop] != tw_val:
                     self.__dict__[prop] = tw_val
                     model_changed = True
+                    if debugging: dLogger.log('    %s has changed: %s'%(prop, self.__dict__[prop]))
+        
+        for elem in ('protected', 'profile_background_tile'):
+            if getattr(self, elem) == None:
+                setattr(self, elem, False)
 
         for prop in date_to_check:
             prop_name = "_"+prop
             if prop_name in twitter_model.__dict__:
                 tw_prop_val = twitter_model.__dict__[prop_name]
-                date_val = datetime.strptime(tw_prop_val,'%a %b %d %H:%M:%S +0000 %Y')
-                if self.__dict__[prop] != date_val:
-                    self.__dict__[prop] = date_val
-                    model_changed = True
+                if tw_prop_val: 
+                    date_val = datetime.strptime(tw_prop_val,'%a %b %d %H:%M:%S +0000 %Y')
+                    if self.__dict__[prop] != date_val:
+                        self.__dict__[prop] = date_val
+                        model_changed = True
 
 
         if "_url" in twitter_model.__dict__:
@@ -372,10 +452,11 @@ class TWUser(models.Model):
             self.model_update_date = datetime.utcnow()
             self.error_on_update = False
             self.save()
+            if debugging: dLogger.log("    Model has changed. Saved")
 
     @dLogger.debug
     def get_latest_status(self):
-        if debugging: print "%s::get_latest_status"%(self.screen_name)
+        if debugging: dLogger.log("get_latest_status()")
 
         latest_status = None
         statuses = TWStatus.objects.filter(user=self).order_by("created_at")
@@ -439,7 +520,8 @@ class TWStatus(models.Model):
 
     @dLogger.debug
     def get_existing_user(self, param):
-        if debugging: dLogger.log( "<TWStatus>'%s'::get_existing_user(param: %s)"%(self, param))
+        #if debugging: dLogger.log("get_existing_user()")
+            #dLogger.log("    param: %s"%param)
 
         user = None
         try:
@@ -448,11 +530,12 @@ class TWStatus(models.Model):
             user = TWUser.objects.filter(**param)[0]
         except ObjectDoesNotExist:
             pass
+        #if debugging: dLogger.log("    user found: %s"%user)
         return user
 
     @dLogger.debug
     def update_from_rawtwitter(self, twitter_model, user, twython=False):
-        if debugging: dLogger.log( "<TWStatus>'%s'::update_from_rawtwitter(twitter_model: %s, user: %s)"%(self, type(twitter_model), user))
+        if debugging: dLogger.log("%s::update_from_rawtwitter()"%self)
 
         model_changed = False
         props_to_check = {
@@ -537,21 +620,26 @@ class TWStatus(models.Model):
                     usermention = None
                     try:
                         usermention = self.get_existing_user({"fid__exact":tw_mention.id})
+                        #if debugging: dLogger.log("    usermention: %s"%usermention)
                         if not usermention:
                             usermention = self.get_existing_user({"screen_name__exact":tw_mention.screen_name})
                         if not usermention:
                             usermention = TWUser(
                                             fid=tw_mention.id,
                                             screen_name=tw_mention.screen_name,
+                                            harvester=user.harvester
                                          )
                         usermention.update_from_rawtwitter(tw_mention,twython)
                         usermention.save()
+                        if debugging: dLogger.log("    user created from user mention: %s"%usermention)
                     except:
+                        if debugging: dLogger.exception("Exception occured while saving user:")
                         pass
 
                     if usermention is None:
                         usermention = TWUser(
                                         fid=tw_mention.id,
+                                        harvester=user.harvester
                                      )
                         usermention.update_from_rawtwitter(tw_mention, twython)
                         usermention.save()
@@ -574,7 +662,9 @@ class TWStatus(models.Model):
 
     @dLogger.debug
     def update_from_twitter(self, twitter_model, user):
-        if debugging: dLogger.log( "<TWStatus>'%s'::update_from_twitter(twitter_model: %s, user: %s)"%(self, type(twitter_model), user))
+        #if debugging: 
+            #dLogger.log("update_from_twitter()")
+            #dLogger.log("    twitter_model: %s"%twitter_model)
         
         model_changed = False
         props_to_check = {
@@ -590,7 +680,6 @@ class TWStatus(models.Model):
         date_to_check = ["created_at"]
 
         self.user = user
-
         for prop in props_to_check:
             prop_name = "_"+props_to_check[prop]
             if prop_name in twitter_model.__dict__:
@@ -598,6 +687,7 @@ class TWStatus(models.Model):
                 if self.__dict__[prop] != tw_prop_val:
                     self.__dict__[prop] = tw_prop_val
                     model_changed = True
+                    if debugging: dLogger.log('    %s has changed: %s'%(prop, self.__dict__[prop]))
 
         for prop in date_to_check:
             prop_name = "_"+prop
@@ -655,14 +745,20 @@ class TWStatus(models.Model):
                 try:
 
                     usermention = self.get_existing_user({"fid__exact":tw_mention.id})
+                    #if debugging: dLogger.log("    usermention: %s"%usermention)
                     if not usermention:
                         usermention = self.get_existing_user({"screen_name__exact":tw_mention.screen_name})
                     if not usermention:
                         usermention = TWUser(
-                                        fid=tw_mention.screen_name.id,
+                                        fid=tw_mention.id,
                                         screen_name=tw_mention.screen_name,
+                                        harvester=user.harvester
                                      )
+                        usermention.update_from_twitter(tw_mention)
+                        usermention.save()
+                        if debugging: dLogger.log("    user created from user mention: %s"%usermention)
                 except:
+                    if debugging: dLogger.exception("AN EXCEPTION OCCURED WHILE CREATING NEW USER:")
                     pass
 
                 if usermention and usermention not in self.user_mentions.all():
@@ -670,10 +766,14 @@ class TWStatus(models.Model):
                     model_changed = True
 
         if model_changed:
-            text = re.sub(r'(\\\\x..)', '', self.text) #removing emojis from texts
-            self.text = self.text.encode('ascii', 'ignore')
             self.model_update_date = datetime.utcnow()
             self.error_on_update = False
-            self.save()
+            try: 
+                self.save()
+            except:
+                self.text = self.text.encode('unicode-escape')
+                self.save()
+            if debugging: dLogger.log("    Status %s has changed. Updated"%self)
+
 
 

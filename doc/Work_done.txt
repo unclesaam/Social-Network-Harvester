@@ -150,3 +150,17 @@ Ceci est un journal du travail effectué dans le cadre de la mise à niveau de l
 - Mise en place des cron-jobs
 - tests
 - fin de journée (6h)
+
+30 mai 2015:
+- Fix de la procédure de paging de Twitter
+- Tests
+- fin de journée (6h)
+
+1 juin 2015:
+- Optimisation du code twitter, afin d'utiliser toute les ressources disponibles pour chaque app et accélérer la collecte
+- fin de journée (6h)
+
+2 juin 2015:
+- Optimisation de l'utilisation des ressources Twitter
+- Code d'un algo permettant de collecter les infos de tout les utilisateurs (pas juste ceux harvestés)
+- fin de journée (6h)
