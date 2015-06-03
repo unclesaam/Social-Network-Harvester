@@ -86,8 +86,7 @@ def manage_exception(retry_count, harvester, user):
 
 @dLogger.debug
 def manage_twitter_exception(retry_count, harvester, user, tex):
-    if debugging: dLogger.log( "manage_twitter_exception(retry_count: %s, harvester: %s, user: %s, tex: %s)"%(retry_count, 
-                                                                harvester, user.screen_name, type(tex)))
+    if debugging: dLogger.log( "manage_twitter_exception()")
 
     retry_count += 1
     need_a_break = retry_count > harvester.max_retry_on_fail
@@ -369,6 +368,7 @@ def update_user_batch(harvester, user_batch):
         for twModel in twModels:
             #dLogger.log('    twModel: %s'%twModel)
             userObjects[twModel.screen_name].update_from_twitter(twModel)
+            logger.info(u"Updating %s" % (userObjects[twModel.screen_name]))
     except:
         if debugging: dLogger.exception( "ERROR WHILE UPDATING USER BATCH:")
 
@@ -430,14 +430,14 @@ def run_users_update(harvester):
     if debugging: dLogger.log ("run_users_update(harvester: %s)"%(harvester))
     harvester.start_new_harvest()
     harvester.update_client_stats()
-    logger.info(u"START REST user update: %s Stats:%s" % (harvester,unicode(harvester.get_stats())))
-
-        while harvester.remaining_user_lookup_hits > 0:
-            user_batch = harvester.get_next_user_batch_to_update()
-            if user_batch:
-                update_user_batch(harvester, user_batch)
-            else:
-                break
+    logger.info(u"START user update: %s Stats:%s" % (harvester,unicode(harvester.get_stats())))
+    while harvester.remaining_user_lookup_hits > 0:
+        logger.info(u"New user batch to update. User lookup hits to go: %s" %(harvester.remaining_user_lookup_hits))
+        user_batch = harvester.get_next_user_batch_to_update()
+        if user_batch:
+            update_user_batch(harvester, user_batch)
+        else:
+            break
     logger.info(u"End user update for %s Stats:%s" % (harvester,unicode(harvester.get_stats())))
 
 
