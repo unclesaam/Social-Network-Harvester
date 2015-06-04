@@ -2,3 +2,6 @@ SocialNetworkHarvester/py27env.bat
 *.log
 SocialNetworkHarvester/settings.py
 SocialNetworkHarvester/settings.pyc
+*.log
+*.log
+SocialNetworkHarvester/log/twitter.log

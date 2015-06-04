@@ -164,3 +164,9 @@ Ceci est un journal du travail effectué dans le cadre de la mise à niveau de l
 - Optimisation de l'utilisation des ressources Twitter
 - Code d'un algo permettant de collecter les infos de tout les utilisateurs (pas juste ceux harvestés)
 - fin de journée (6h)
+
+3 juin 2015:
+- Update du server-test, mise en place d'un cronjob a chaque 30 min pour twitter.
+- Entré de la liste des utilisateurs (membres des parlements Européens, 572 utilisateurs)
+- Fonctionnement toute la nuit, évaluation des résultats demain.
+- fin de journée (7h)

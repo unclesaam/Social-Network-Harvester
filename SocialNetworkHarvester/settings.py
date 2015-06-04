@@ -34,7 +34,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'aspira_test',                
         'USER': 'root',                       
-        'PASSWORD': 'dyson2014',                
+        'PASSWORD': '1234',                
         'HOST': '127.0.0.1',                 
         'PORT': '3306',                          
         'OPTIONS': {

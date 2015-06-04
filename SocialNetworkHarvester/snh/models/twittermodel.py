@@ -195,6 +195,7 @@ class TwitterHarvester(AbstractHaverster):
         '''
         if debugging: dLogger.log( "build_updater_sequence()")
         all_users = self.created_users.all()
+        all_users.join(self.twusers_to_harvest.all())
         ordered_users = []
         if self.last_updated_user:
             startIndex = all_users.index(self.last_updated_user)
