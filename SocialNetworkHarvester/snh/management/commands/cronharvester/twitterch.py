@@ -13,9 +13,9 @@ import snhlogger
 import os
 
 
-from settings import DEBUGCONTROL
-debugging = DEBUGCONTROL['twitterch'], dLogger
-if DEBUGCONTROL['twitterch']: print "DEBBUGING ENABLED IN %s"%__name__
+from settings import DEBUGCONTROL, dLogger
+debugging = DEBUGCONTROL['twitterch']
+if debugging: print "DEBBUGING ENABLED IN %s"%__name__
 
 logger = snhlogger.init_logger(__name__, "twitter.log")
 
@@ -47,6 +47,7 @@ def run_twitter_harvester():
             else:
                 run_users_update(harvester)
             harvester.end_current_harvest()
+
 
 
 @dLogger.debug
@@ -256,7 +257,7 @@ def call_search(harvester, term, since_id=None):
             if data != []:
                 status_list = data
                 has_more = True
-                dLogger.log('    it has more!')
+                #dLogger.log('    it has more!')
 
         except twitter.TwitterError, tex:
             (retry, need_a_break) = manage_twitter_exception(retry, harvester, term, tex)
