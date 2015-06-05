@@ -170,3 +170,16 @@ Ceci est un journal du travail effectué dans le cadre de la mise à niveau de l
 - Entré de la liste des utilisateurs (membres des parlements Européens, 572 utilisateurs)
 - Fonctionnement toute la nuit, évaluation des résultats demain.
 - fin de journée (7h)
+
+4 juin 2015:
+- Évaluation de la performance du scrapper de Twitter a grande échelle
+- Réglage de petits bugs
+- Sauvegarde de la base de donnée
+- Augmentation du temps entre chaque cronjob (a chaque 30 min est trop intense pour le serveur-test) Évalué plutot a chaque 2 heures.
+- fin de journée (5h)
+
+5 juin 2015:
+- Évaluation de la performance de Facebook sur le serveur-test
+- Prise en charge de petits bugs aléatoires
+- Commencement d'un diagramme UML des DB models, afin d'avoir une présentation croncrete des changements a apporter en cours d'été (style avant/apres de la DB)
+- fin de journée (6h)

@@ -114,7 +114,12 @@ class FBUser(models.Model):
         app_label = "snh"
 
     def __unicode__(self):
-        return unicode(self.username if self.username else self.name)
+        if self.username:
+            return unicode(self.username)
+        elif self.name:
+            return unicode(self.name)
+        else:
+            return unicode(self.fid)
 
     def related_label(self):
         return u"%s (%s)" % (self.username if self.username else self.name, self.pmk_id)
@@ -244,7 +249,7 @@ class FBUser(models.Model):
                 self.__dict__[prop] = fb_user[props_to_check[prop]]
                 #print "prop changed. %s = %s" % (prop, self.__dict__[prop])
                 model_changed = True
-                if debugging: dLogger.log("    %s has been updated"%prop)
+                if debugging: dLogger.log("    %s has been updated: %s"%(prop, self.__dict__[prop][:15]))
 
         for prop in date_to_check:
             if date_to_check[prop] in fb_user and self.__dict__[prop] != fb_user[date_to_check[prop]]:
@@ -402,8 +407,8 @@ class FBPost(models.Model):
                             user_like.update_from_facebook(fbuser)
                         else:
                             logger.debug(u">>>>CRITICAL CANT UPDATED DUPLICATED USER %s" % fbuser["id"])
-
-                user_like.update_from_facebook(fbuser)
+                if user_like:
+                    user_like.update_from_facebook(fbuser)
 
                 if user_like not in self.likes_from.all():
                     self.likes_from.add(user_like)
@@ -479,8 +484,12 @@ class FBPost(models.Model):
         for prop in date_to_check:
             if prop in facebook_model:
                 fb_val = facebook_model[prop]
-                date_val = datetime.strptime(fb_val,'%Y-%m-%dT%H:%M:%S+0000')
-                if self.__dict__[prop] != date_val:
+                try:
+                    date_val = datetime.strptime(fb_val,'%Y-%m-%dT%H:%M:%S+0000')
+                except:
+                    if debugging: dLogger.log('    THAT WEIRD ERROR AGAIN!')
+                    date_val = None
+                if date_val and self.__dict__[prop] != date_val:
                     self.__dict__[prop] = date_val
                     model_changed = True
 

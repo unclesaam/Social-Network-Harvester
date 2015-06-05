@@ -84,7 +84,6 @@ def tw_status_detail(request, harvester_id, status_id):
                                                             u'all_harvesters':twitter_harvesters,
                                                             u'harvester_id':harvester_id,
                                                             u'twuser': status.user, 
-                                                            u'user_url':user.url or '',
                                                             u'status':status, 
                                                             u'mentions':status.user_mentions.all(),
                                                             u'urls':status.text_urls.all(),
@@ -132,6 +131,7 @@ def get_twsearch_list(request, call_type, harvester_id):
     columnIndexNameMap = {
                             0 : u'pmk_id',
                             1 : u'term',
+                            #2 : u'len#status_list'
                             }
     #call to generic function from utils
     return get_datatables_records(request, querySet, columnIndexNameMap, call_type)

@@ -5,6 +5,7 @@ from django.utils.cache import add_never_cache_headers
 from django.utils import simplejson
 import csv, codecs, cStringIO
 from xml.etree import ElementTree
+import re
 
 import snhlogger
 logger = snhlogger.init_logger(__name__, "view.log")
@@ -66,9 +67,18 @@ def get_datatables_records(request, querySet, columnIndexNameMap, call_type='web
     
     # Pass sColumns
     keys = columnIndexNameMap.keys()
+    lenList = []
     keys.sort()
     colitems = [columnIndexNameMap[key] for key in keys]
+    for key in keys:
+        if "len#" in columnIndexNameMap[key]:
+            columnIndexNameMap[key] = re.sub(r'.*#', '', columnIndexNameMap[key])
+            lenList.append(columnIndexNameMap[key])
+            columnIndexNameMap.pop(key)
+        else:
+            colitems.append(columnIndexNameMap[key])
     sColumns = ",".join(map(unicode,colitems))
+
 
     if querySet is None:
         response_dict = {}
@@ -131,7 +141,9 @@ def get_datatables_records(request, querySet, columnIndexNameMap, call_type='web
     else:
         aaData = []
         a = querySet.values(*columnIndexNameMap.values())
+        print 'a: %s'%a
         for row in a:
+            print ' row: %s'%row
             rowkeys = row.keys()
             rowvalues = row.values()
             rowlist = []
@@ -139,7 +151,9 @@ def get_datatables_records(request, querySet, columnIndexNameMap, call_type='web
                 for idx, val in enumerate(rowkeys):
                     if val == colitems[col]:
                         rowlist.append(unicode(rowvalues[idx]))
+            print ' rowlist: %s'%rowlist
             aaData.append(rowlist)
+        print 'aaData: %s'%aaData
         response_dict = {}
         response_dict.update({'aaData':aaData})
         response_dict.update({'sEcho': sEcho, 'iTotalRecords': iTotalRecords, 'iTotalDisplayRecords':iTotalDisplayRecords, 'sColumns':sColumns})

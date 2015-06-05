@@ -410,17 +410,18 @@ def update_user_statuses_batch(harvester):
 @dLogger.debug
 def update_user_comments_from_batch(harvester, statusid, fbcomments_page):
     if debugging: 
-        dLogger.log("update_user_comments_from_batch()")
-        dLogger.log("    statusid: %s"%statusid)
-        #dLogger.log("    fbcomments_page: %s"%fbcomments_page)
+        dLogger.log("update_user_comments_from_batch(statusid: %s)"%statusid)
 
     next_bman = []
 
     #if "data" not in fbcomments_page:
         #logger.debug("DEVED: %s: %s" % (statusid, fbcomments_page))
-
+    comment_count = None
     fbcomments_page = json.loads(fbcomments_page['body'])
-    comment_count = len(fbcomments_page["data"])
+    if not 'error' in fbcomments_page:
+        comment_count = len(fbcomments_page["data"])
+    else:
+        logger.debug('ERROR: status %s could not be harvested: %s'%(statusid, fbcomments_page['error']))
 
     if comment_count:
 
@@ -449,6 +450,7 @@ def update_user_comments_from_batch(harvester, statusid, fbcomments_page):
     #    logger.debug("Empty comment page!! %s" % fbcomments_page)
 
     return next_bman
+
 
 @dLogger.debug
 def update_likes_from_batch(harvester, statusid, fblikes_page):
@@ -508,7 +510,9 @@ class ThreadStatus(threading.Thread):
                 rez = eval(fbpost.result)
                 snh_status = self.update_user_status(rez,user)
                 fbpost.delete()
-                if debugging: dLogger.log("    %s Posts left in queue"%self.queue.qsize())
+                qsize = self.queue.qsize()
+                if debugging: dLogger.log("    %s Posts left in queue"%qsize)
+                if qsize % 100 == 0: logger.info("    less than %s posts left in queue"%self.queue.qsize())
                 #signals to queue job is done
             except ObjectDoesNotExist:
                 logger.exception("DEVED %s %s" % (fbpost.parent, fbpost.ftype))
@@ -555,7 +559,7 @@ class ThreadStatus(threading.Thread):
                 logger.exception(msg) 
                 if debugging: dLogger.exception(msg)
         except:
-            msg = u"Cannot update status %s for %s" % (unicode(fbstatus), user.fid if user.fid else "0")
+            msg = u"Cannot update status %s for %s" % (unicode(fbstatus)[:100], user.fid if user.fid else "0")
             logger.exception(msg) 
             if debugging: dLogger.exception(msg)
         return snh_status
@@ -579,8 +583,9 @@ class ThreadComment(threading.Thread):
                     self.update_comment_status(eval(fbcomment.result), post)
 
                     fbcomment.delete()
-
-                    if debugging: dLogger.log("    %s Comments left in queue"%self.queue.qsize())
+                    qsize = self.queue.qsize()
+                    if debugging: dLogger.log("    %s Comments left in queue"%qsize)
+                    if qsize % 500 == 0: logger.info("    less than %s comments left in queue"%qsize)
                 else:
                     logger.error(u"ThreadComment %s. fid is none! %s." % (self, fid))
                 #signals to queue job is done
@@ -635,7 +640,7 @@ def compute_new_post(harvester):
     for post in all_posts:
         queue.put(post["fid"])
 
-    for i in range(3):
+    for i in range(10):
         t = ThreadStatus(queue)
         t.setDaemon(True)
         t.start()
@@ -654,7 +659,7 @@ def compute_new_comment(harvester):
     for comment in all_comments:
         commentqueue.put(comment["fid"])
 
-    for i in range(3):
+    for i in range(10):
         t = ThreadComment(commentqueue)
         t.setDaemon(True)
         t.start()
