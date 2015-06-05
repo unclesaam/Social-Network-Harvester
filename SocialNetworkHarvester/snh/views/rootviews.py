@@ -2,7 +2,7 @@
 
 from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
-from django.shortcuts import render_to_response, get_object_or_404, get_list_or_404, redirect
+from django.shortcuts import render_to_response, get_object_or_404, get_list_or_404, redirect, HttpResponse
 from django.core.exceptions import ObjectDoesNotExist
 from django import template
 from django.template.defaultfilters import stringfilter
@@ -36,3 +36,6 @@ def index(request):
                                                     u'youtube_harvesters':youtube_harvesters,
                                                   })
 
+@login_required(login_url=u'/login/')
+def get_event_logs(request):
+    return render_to_response('snh/getLogger.html')

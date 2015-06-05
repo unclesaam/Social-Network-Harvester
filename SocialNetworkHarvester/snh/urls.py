@@ -87,5 +87,5 @@ urlpatterns = patterns('snh.views',
     #(r'^facebook_post/(?P<post_id>\w+)/$', 'facebook_post'),
     #(r'^facebook_detail/(?P<user_id>\d+)/$', 'facebook_detail'),
     #(r'^facebook/(?P<harvester_id>\d+)/$', 'facebook'),
-
+    (r'^event_logs/$', 'get_event_logs'),
 )

@@ -15,4 +15,5 @@ urlpatterns = patterns('',
     (r'^logout/$', 'django.contrib.auth.views.logout'),
     url(r'', include("snh.urls")),
 
+
 )
