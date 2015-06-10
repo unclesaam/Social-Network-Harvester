@@ -293,22 +293,28 @@ def update_user_batch(harvester):
 
 #@dLogger.debug
 def update_user_status_from_batch(harvester, snhuser, status):
-    if debugging: 
-        dLogger.log("update_user_status_from_batch()")
-
-    res = FBResult()
-    res.harvester = harvester
-    res.result = status
-    res.ftype = "FBPost"
-    res.fid = status["id"]
-    res.parent = snhuser.fid
-    res.save()
-    if debugging: dLogger.log('    one more FBStatus to analyse: %s'%res.fid)
+    #if debugging: 
+        #dLogger.log("update_user_status_from_batch()")
+    try:
+        res = FBResult()
+        res.harvester = harvester
+        res.result = status
+        res.ftype = "FBPost"
+        res.fid = status["id"]
+        res.parent = snhuser.fid
+        res.save()
+    except:
+        if debugging:
+            dLogger.exception('ERROR WHILE CREATING A NEW FBRESULT<FBPOST>:')
+            dLogger.log('    snhuser: %s'%snhuser)
+            dLogger.log('    status: %s'%status)
+        logger.debug('Error while adding %s\'s status')
+    #if debugging: dLogger.log('    one more FBStatus to analyse: %s'%res.fid)
 
 @dLogger.debug
 def update_user_feed_from_batch(harvester, snhuser, fbfeed_page):
-    if debugging: 
-        dLogger.log("update_user_feed_from_batch()")
+    #if debugging: 
+        #dLogger.log("update_user_feed_from_batch()")
         #dLogger.log("    fbfeed_page['body']: %s"%fbfeed_page['body'])
         #dLogger.log('fbfeed_page: %s'%fbfeed_page)
     
@@ -403,10 +409,8 @@ def update_user_statuses_batch(harvester):
         if not snhuser.error_triggered:
             uid = snhuser.fid if snhuser.fid else snhuser.username
             d = {"method": "GET", "relative_url": str("%s/feed?limit=250&fields=comments.limit(0).summary(true),\
-                                                        likes.limit(0).summary(true),shares,\
-                                                        message,message_tags,name,caption,description,properties,privacy,type,\
-                                                        place,story,story_tags,object_id,application,updated_time,picture,\
-                                                        link,source,icon,from" % str(uid))}
+likes.limit(0).summary(true),shares,message,message_tags,name,caption,description,properties,privacy,type,\
+place,story,story_tags,object_id,application,updated_time,picture,link,source,icon,from" % str(uid))}
             #if debugging: dLogger.log("    d: %s"%d)
             batch_man.append({"snh_obj":snhuser,"retry":0,"request":d,"callback":update_user_feed_from_batch})
         else:
@@ -416,10 +420,10 @@ def update_user_statuses_batch(harvester):
     logger.info(u"Will harvest statuses for %s Mem:%s MB" % (harvester, int(usage[4])/(1024.0)))
     generic_batch_processor_v2(harvester, batch_man)
 
-@dLogger.debug
+#@dLogger.debug
 def update_user_comments_from_batch(harvester, statusid, fbcomments_page):
-    if debugging: 
-        dLogger.log("update_user_comments_from_batch(statusid: %s)"%statusid)
+    #if debugging: 
+        #dLogger.log("update_user_comments_from_batch(statusid: %s)"%statusid)
 
     next_bman = []
 
@@ -525,7 +529,7 @@ class ThreadStatus(threading.Thread):
                 if qsize % 100 == 0: logger.info("    less than %s posts left in queue"%self.queue.qsize())
                 #signals to queue job is done
             except ObjectDoesNotExist:
-                logger.exception("DEVED %s %s" % (fbpost.parent, fbpost.ftype))
+                logger.exception("<p style='color:red;'>DEVED %s %s</p>" % (fbpost.parent, fbpost.ftype))
                 if debugging: dLogger.exception(msg)
             except Queue.Empty:
                 logger.info(u"ThreadStatus %s. Queue is empty." % self)
@@ -650,6 +654,7 @@ def compute_new_post(harvester):
     global queue
     queue = Queue.Queue()
     all_posts = FBResult.objects.filter(ftype="FBPost").values("fid")
+    logger.info('%s Posts to analyse'%len(all_posts))
     for post in all_posts:
         queue.put(post["fid"])
 
@@ -669,6 +674,7 @@ def compute_new_comment(harvester):
     commentqueue = Queue.Queue()
 
     all_comments = FBResult.objects.filter(ftype="FBComment").values("fid")
+    logger.info('%s Comments to analyse'%len(all_comments))
     for comment in all_comments:
         commentqueue.put(comment["fid"])
 

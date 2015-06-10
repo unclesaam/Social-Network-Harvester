@@ -30,7 +30,7 @@ def run_twitter_harvester():
                     (unicode(harvester), 
                     "active" if harvester.is_active else "inactive"))
         if harvester.is_active:
-            '''
+            
             if harvester.remaining_user_timeline_hits <= 0 and remaining_user_lookup_hits <= 0:
                 warn = u"The harvester %s has exceeded the status rate limits. Need to wait? %s" % (unicode(harvester), harvester.get_stats())
                 logger.warning(warn)
@@ -42,7 +42,6 @@ def run_twitter_harvester():
                 logger.warning(warn)
             else:
                 run_harvester_search(harvester)
-            '''
             if harvester.remaining_user_lookup_hits == 0:
                 warn = u"The harvester %s has exceeded the user lookup rate limit. Need to wait? %s" % (unicode(harvester), harvester.get_stats())
                 logger.warning(warn)
@@ -371,7 +370,7 @@ def update_user_batch(harvester, user_batch):
         for twModel in twModels:
             #dLogger.log('    twModel: %s'%twModel)
             userObjects[twModel.screen_name].update_from_twitter(twModel)
-            logger.info(u"Updating %s" % (userObjects[twModel.screen_name]))
+            #logger.info(u"Updating %s" % (userObjects[twModel.screen_name]))
     except:
         if debugging: dLogger.exception( "ERROR WHILE UPDATING USER BATCH:")
 
