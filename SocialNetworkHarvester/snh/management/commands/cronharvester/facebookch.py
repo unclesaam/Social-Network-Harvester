@@ -234,7 +234,7 @@ def generic_batch_processor_v2(harvester, bman_list):
 
 @dLogger.debug
 def get_feed_paging(page):
-    if debugging: dLogger.log("get_feed_paging()")
+    #if debugging: dLogger.log("get_feed_paging()")
 
     until = None
     new_page = False
@@ -246,7 +246,7 @@ def get_feed_paging(page):
 
 @dLogger.debug
 def get_comment_paging(page):
-    if debugging: dLogger.log("get_comment_paging()")
+    #if debugging: dLogger.log("get_comment_paging()")
     paging = page['paging']
     #if debugging: dLogger.log("    paging: %s"%paging)
 
@@ -291,7 +291,7 @@ def update_user_batch(harvester):
     #if debugging: dLogger.log("    batch_man: %s"%batch_man)
     generic_batch_processor_v2(harvester, batch_man)
 
-@dLogger.debug
+#@dLogger.debug
 def update_user_status_from_batch(harvester, snhuser, status):
     if debugging: 
         dLogger.log("update_user_status_from_batch()")
@@ -303,6 +303,7 @@ def update_user_status_from_batch(harvester, snhuser, status):
     res.fid = status["id"]
     res.parent = snhuser.fid
     res.save()
+    if debugging: dLogger.log('    one more FBStatus to analyse: %s'%res.fid)
 
 @dLogger.debug
 def update_user_feed_from_batch(harvester, snhuser, fbfeed_page):
@@ -318,7 +319,9 @@ def update_user_feed_from_batch(harvester, snhuser, fbfeed_page):
     # reduces the size of the batch call in case Facebook is mad at us and retry
     if 'error' in fbfeed_page and fbfeed_page['error']['code'] == -3:
         if debugging: dLogger.log("ERROR: %s"%fbfeed_page['error']['message'])
-        d = {"method": "GET", "relative_url": str("%s/feed?limit=100" % (snhuser.fid))}
+        d = {"method": "GET", "relative_url": str("%s/feed?limit=100&fields=comments.limit(0).summary(true),\
+likes.limit(0).summary(true),shares,message,message_tags,name,caption,description,properties,privacy,type,\
+place,story,story_tags,object_id,application,updated_time,picture,link,source,icon,from" % (snhuser.fid))}
         next_bman.append({"snh_obj":snhuser, "retry":0, "request":d, "callback":update_user_feed_from_batch})
         return next_bman
 
@@ -331,7 +334,7 @@ def update_user_feed_from_batch(harvester, snhuser, fbfeed_page):
 
     if feed_count:
         usage = psutil.virtual_memory()
-        logger.debug(u"Updating %d feeds: %s Mem:%s MB" % (feed_count, harvester, int(usage[4])/(1024.0)))
+        #logger.debug(u"Updating %d feeds: %s Mem:%s MB" % (feed_count, harvester, int(usage[4])/(1024.0)))
 
         for feed in fbfeed_page["data"]:
             if feed["created_time"]:
@@ -378,7 +381,9 @@ def update_user_feed_from_batch(harvester, snhuser, fbfeed_page):
         paging, new_page = get_feed_paging(fbfeed_page)
 
         if not too_old and new_page:
-            d = {"method": "GET", "relative_url": str("%s/feed?limit=250&%s=%s" % (snhuser.fid, paging[0], paging[1]))}
+            d = {"method": "GET", "relative_url": str("%s/feed?limit=250&fields=comments.limit(0).summary(true),\
+likes.limit(0).summary(true),shares,message,message_tags,name,caption,description,properties,privacy,type,\
+place,story,story_tags,object_id,application,updated_time,picture,link,source,icon,from&%s=%s" % (snhuser.fid, paging[0], paging[1]))}
             #if debugging: dLogger.log("    d: %s"%d)
             next_bman.append({"snh_obj":snhuser, "retry":0, "request":d, "callback":update_user_feed_from_batch})
     #else:
@@ -397,7 +402,11 @@ def update_user_statuses_batch(harvester):
     for snhuser in all_users:
         if not snhuser.error_triggered:
             uid = snhuser.fid if snhuser.fid else snhuser.username
-            d = {"method": "GET", "relative_url": str("%s/feed?limit=250" % str(uid))}
+            d = {"method": "GET", "relative_url": str("%s/feed?limit=250&fields=comments.limit(0).summary(true),\
+                                                        likes.limit(0).summary(true),shares,\
+                                                        message,message_tags,name,caption,description,properties,privacy,type,\
+                                                        place,story,story_tags,object_id,application,updated_time,picture,\
+                                                        link,source,icon,from" % str(uid))}
             #if debugging: dLogger.log("    d: %s"%d)
             batch_man.append({"snh_obj":snhuser,"retry":0,"request":d,"callback":update_user_feed_from_batch})
         else:
@@ -436,15 +445,15 @@ def update_user_comments_from_batch(harvester, statusid, fbcomments_page):
             res.save()
             waitCount += 1
 
-        if debugging: dLogger.log("    %s comments in waiting..."%waitCount)
+        if debugging: dLogger.log("    %s more comments in waiting..."%waitCount)
 
         paging, new_page = get_comment_paging(fbcomments_page)
         
         usage = psutil.virtual_memory()
-        logger.debug(u"Updating %d comments. New: %s Paging: %s Mem:%s MB" % (comment_count, new_page, paging, int(usage[4])/(1024.0)))
+        #logger.debug(u"Updating %d comments. New: %s Paging: %s Mem:%s MB" % (comment_count, new_page, paging, int(usage[4])/(1024.0)))
 
         if new_page:
-            d = {"method": "GET", "relative_url": str("%s/comments?limit=250&%s" % (statusid, paging))}
+            d = {"method": "GET", "relative_url": str("%s/comments?limit=250%s" % (statusid, paging))}
             next_bman.append({"snh_obj":statusid,"retry":0,"request":d,"callback":update_user_comments_from_batch})
     #else:
     #    logger.debug("Empty comment page!! %s" % fbcomments_page)
@@ -475,11 +484,11 @@ def update_likes_from_batch(harvester, statusid, fblikes_page):
         res.fid = statusid
         res.parent = statusid
         res.save()
-        if debugging: dLogger.log("    New likes page added: %s new likes to analyze"%likes_count)
+        if debugging: dLogger.log("    %s more likes to analyze"%likes_count)
         paging, new_page = get_comment_paging(fblikes_page)
 
         usage = psutil.virtual_memory()
-        logger.debug(u"Updating %d likes. statusid:%s paging:%s Mem:%s MB" % (likes_count, statusid, paging, int(usage[4])/(1024.0)))
+        #logger.debug(u"Updating %d likes. statusid:%s paging:%s Mem:%s MB" % (likes_count, statusid, paging, int(usage[4])/(1024.0)))
         
         if new_page:
             d = {"method": "GET", "relative_url": str("%s/likes?limit=250&%s" % (statusid, paging))}
@@ -510,6 +519,7 @@ class ThreadStatus(threading.Thread):
                 rez = eval(fbpost.result)
                 snh_status = self.update_user_status(rez,user)
                 fbpost.delete()
+                #if debugging: dLogger.log("    deleted FBStatus result %s"%fbpost)
                 qsize = self.queue.qsize()
                 if debugging: dLogger.log("    %s Posts left in queue"%qsize)
                 if qsize % 100 == 0: logger.info("    less than %s posts left in queue"%self.queue.qsize())
@@ -545,11 +555,13 @@ class ThreadStatus(threading.Thread):
                 if debugging: dLogger.log("    New empty status created, to be processed.")
             snh_status.update_from_facebook(fbstatus,user)
             likes_list = FBResult.objects.filter(ftype="FBPost.likes").filter(parent=fbstatus["id"])
-            all_likes = []            
+            all_likes = []
+            if debugging: dLogger.log('    likes_list: %s, parent: %s'%(likes_list, fbstatus["id"]))
             for likes in likes_list:
                 all_likes += eval(likes.result)
             snh_status.update_likes_from_facebook(all_likes)
             likes_list.delete()
+            #if debugging: dLogger.log("    deleted likes_List %s"%likes_list)
         except IntegrityError:
             try:
                 snh_status = FBPost.objects.get(fid=fbstatus["id"])
@@ -583,9 +595,10 @@ class ThreadComment(threading.Thread):
                     self.update_comment_status(eval(fbcomment.result), post)
 
                     fbcomment.delete()
+                    #if debugging: dLogger.log("    deleted fbcomment result %s"%fbcomment)
                     qsize = self.queue.qsize()
                     if debugging: dLogger.log("    %s Comments left in queue"%qsize)
-                    if qsize % 500 == 0: logger.info("    less than %s comments left in queue"%qsize)
+                    if qsize % 1000 == 0: logger.info("    less than %s comments left in queue"%qsize)
                 else:
                     logger.error(u"ThreadComment %s. fid is none! %s." % (self, fid))
                 #signals to queue job is done

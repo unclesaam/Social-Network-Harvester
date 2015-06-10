@@ -13,11 +13,11 @@ TEMPLATE_DEBUG = DEBUG
 
 dLogger = DebugLogger('debug'+__name__, os.path.join(PROJECT_PATH,"log/debugLogger.log"), '<%(thread)d>%(message)s')
 DEBUGCONTROL = {'commonmodel':      False,
-                'facebookmodel':    True,
+                'facebookmodel':    False,
                 'dailymotionmodel': False,
                 'twittermodel':     False,
                 'youtubemodel':     False,
-                'facebookch':       True,
+                'facebookch':       False,
                 'twitterch':        False,
                 'dailymotionch':    False,
                 'youtubech':        False
@@ -142,8 +142,6 @@ TEMPLATE_DIRS = (
     os.path.join(PROJECT_PATH, "templates/"),
 )
 
-GRAPPELLI_ADMIN_TITLE = "<a href='/admin'>SNH Admin</a> | <a href='/'>Consultation</a> | <a href='/test_fb_token'>Test Facebook token</a>"
-
 INSTALLED_APPS = (
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -160,7 +158,7 @@ INSTALLED_APPS = (
 
 GRAPPELLI_ADMIN_TITLE = "<a href='/admin'>SNH Admin</a> |\
                          <a href='/'>Consultation</a> |\
-                         <a href='/test_fb_token'>Test Facebook token</a> |\
+                         <a href='/test_fb_token'>Facebook token</a> |\
                          <a href='/event_logs'>Event logs</a>"
 
 LOGIN_REDIRECT_URL = "/"

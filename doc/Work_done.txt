@@ -183,3 +183,11 @@ Ceci est un journal du travail effectué dans le cadre de la mise à niveau de l
 - Prise en charge de petits bugs aléatoires
 - Commencement d'un diagramme UML des DB models, afin d'avoir une présentation croncrete des changements a apporter en cours d'été (style avant/apres de la DB)
 - fin de journée (6h)
+
+8 juin 2015:
+- Visualisation des logfiles a partir de la section admin du SNH (web)
+- Optimisation de Facebook (certains champs ne s'updatent pas parce que la procédure de Fb a changé)
+- fin de journée (6h)
+
+9 juin 2015:
+- 

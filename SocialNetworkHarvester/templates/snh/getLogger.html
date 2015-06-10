@@ -1,9 +1,36 @@
 {% extends "admin/base.html" %}
+{% load url from future %}
+{% load adminmedia i18n grp_tags %}
 
+
+
+{% block branding %}
+<h1 id="site-name">{% trans '{{ title }}' %}</h1>
+{% endblock %}
+
+
+
+{% block breadcrumbs %}
+    <div id="breadcrumbs">
+        <a href="/">{% trans 'Home' %}</a>{% if title %} &rsaquo; {{ title }}{% endif %}<br>
+        <div style="position:relative;">
+            <span><a href="facebooklog"> Facebook </a></span><span>|</span>
+            <span><a href="twitterlog"> Twitter </a></span><span>|</span>
+            <span><a href="youtubelog"> Youtube </a></span><span>|</span>
+            <span><a href="dailymotionlog"> Dailymotion </a></span>
+            <span style='position: absolute; right:40px'>
+                <form method='post' action='' id='resetForm'>
+                    <input name='resetLog' value='{{ title }}' type='hidden'></input>
+                    <a href='' onclick="document.getElementById('resetForm').submit(); return false;">Erase logfile</a>
+                </form>
+            </span>
+        </div>
+    </div>
+{% endblock %}
 
 
 {% block content %}
-<p>
-	HERE ARE TO BE ALL THE LOGFILES
-</p>
+    {% autoescape off %}{{ logfile }}{% endautoescape %}
+    <a style='bottom:0px;' href='' name='bot'></a>
+    <div style='position:fixed;right:21px;top:80px;'><a href='#bot'>jump to bottom</a></div>
 {% endblock %}
