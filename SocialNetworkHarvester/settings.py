@@ -32,8 +32,8 @@ MANAGERS = ADMINS
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'snh_2015',                
-        'USER': 'snh',                       
+        'NAME': 'snh_2015_schema',                
+        'USER': 'root',                       
         'PASSWORD': 'grcp2014',                
         'HOST': '127.0.0.1',                 
         'PORT': '3306',                          
@@ -81,7 +81,7 @@ MEDIA_URL = ''
 
 # For videos downloaded from youtube and dailymotion. Also contains the 
 # related captions files when available
-DOWNLOADED_VIDEO_PATH = MEDIA_ROOT
+DOWNLOADED_VIDEO_PATH = '/mnt/video/2015'
 
 # Absolute path to the directory static files should be collected to.
 # Don't put anything in this directory yourself; store your static files

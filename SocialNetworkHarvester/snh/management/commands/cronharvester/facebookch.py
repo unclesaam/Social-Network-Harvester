@@ -5,7 +5,7 @@ import time
 import Queue
 import threading
 import urlparse
-import psutil
+#import psutil
 import datetime
 import facebook
 import json
@@ -185,8 +185,8 @@ def generic_batch_processor_v2(harvester, bman_list):
     error_sum = 0
 
     while bman_list:
-        usage = psutil.virtual_memory()
-        logger.info(u"New batch. Size:%d for %s Mem:%s MB" % (len(bman_list), harvester, int(usage[4])/(1024.0)))
+        #usage = psutil.virtual_memory()
+        logger.info(u"New batch. Size:%d for %s" % (len(bman_list), harvester))
 
         if (E_UNEX in error_map and error_map[E_UNEX] / float(bman_total) > fail_ratio) or error_sum > 4:
             step_size = int(step_size / step_factor) if int(step_size / step_factor) > 1 else 1
@@ -201,8 +201,8 @@ def generic_batch_processor_v2(harvester, bman_list):
             
             if not(E_UNEX in error_map and error_map[E_UNEX] / float(bman_total) > fail_ratio) or not (E_USER_QUOTA in error_map):
                 actual_fail_ratio = error_map[E_UNEX] / float(bman_total) if E_UNEX in error_map else 0
-                usage = psutil.virtual_memory()
-                logger.info(u"bman_chunk (%d/%d) chunk_total:%s InQueue:%d fail_ratio:%s > %s Mem:%s KB" % (counter, bman_total, len(bman_chunk), len(next_bman_list), actual_fail_ratio, fail_ratio, usage[4]/(1024.0)))
+                #usage = psutil.virtual_memory()
+                logger.info(u"bman_chunk (%d/%d) chunk_total:%s InQueue:%d fail_ratio:%s > %s" % (counter, bman_total, len(bman_chunk), len(next_bman_list), actual_fail_ratio, fail_ratio, ))
 
                 if E_QUOTA in error_map:
                     logger.info("Quota error, waiting for 10 minutes")
@@ -227,9 +227,9 @@ def generic_batch_processor_v2(harvester, bman_list):
         bman_list = next_bman_list
         next_bman_list = []
 
-    usage = psutil.virtual_memory()
+    #usage = psutil.virtual_memory()
     readable_failed_list = [failed_list[j]["request"]["relative_url"] for j in range(0, len(failed_list))]
-    logger.debug(u"END harvesting. Mem:%s MB" % (int(usage[4])/(1024.0)))
+    logger.debug(u"END harvesting.")
     logger.debug(u"Failed list: %s" % (readable_failed_list))
 
 @dLogger.debug
@@ -285,8 +285,8 @@ def update_user_batch(harvester):
         else:
             logger.info(u"Skipping user update: %s(%s) because user has triggered the error flag." % (unicode(snhuser), snhuser.fid if snhuser.fid else "0"))
 
-    usage = psutil.virtual_memory()
-    logger.info(u"Will harvest users for %s Mem:%s MB" % (harvester,int(usage[4])/(1024.0)))
+    #usage = psutil.virtual_memory()
+    logger.info(u"Will harvest users for %s" % (harvester,))
 
     #if debugging: dLogger.log("    batch_man: %s"%batch_man)
     generic_batch_processor_v2(harvester, batch_man)
@@ -339,7 +339,7 @@ place,story,story_tags,object_id,application,updated_time,picture,link,source,ic
     too_old = False
 
     if feed_count:
-        usage = psutil.virtual_memory()
+        #usage = psutil.virtual_memory()
         #logger.debug(u"Updating %d feeds: %s Mem:%s MB" % (feed_count, harvester, int(usage[4])/(1024.0)))
 
         for feed in fbfeed_page["data"]:
@@ -416,8 +416,8 @@ place,story,story_tags,object_id,application,updated_time,picture,link,source,ic
         else:
             logger.info(u"Skipping status update: %s(%s) because user has triggered the error flag." % (unicode(snhuser), snhuser.fid if snhuser.fid else "0"))
 
-    usage = psutil.virtual_memory()
-    logger.info(u"Will harvest statuses for %s Mem:%s MB" % (harvester, int(usage[4])/(1024.0)))
+    #usage = psutil.virtual_memory()
+    logger.info(u"Will harvest statuses for %s" % (harvester))
     generic_batch_processor_v2(harvester, batch_man)
 
 #@dLogger.debug
@@ -453,7 +453,7 @@ def update_user_comments_from_batch(harvester, statusid, fbcomments_page):
 
         paging, new_page = get_comment_paging(fbcomments_page)
         
-        usage = psutil.virtual_memory()
+        #usage = psutil.virtual_memory()
         #logger.debug(u"Updating %d comments. New: %s Paging: %s Mem:%s MB" % (comment_count, new_page, paging, int(usage[4])/(1024.0)))
 
         if new_page:
@@ -526,7 +526,7 @@ class ThreadStatus(threading.Thread):
                 #if debugging: dLogger.log("    deleted FBStatus result %s"%fbpost)
                 qsize = self.queue.qsize()
                 if debugging: dLogger.log("    %s Posts left in queue"%qsize)
-                if qsize % 100 == 0: logger.info("    less than %s posts left in queue"%self.queue.qsize())
+                if qsize % 100 == 0: logger.debug("    less than %s posts left in queue"%self.queue.qsize())
                 #signals to queue job is done
             except ObjectDoesNotExist:
                 logger.exception("<p style='color:red;'>DEVED %s %s</p>" % (fbpost.parent, fbpost.ftype))
@@ -602,7 +602,7 @@ class ThreadComment(threading.Thread):
                     #if debugging: dLogger.log("    deleted fbcomment result %s"%fbcomment)
                     qsize = self.queue.qsize()
                     if debugging: dLogger.log("    %s Comments left in queue"%qsize)
-                    if qsize % 1000 == 0: logger.info("    less than %s comments left in queue"%qsize)
+                    if qsize % 1000 == 0: logger.debug("    less than %s comments left in queue"%qsize)
                 else:
                     logger.error(u"ThreadComment %s. fid is none! %s." % (self, fid))
                 #signals to queue job is done
@@ -658,7 +658,7 @@ def compute_new_post(harvester):
     for post in all_posts:
         queue.put(post["fid"])
 
-    for i in range(10):
+    for i in range(4):
         t = ThreadStatus(queue)
         t.setDaemon(True)
         t.start()
@@ -678,7 +678,7 @@ def compute_new_comment(harvester):
     for comment in all_comments:
         commentqueue.put(comment["fid"])
 
-    for i in range(10):
+    for i in range(4):
         t = ThreadComment(commentqueue)
         t.setDaemon(True)
         t.start()
@@ -714,7 +714,7 @@ def run_harvester_v3(harvester):
         logger.exception(u"EXCEPTION: %s" % harvester)
         if debugging: dLogger.exception(u"EXCEPTION: %s" % harvester)
     finally:
-        usage = psutil.virtual_memory()
+        #usage = psutil.virtual_memory()
         harvester.end_current_harvest()
-        logger.info(u"End: %s Stats:%s Mem:%s MB" % (harvester,unicode(harvester.get_stats()), int(usage[4])/(1024.0)))
+        logger.info(u"End: %s Stats:%s" % (harvester,unicode(harvester.get_stats())))
 

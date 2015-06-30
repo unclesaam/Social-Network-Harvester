@@ -1,7 +1,7 @@
 # coding=UTF-8
 
 from datetime import timedelta
-import psutil
+#import psutil
 import time
 import urllib
 import json
@@ -118,8 +118,8 @@ def update_users(harvester):
             update_user(harvester, ytUser)
 
 
-    usage = psutil.virtual_memory()
-    logger.info(u"User harvest completed %s Mem:%s MB" % (harvester, int(usage[4])/(1024.0)))
+    #usage = psutil.virtual_memory()
+    logger.info(u"User harvest completed %s" % (harvester))
 
 
 @dLogger.debug
@@ -190,9 +190,9 @@ def update_comment_thread(harvester, snhvideo, ytThread):
             update_comment(harvester, ytComment, snhvideo, snhParentComment)
 
 
-    usage = psutil.virtual_memory()
-    logger.debug(u"Thread updated: comid:%s vidid:%s %s Mem:%s MB" % (snhParentComment.fid if snhParentComment else '',
-            snhvideo.fid, harvester, int(usage[4])/(1024.0)))
+    #usage = psutil.virtual_memory()
+    logger.debug(u"Thread updated: comid:%s vidid:%s %s" % (snhParentComment.fid if snhParentComment else '',
+            snhvideo.fid, harvester))
 
     return snhParentComment
 
@@ -220,8 +220,8 @@ def update_all_comment(harvester,snhvideo):
             comment_list = harvester.api_call("comment_threads_list",{"videoId":snhvideo.fid, "pageToken":next_page_token})
             next_page_token = update_all_comment_helper(harvester, snhvideo, comment_list)
 
-        usage = psutil.virtual_memory()
-        logger.info(u"Comment harvest completed for this video: %s %s Mem:%s MB" % (snhvideo.fid, harvester,int(usage[4])/(1024.0)))
+        #usage = psutil.virtual_memory()
+        logger.info(u"Comment harvest completed for this video: %s %s" % (snhvideo.fid, harvester))
     except HttpError as err:
         dLogger.exception(u"HttpError received for this video: %s (%s)" % (snhvideo.fid, err))
     except Exception as err:
@@ -275,8 +275,8 @@ def update_all_videos(harvester):
         else:
             logger.info(u"Skipping user update: %s(%s) because user has triggered the error flag." % (unicode(snhuser), snhuser.fid if snhuser.fid else "0"))
 
-    usage = psutil.virtual_memory()
-    logger.info(u"Video harvest completed %s Mem:%s MB" % (harvester, int(usage[4])/(1024.0)))
+    #usage = psutil.virtual_memory()
+    logger.info(u"Video harvest completed %s" % (harvester))
 
 @dLogger.debug
 def download_video(harvester, snhVideo):
@@ -344,9 +344,9 @@ def run_harvester_v1(harvester):
         logger.exception(u"EXCEPTION: %s" % harvester)
         dLogger.exception(u"EXCEPTION: %s" % harvester)
     finally:
-        usage = psutil.virtual_memory()
+        #usage = psutil.virtual_memory()
         harvester.end_current_harvest()
-        logger.info(u"End: %s Stats:%s Mem:%s MB" % (harvester,unicode(harvester.get_stats()),int(usage[4])/(1024.0)))
+        logger.info(u"End: %s Stats:%s" % (harvester,unicode(harvester.get_stats())))
 
 
 
