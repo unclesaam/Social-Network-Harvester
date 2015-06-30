@@ -95,7 +95,7 @@ def get_yt_list(request, call_type, harvester_id):
                             9 : u'company',
                             10 : u'last_web_access',
                             11 : u'subscriber_count',
-                            12 : u'video_watch_count',
+                            12 : u'video_count',
                             13 : u'view_count',
                             }
     #call to generic function from utils
@@ -135,8 +135,9 @@ def get_yt_comment_list(request, call_type, userfid):
                             2 : u'video__user__username',
                             3 : u'video__fid',
                             4 : u'message',
-                            5 : u'user__fid',
-                            6 : u'video__user__fid',
+                            5 : u'like_count',
+                            6 : u'user__fid',
+                            7 : u'video__user__fid',
                             }
     try:
         user = get_list_or_404(YTUser, fid=userfid)[0]
@@ -156,8 +157,9 @@ def get_yt_videocomment_list(request, call_type, videofid):
                             2 : u'video__user__username',
                             3 : u'video__fid',
                             4 : u'message',
-                            5 : u'user__fid',
-                            6 : u'video__user__fid',
+                            5 : u'like_count',
+                            6 : u'user__fid',
+                            7 : u'video__user__fid',
                             }    
     try:
         video = get_list_or_404(YTVideo, fid=videofid)[0]

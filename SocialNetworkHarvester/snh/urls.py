@@ -75,6 +75,8 @@ urlpatterns = patterns('snh.views',
     (r'^get_ytcomment_chart/(?P<harvester_id>\d+)/fid/(?P<userfid>.*)/$', 'get_ytcomment_chart'),
     (r'^get_ytvideocomment_chart/(?P<harvester_id>\d+)/fid/(?P<videofid>.*)/$', 'get_ytvideocomment_chart'),
 
+
+
     #(r'^$', 'index'),
     #(r'^reset_fb_token$', 'reset_fb_token'),
     #(r'^request_fb_token$', 'request_fb_token'),

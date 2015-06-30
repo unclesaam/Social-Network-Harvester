@@ -2,6 +2,8 @@
 from collections import deque
 from datetime import datetime
 import time
+import re
+from apiclient.errors import HttpError
 
 import gdata.youtube
 import gdata.youtube.service
@@ -10,6 +12,7 @@ from django.db import models
 from snh.models.common import *
 import snhlogger
 
+
 from settings import DEBUGCONTROL, dLogger
 debugging = DEBUGCONTROL['youtubemodel']
 if debugging: print "DEBBUGING ENABLED IN %s"%__name__
@@ -17,16 +20,12 @@ if debugging: print "DEBBUGING ENABLED IN %s"%__name__
 class YoutubeHarvester(AbstractHaverster):
 
     harvester_type = "Youtube"
-
     ytusers_to_harvest = models.ManyToManyField('YTUser', related_name='ytusers_to_harvest')
-
     last_harvested_user = models.ForeignKey('YTUser',  related_name='last_harvested_user', null=True)
     current_harvested_user = models.ForeignKey('YTUser', related_name='current_harvested_user',  null=True)
-
+    download_videos = models.BooleanField(default=False)
     dev_key = models.TextField(null=True)
-
     client = None
-
     haverst_deque = None
 
     def update_client_stats(self):
@@ -40,14 +39,20 @@ class YoutubeHarvester(AbstractHaverster):
 
     @dLogger.debug
     def api_call(self, method, params):
+        if debugging: 
+            dLogger.log('api_call():')
+            dLogger.log('    method: %s'%method)
+            dLogger.log('    params: %s'%params)
         if self.client is None:
-            self.client = gdata.youtube.service.YouTubeService()
-            self.client.developer_key = self.dev_key
-            #print self.dev_key         
+            raise Exception('You must set the client first!')
         super(YoutubeHarvester, self).api_call(method, params)
-        time.sleep(0.7)
+        #time.sleep(0.7)
         metp = getattr(self.client, method)
-        ret = metp(**params)
+        try:
+            ret = metp(**params)
+        except HttpError, err:
+            if debugging: dLogger.log('    HTTPERROR HAS OCCURED: %s'%err)
+            ret = None
         return ret
 
     def get_last_harvested_user(self):
@@ -58,7 +63,7 @@ class YoutubeHarvester(AbstractHaverster):
 
     @dLogger.debug
     def get_next_user_to_harvest(self): 
-        if debugging: dLogger.log("%s::get_next_user_to_harvest()", self)
+        if debugging: dLogger.log("%s::get_next_user_to_harvest()"%self)
         if self.current_harvested_user:
             self.last_harvested_user = self.current_harvested_user
 
@@ -75,7 +80,7 @@ class YoutubeHarvester(AbstractHaverster):
 
     @dLogger.debug
     def build_harvester_sequence(self):
-        if debugging: dLogger.log("%s::build_harvester_sequence()", self)
+        if debugging: dLogger.log("%s::build_harvester_sequence()"%self)
         self.haverst_deque = deque()
         all_users = self.ytusers_to_harvest.all()
 
@@ -92,12 +97,22 @@ class YoutubeHarvester(AbstractHaverster):
             self.haverst_deque.extend(all_users)
 
     def get_stats(self):
-        if debugging: dLogger.log("%s::get_stats()", self)
+        if debugging: dLogger.log("%s::get_stats()"%self)
         parent_stats = super(YoutubeHarvester, self).get_stats()
         parent_stats["concrete"] = {}
         return parent_stats
-            
+
 class YTUser(models.Model):
+    '''
+    TODO:
+    * Implement a Google Plus Profile, which should contain all the personal infos.
+        Youtube does not hold personal infos anymore, and a GPlus 
+        user can actually have multiple youtube channels.
+    * all of the following characteristics are outdated:
+        [first_name, last_name, relationship, link, 
+        company, occupation, school, hobbies, movies, 
+        music, books, hometown, age, gender, location]
+    '''
 
     class Meta:
         app_label = "snh"
@@ -108,7 +123,9 @@ class YTUser(models.Model):
     def related_label(self):
         return u"%s (%s)" % (self.username, self.pmk_id)
 
+
     pmk_id =  models.AutoField(primary_key=True)
+    harvester = models.ForeignKey('YoutubeHarvester', related_name='harvested_users', null=True)
 
     fid = models.CharField(max_length=255, null=True)
 
@@ -140,86 +157,49 @@ class YTUser(models.Model):
 
     last_web_access = models.DateTimeField(null=True)
     subscriber_count = models.IntegerField(null=True)
-    video_watch_count = models.IntegerField(null=True)
+    video_count = models.IntegerField(null=True)
     view_count = models.IntegerField(null=True)
+
 
     @dLogger.debug
     def update_from_youtube(self, yt_user): #User
-        if debugging: dLogger.log("<YTUser: '%s'>::update_from_youtube()", self)
+
+        if debugging: 
+            dLogger.log("<YTUser: '%s'>::update_from_youtube()"%self)
+            #dLogger.log("    yt_user:")
+            #dLogger.pretty(yt_user)
+
         model_changed = False
-        text_to_check = {
-                            u"gender":u"gender",
-                            u"location":u"location",
-                            u"username":u"username",
-                            u"first_name":u"first_name",
-                            u"last_name":u"last_name",
-                            u"relationship":u"relationship",
-                            u"description":u"content",
-                            u"company":u"company",
-                            u"occupation":u"occupation",
-                            u"school":u"school",
-                            u"hobbies":u"hobbies",
-                            u"music":u"music",
-                            u"books":u"books",
-                            u"hometown":u"hometown",
-                            }
 
-        split_uri = yt_user.id.text.split("/")
-        fid = split_uri[len(split_uri)-1]
-
-        if self.fid != fid:
-            self.fid = fid
+        if self.fid != yt_user['id']:
+            self.fid = yt_user['id']
             model_changed = True
 
-        if yt_user.age and \
-                yt_user.age.text and \
-                self.age != int(yt_user.age.text):
-            self.age = int(yt_user.age.text)
-            #if debugging: dLogger.log("    age change %d" % self.age )
-            model_changed = True
+        if 'statistics' in yt_user:
+            props = {'subscriber_count': 'subscriberCount',
+                    'video_count': 'videoCount',
+                    'view_count': 'viewCount'}
+            for prop in props:
+                if props[prop] in yt_user['statistics'] and \
+                getattr(self, prop) != int(yt_user['statistics'][props[prop]]):
+                    setattr(self, prop, int(yt_user['statistics'][props[prop]]))
+                    model_changed = True
 
-        yt_last_web_access = yt_user.statistics.last_web_access
-        date_val = datetime.strptime(yt_last_web_access,'%Y-%m-%dT%H:%M:%S.000Z')
-        if self.last_web_access != date_val:
-            self.last_web_access = date_val
-            model_changed = True
+        if 'snippet' in yt_user:
+            props = {'description': 'description',
+                    'title': 'title'}
+            for prop in props:
+                if props[prop] in yt_user['snippet'] and \
+                getattr(self, prop) != yt_user['snippet'][props[prop]]:
+                    setattr(self, prop, yt_user['snippet'][props[prop]])
+                    model_changed = True
 
-        if yt_user.statistics and \
-                yt_user.statistics.subscriber_count and \
-                self.subscriber_count != int(yt_user.statistics.subscriber_count):
-            self.subscriber_count = int(yt_user.statistics.subscriber_count)
-            #if debugging: dLogger.log("    subscriber_count change %d" % self.subscriber_count)
-            model_changed = True
-
-        if yt_user.statistics and \
-                yt_user.statistics.video_watch_count and \
-                self.video_watch_count != int(yt_user.statistics.video_watch_count):
-            self.video_watch_count = int(yt_user.statistics.video_watch_count)
-            #if debugging: dLogger.log("    video_watch_count change %d" % self.video_watch_count)
-            model_changed = True
-
-        if yt_user.statistics and \
-                yt_user.statistics.view_count and \
-                self.view_count != int(yt_user.statistics.view_count):
-            self.view_count = int(yt_user.statistics.view_count)
-            #if debugging: dLogger.log("    view_count change %d" % self.view_count )
-            model_changed = True
-
-        for prop in text_to_check:
-            if text_to_check[prop] in yt_user.__dict__ and \
-                    yt_user.__dict__[text_to_check[prop]] and \
-                    yt_user.__dict__[text_to_check[prop]].text and \
-                    self.__dict__[prop] != unicode(yt_user.__dict__[text_to_check[prop]].text, 'UTF-8'):
-
-                self.__dict__[prop] = unicode(yt_user.__dict__[text_to_check[prop]].text, 'UTF-8') 
-                #if debugging: dLogger.log("    prop changed. %s = %s" % (prop, self.__dict__[prop]) )
-                model_changed = True
-            
         if model_changed:
             self.model_update_date = datetime.utcnow()
             self.save()
 
         return model_changed
+
 
 class YTVideo(models.Model):
 
@@ -244,116 +224,76 @@ class YTVideo(models.Model):
 
     description = models.TextField(null=True)
     category =  models.CharField(max_length=255, null=True)
-    #tags = Many2Many
-    favorite_count = models.IntegerField(null=True)
-    view_count = models.IntegerField(null=True)
     duration = models.IntegerField(null=True)
 
+    favorite_count = models.IntegerField(null=True)
+    view_count = models.IntegerField(null=True)
+    like_count = models.IntegerField(null=True)
+    dislike_count = models.IntegerField(null=True)
+    comment_count = models.IntegerField(null=True)
+
     video_file_path = models.TextField(null=True)
+    comments_enabled = models.BooleanField(default=True)
+
 
     @dLogger.debug
     def update_from_youtube(self, snh_user, yt_video): #Video
-        if debugging: dLogger.log("<YTVideo: '%s'>::update_from_youtube()", self)
+        if debugging: dLogger.log("<YTVideo: '%s'>::update_from_youtube()"%self)
         model_changed = False
-        text_to_check = {
-                            u"title":u"title",
-                            u"description":u"description",
-                            }
-        split_uri = yt_video.id.text.split("/")
-        fid = split_uri[len(split_uri)-1]
 
+        fid = yt_video['id']
         if self.fid != fid:
             self.fid = fid
             model_changed = True
 
-        if self.url is None or self.url.original_url != yt_video.id.text:
-            url = None
-            try:
-                url = URL.objects.filter(original_url=yt_video.id.text)[0]
-            except:
-                pass
+        if 'snippet' in yt_video:
+            if 'publishedAt' in yt_video['snippet']:
+                yt_published = yt_video['snippet']['publishedAt']
 
-            if url is None:
-                url = URL(original_url=yt_video.id.text)
-                url.save()
-            self.url = url
-            model_changed = True
 
-        if self.player_url is None or self.player_url.original_url != yt_video.media.player.url:
-            url = None
-            try:
-                url = URL.objects.filter(original_url=yt_video.media.player.url)[0]
-            except:
-                pass
+            props = {'title':'channelTitle',
+                    'description': 'description',
+                    'title': 'title' }
+            for prop in props:
+                if props[prop] in yt_video['snippet'] and \
+                getattr(self, prop) != yt_video['snippet'][props[prop]]:
+                    setattr(self, prop, yt_video['snippet'][props[prop]])
+                    model_changed = True
 
-            if url is None:
-                url = URL(original_url=yt_video.media.player.url)
-                url.save()
-            self.player_url = url
-            model_changed = True
+        if 'statistics' in yt_video:
+            props = {'favorite_count':'favoriteCount',
+                    'view_count': 'viewCount',
+                    'like_count': 'likeCount',
+                    'dislike_count': 'dislikeCount',
+                    'comment_count': 'commentCount' }
+            for prop in props:
+                if props[prop] in yt_video['statistics'] and \
+                getattr(self, prop) != yt_video['statistics'][props[prop]]:
+                    setattr(self, prop, yt_video['statistics'][props[prop]])
+                    model_changed = True
 
-        if self.swf_url is None or self.swf_url.original_url != yt_video.GetSwfUrl():
-            url = None
-            try:
-                url = URL.objects.filter(original_url=yt_video.GetSwfUrl())[0]
-            except:
-                pass
-
-            if url is None:
-                url = URL(original_url=yt_video.GetSwfUrl())
-                url.save()
-            self.swf_url = url
-            model_changed = True
-
-        for prop in text_to_check:
-            if text_to_check[prop] in yt_video.media.__dict__ and \
-                    yt_video.media.__dict__[text_to_check[prop]] and \
-                    yt_video.media.__dict__[text_to_check[prop]].text and \
-                    self.__dict__[prop] != unicode(yt_video.media.__dict__[text_to_check[prop]].text, 'UTF-8'):
-
-                self.__dict__[prop] = unicode(yt_video.media.__dict__[text_to_check[prop]].text, 'UTF-8')
-                #print "prop changed. %s = %s" % (prop, self.__dict__[prop]) 
+        if yt_published:
+            date_val = datetime.strptime(yt_published,'%Y-%m-%dT%H:%M:%S.000Z')
+            if self.published != date_val:
+                self.published = date_val
                 model_changed = True
 
-        yt_published = yt_video.published.text
-        date_val = datetime.strptime(yt_published,'%Y-%m-%dT%H:%M:%S.000Z')
-        if self.published != date_val:
-            self.published = date_val
-            model_changed = True
+        if 'contentDetails' in yt_video and \
+        'duration' in yt_video['contentDetails']:
+            rawDuration = yt_video['contentDetails']['duration']
 
-        yt_updated = yt_video.updated.text
-        date_val = datetime.strptime(yt_updated,'%Y-%m-%dT%H:%M:%S.000Z')
-        if self.updated != date_val:
-            self.updated = date_val
-            model_changed = True
-
-        if yt_video.recorded:
-            yt_recorded = yt_video.recorded.text
-            date_val = datetime.strptime(yt_recorded,'%Y-%m-%d')
-            if self.recorded != date_val:
-                self.recorded = date_val
+            format = 'PT'
+            if 'H' in rawDuration:
+                format += '%HH'
+            if 'M' in rawDuration:
+                format += '%MM'
+            if 'S' in rawDuration:
+                format += '%SS'
+            duration = datetime.strptime(rawDuration, format)
+            duration = int((duration-datetime(1900,1,1)).total_seconds())
+            if self.duration != duration:
+                self.duration = duration
                 model_changed = True
-
-        if yt_video.statistics and \
-                yt_video.statistics.view_count and \
-                self.view_count != int(yt_video.statistics.view_count):
-            self.view_count = int(yt_video.statistics.view_count)
-            #print "view_count change %d" % self.view_count 
-            model_changed = True
-
-        if yt_video.statistics and \
-                yt_video.statistics.favorite_count and \
-                self.favorite_count != int(yt_video.statistics.favorite_count):
-            self.favorite_count = int(yt_video.statistics.favorite_count)
-            #print "favorite_count change %d" % self.favorite_count 
-            model_changed = True
-
-        if yt_video.media.duration and \
-                yt_video.media.duration.seconds and \
-                self.duration != int(yt_video.media.duration.seconds):
-            self.duration = int(yt_video.media.duration.seconds)
-            #print "duration change %d" % self.duration 
-            model_changed = True
         
         if model_changed:
             self.model_update_date = datetime.utcnow()
@@ -361,6 +301,21 @@ class YTVideo(models.Model):
             self.save()
 
         return model_changed
+
+class YTVideoCaption(models.Model):
+
+    class Meta:
+        app_label = "snh"
+
+    def __unicode__(self):
+        return '%s caption for %s'%(self.language, self.video)
+
+    pmk_id =  models.AutoField(primary_key=True)
+
+    video = models.ForeignKey('YTVideo', related_name='YTCaptionFiles', null=True)
+    srt_file_path = models.TextField(null=True)
+    language = models.CharField(max_length=5, null=True)
+    auto_generated = models.BooleanField(default=True)
 
 class YTComment(models.Model):
 
@@ -376,30 +331,28 @@ class YTComment(models.Model):
 
     user = models.ForeignKey('YTUser',  related_name='ytcomment.user', null=True)
     video = models.ForeignKey('YTVideo',  related_name='ytcomment.video')
+    parent_comment = models.ForeignKey('YTComment', related_name='replies', null=True)
     message = models.TextField(null=True)
+    like_count = models.IntegerField(null=True)
 
     published = models.DateTimeField(null=True)
     updated = models.DateTimeField(null=True)
 
     @dLogger.debug
     def update_from_youtube(self, snh_video, snh_user, yt_comment): #Comment
-        if debugging: dLogger.log("<YTComment: '%s'>::update_from_youtube()", self)
+        if debugging: 
+            dLogger.log("<YTComment: '%s'>::update_from_youtube()"%self)
+            #dLogger.pretty(yt_comment)
+
         model_changed = False
-        text_to_check = {
-                            u"message":u"message",
-                            }
 
-        date_to_check = {
-                            #"created_time":"created_time",
-                            }
-
-        split_uri = yt_comment.id.text.split("/")
-        fid = split_uri[len(split_uri)-1]
+        fid = yt_comment['id']
 
         if self.fid != fid:
             self.fid = fid
             model_changed = True
 
+        snippet = yt_comment['snippet']
 
         if self.video != snh_video:
             self.video = snh_video
@@ -409,28 +362,37 @@ class YTComment(models.Model):
             self.user = snh_user
             model_changed = True
 
-        yt_published = yt_comment.published.text
-        date_val = datetime.strptime(yt_published,'%Y-%m-%dT%H:%M:%S.000Z')
+        yt_published = snippet['publishedAt']
+        date_val = datetime.strptime(yt_published[:-5],'%Y-%m-%dT%H:%M:%S')
         if self.published != date_val:
             self.published = date_val
             model_changed = True
 
-        yt_updated = yt_comment.updated.text
-        date_val = datetime.strptime(yt_updated,'%Y-%m-%dT%H:%M:%S.000Z')
+        yt_updated = snippet['updatedAt']
+        date_val = datetime.strptime(yt_updated[:-5],'%Y-%m-%dT%H:%M:%S')
         if self.updated != date_val:
             self.updated = date_val
             model_changed = True
 
-
-        content = yt_comment.content.text.decode('utf-8', 'ignore')
+        content = snippet['textDisplay'].encode('unicode_escape')
+        content = re.sub(r'\\\\x..', '', content)
         if self.message != content:
             self.message = content
             model_changed = True
 
+        like_count = snippet['likeCount']
+        if self.like_count != like_count:
+            self.like_count = like_count   
+            model_changed = True        
+
         if model_changed:
             self.model_update_date = datetime.utcnow()
-            self.save()
-
+            try:
+                self.save()
+            except Exception, e:
+                dLogger.log('    Error while saving:')
+                dLogger.exception(e)
+                dLogger.pretty(str(yt_comment).encode('unicode_escape'))
         return model_changed
 
 

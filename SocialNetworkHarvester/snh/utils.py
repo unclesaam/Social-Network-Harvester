@@ -108,7 +108,7 @@ def get_datatables_records(request, querySet, columnIndexNameMap, call_type='web
     # Determine which columns are searchable
     searchableColumns = []
     for col in range(0,cols):
-        logger.debug(col)
+        #logger.debug(col)
         if request.GET.get('bSearchable_{0}'.format(col), False) == 'true': searchableColumns.append(columnIndexNameMap[col])
 
     # Apply filtering by value sent by user

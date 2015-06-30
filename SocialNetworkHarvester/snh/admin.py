@@ -149,6 +149,34 @@ class FBUserAdmin(admin.ModelAdmin):
 
 class FBPostAdmin(admin.ModelAdmin):
     list_per_page = 500
+    readonly_fields = (
+                'user',
+                'fid',
+                'message',
+                'message_tags_raw',
+                'picture',
+                'link',
+                'name',
+                'caption',
+                'description',
+                'source',
+                'properties_raw',
+                'icon',
+                'privacy_raw',
+                'ftype',
+                'likes_from',
+                'likes_count',
+                'comments_count',
+                'shares_count',
+                'place_raw',
+                'story',
+                'story_tags_raw',
+                'object_id',
+                'application_raw',
+                'created_time',
+                'updated_time',
+                'error_on_update',
+                        )
     fields = [
                 'user',
                 'fid',
@@ -177,9 +205,21 @@ class FBPostAdmin(admin.ModelAdmin):
                 'updated_time',
                 'error_on_update',
             ]
+    list_display = ('fid', 'user', 'message', 'ftype')
 
 class FBCommentAdmin(admin.ModelAdmin):
-    list_per_page = 500
+    list_per_page = 100
+    readonly_fields = [
+                'fid',
+                'ffrom',
+                'message',
+                'created_time',
+                'likes',
+                'user_likes',
+                'ftype',
+                'post',
+                'error_on_update',
+            ]
     fields = [
                 'fid',
                 'ffrom',
@@ -191,6 +231,7 @@ class FBCommentAdmin(admin.ModelAdmin):
                 'post',
                 'error_on_update',
             ]
+    list_display = ('fid', 'ffrom', 'message', 'ftype')
 
 admin.site.register(FacebookHarvester, FacebookHarvesterAdmin)
 admin.site.register(FBUser, FBUserAdmin)
@@ -245,28 +286,24 @@ class YoutubeHarvesterAdmin(admin.ModelAdmin):
                         u'harvester_name', 
                         u'dev_key', 
                         u'is_active',
+                        u'download_videos',
                         u'max_retry_on_fail',
                         u'harvest_window_from',
-                        u'harvest_window_to',
+                        u'harvest_window_to'
                         ),
         }),
         ('Users to harvest', {
-            'classes': ('collapse open',),
+            'classes': ('collapse closed',),
             'fields' : ('ytusers_to_harvest',),
         }),
     )
 
-    # define the raw_id_fields
-    raw_id_fields = ('ytusers_to_harvest',)
-    # define the related_lookup_fields
-    related_lookup_fields = {
-        'm2m': ['ytusers_to_harvest',],
-    }
+    filter_horizontal = ('ytusers_to_harvest',)
 
 class YTUserAdmin(admin.ModelAdmin):
     readonly_fields = (
             'subscriber_count',
-            'video_watch_count',
+            'video_count',
             'view_count'
     )
     fieldsets = (   
@@ -279,7 +316,7 @@ class YTUserAdmin(admin.ModelAdmin):
         (u'Détails', {
             u'fields': (  
                 u'subscriber_count',
-                u'video_watch_count',
+                u'video_count',
                 u'view_count'
                 )
             }

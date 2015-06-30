@@ -6,9 +6,9 @@ import sys
 from DebugLogger import DebugLogger
 
 PROJECT_PATH = os.path.abspath(os.path.split(__file__)[0])
-LOG_LEVEL = logging.DEBUG
+LOG_LEVEL = logging.INFO
 
-DEBUG = False
+DEBUG = True
 TEMPLATE_DEBUG = DEBUG
 
 dLogger = DebugLogger('debug'+__name__, os.path.join(PROJECT_PATH,"log/debugLogger.log"), '<%(thread)d>%(message)s')
@@ -32,9 +32,9 @@ MANAGERS = ADMINS
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'aspira_test',                
-        'USER': 'root',                       
-        'PASSWORD': 'dyson2014',                
+        'NAME': 'snh_2015',                
+        'USER': 'snh',                       
+        'PASSWORD': 'grcp2014',                
         'HOST': '127.0.0.1',                 
         'PORT': '3306',                          
         'OPTIONS': {
@@ -78,6 +78,10 @@ MEDIA_ROOT = os.path.join(PROJECT_PATH, "upload/")
 # trailing slash.
 # Examples: "http://media.lawrence.com/media/", "http://example.com/media/"
 MEDIA_URL = ''
+
+# For videos downloaded from youtube and dailymotion. Also contains the 
+# related captions files when available
+DOWNLOADED_VIDEO_PATH = MEDIA_ROOT
 
 # Absolute path to the directory static files should be collected to.
 # Don't put anything in this directory yourself; store your static files

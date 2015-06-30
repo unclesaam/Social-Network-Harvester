@@ -543,7 +543,8 @@ class FBComment(models.Model):
         app_label = "snh"
 
     def __unicode__(self):
-        return self.message
+        if self.message:
+            return self.message[:50]
 
     pmk_id =  models.AutoField(primary_key=True)
 

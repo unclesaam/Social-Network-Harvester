@@ -16,9 +16,9 @@
                 "fnRowCallback": function( nRow, aData, iDisplayIndex ) {
                     //from
                     ($('td:eq(1)', nRow).html() == "None") ? from = aData[5] : from = aData[1];
-                    $('td:eq(1)', nRow).html(  '<a href="/yt_user_detail/{{ harvester_id }}/fid/'+aData[5]+'">'+from+'</a>' );
+                    $('td:eq(1)', nRow).html(  '<a href="/yt_user_detail/{{ harvester_id }}/fid/'+aData[6]+'">'+from+'</a>' );
                     //to (post_ffrom)
-                    $('td:eq(2)', nRow).html(  '<a href="/yt_user_detail/{{ harvester_id }}/fid/'+aData[6]+'">'+aData[2]+'</a>' );
+                    $('td:eq(2)', nRow).html(  '<a href="/yt_user_detail/{{ harvester_id }}/fid/'+aData[7]+'">'+aData[2]+'</a>' );
                     //post
                     $('td:eq(3)', nRow).html(  '<a href="/yt_video_detail/{{ harvester_id }}/'+aData[3]+'">'+aData[3]+'</a>' );
                 },
@@ -28,8 +28,9 @@
                     { "bVisible":    true },//2 : u'video__user__username',
                     { "bVisible":    true },//3 : u'video__fid',
                     { "bVisible":    true },//4 : u'message',
-                    { "bVisible":    false },//5 : u'user__fid',
-                    { "bVisible":    false },//6 : u'video__user__fid',
+                    { "bVisible":    true },//5 : u'like_count',
+                    { "bVisible":    false },//6 : u'user__fid',
+                    { "bVisible":    false },//7 : u'video__user__fid',
                 ],
                 "aoColumnDefs": [ 
                     { 
@@ -73,7 +74,7 @@
         <th>company</th>
         <th>last web access</th>
         <th>subscriber count</th>
-        <th>video watch count</th>
+        <th>video count</th>
         <th>view count</th>
 
     </tr>
@@ -90,8 +91,8 @@
         <td>{{ user.location|default_if_none:"0" }}</td>
         <td>{{ user.company|default_if_none:"0" }}</td>
         <td>{{ user.last_web_access|default_if_none:"0" }}</td>
-        <td>{{ user.subscribers_count|default_if_none:"0" }}</td>
-        <td>{{ user.video_watch_count|default_if_none:"0" }}</td>
+        <td>{{ user.subscriber_count|default_if_none:"0" }}</td>
+        <td>{{ user.video_count|default_if_none:"0" }}</td>
         <td>{{ user.view_count|default_if_none:"0" }}</td>
     </tr>
     </tbody>
@@ -125,7 +126,7 @@
 <br>
 
 <center>
-<!-- OLD VERSION (outdated?)
+<!--OLD VERSION (For local files only)
 <a  
 	 href="{{ video_url }}"
 	 style="display:block;width:520px;height:330px"  
@@ -149,6 +150,7 @@
             <th>To</th>
             <th>Video ID</th>
             <th>Message</th>
+            <th>like count</th>
         </tr>
     </thead>
     <tbody>

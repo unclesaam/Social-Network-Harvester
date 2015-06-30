@@ -190,4 +190,57 @@ Ceci est un journal du travail effectué dans le cadre de la mise à niveau de l
 - fin de journée (6h)
 
 9 juin 2015:
-- 
+- patching de facebook et Twitter
+- Test de Youtube (Data api v2 est désuet... Il faut réimplémenter du nouveau code. Il n'existe pas de module tout-fait)
+- lecture de la documentation de gdata
+- fin de journée (5h)
+
+10 juin 2015:
+- lecture de documentation sur youtube
+- tests de fonctionnalités des code samples offerts par google
+- fin de journée (5h)
+
+11 juin 2015:
+- Rencontre avec Thierry, Mickael et Pier-Yves:
+	- Acces aux serveurs de production
+	- Discussion de l'avancement du stage avec Thierry
+- Connection SSH au serveur de production
+- Évaluation de la taille de la base de donné a receuillir
+- Fin de journée (5h)
+
+12 juin 2015:
+- Connection à la base de donné du serveur Prod
+- Backup des donnés legacy
+- Remise en marche du serveur-test (dû faire du ménage. STREAMR prend beaucoup de place, devrait être cleané)
+- fin de journée (6h)
+
+15 juin 2015:
+- Test et implémentation du nouvel API de Youtube en local
+- lecture de documentation
+- fin de journée (6h)
+
+16 juin 2015:
+- Recherche d'un module en python facilitant l'usage du nouvel api de Youtube
+- Aucune trouvée. Commencement de la création d'une classe avec les fonction pertinentes.
+- fin de journée (6h)
+
+17 juin 2015:
+- Rencontre a propos de la migration du serveur de production
+- Continuation du developpement de youtube
+- Il semble que les captions (sous-titres) des videos sont uniquement accessibles par le propriétaire... problème ahead.
+- fin de journée (6h)
+
+18 juin 2015:
+- Travail sur mon youtube wrapper. L'authentification oauth2 ne sert a rien. Requetes en mode public seulement
+- Utilisation d'autres API: youtube-dl qui permet de downloader des videos a partir de leur URL et d'en extraire les captions
+- fin de journée (7h)
+
+19,21,22,23,24,26,27,29 juins:
+- Développement et implémentation du "YoutubeV3Wrapper" comme client du YoutubeHarvester
+- Prise en charge du download des fichiers videos (basse qualité afin d'être conservatif sur l'espace) et des sous-titres lorsque disponibles.
+- Débugging, etc.
+- Changement de la structure d'update des YTUsers. Les "channels" peuvent être updaté en chunk (50 par api call). Même chose pour les YTVideos.
+- TODO: Créer des profils Google+ pour les informations d'utilisateurs. Le API de Youtube ne retourne que des infos sur un "channel" donné.
+  Un utilisateur Google+ peut potentiellement avoir plusieurs channels, ce qui change la structure profonde du SNH. Pour cela, il faudrait implémenter un
+  scrapper différent pour Google+.
+- fins de journés (6h)(5h)(4h)(7h)(6h)(5h)(6h)(8h)

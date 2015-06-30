@@ -1,10 +1,12 @@
 import logging
 import os
+import pprint
 
 class DebugLogger():
 
     indentation = 4
     indent_level = -indentation
+    pp = pprint.PrettyPrinter() 
 
     def __init__(self, loggerName, filePath, format):
     	open(filePath, 'w').close()
@@ -19,6 +21,9 @@ class DebugLogger():
     def log(self, message):
         self.logger.info('%s%s'%(' '*self.indent_level, message))
 
+    def pretty(self, message):
+        self.logger.info(self.pp.pformat(message).encode('utf8'))
+
     def exception(self, message):
         self.logger.exception(message)
 
@@ -32,7 +37,11 @@ class DebugLogger():
                 self.indent_level = 8
             elif self.indent_level < 0:
                 self.indent_level = self.indentation*40 - 4
-            ret = func(*args, **kwargs)
-            self.indent_level -= self.indentation
+            try:
+                ret = func(*args, **kwargs)
+                self.indent_level -= self.indentation
+            except:
+                self.indent_level -= self.indentation
+                raise
             return ret
         return inner
