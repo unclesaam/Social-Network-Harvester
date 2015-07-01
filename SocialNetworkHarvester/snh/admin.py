@@ -38,11 +38,12 @@ class TwitterHarvesterAdmin(admin.ModelAdmin):
     )
 
     # define the raw_id_fields
-    raw_id_fields = ('twusers_to_harvest','twsearch_to_harvest',)
+    #raw_id_fields = ('twusers_to_harvest','twsearch_to_harvest',)
     # define the related_lookup_fields
-    related_lookup_fields = {
-        'm2m': ['twusers_to_harvest','twsearch_to_harvest',],
-    }
+    #related_lookup_fields = {
+    #    'm2m': ['twusers_to_harvest','twsearch_to_harvest',],
+    #}
+    filter_horizontal = ('twusers_to_harvest','twsearch_to_harvest',)
 
 class TWUserAdmin(admin.ModelAdmin):
     search_fields = ('screen_name',)
@@ -132,11 +133,12 @@ class FacebookHarvesterAdmin(admin.ModelAdmin):
     )
 
     # define the raw_id_fields
-    raw_id_fields = ('fbusers_to_harvest',)
+    #raw_id_fields = ('fbusers_to_harvest',)
     # define the related_lookup_fields
-    related_lookup_fields = {
-        'm2m': ['fbusers_to_harvest',],
-    }
+    #related_lookup_fields = {
+    #    'm2m': ['fbusers_to_harvest',],
+    #}
+    filter_horizontal = ('fbusers_to_harvest',)
 
 
 class FBUserAdmin(admin.ModelAdmin):
@@ -263,11 +265,12 @@ class DailyMotionHarvesterAdmin(admin.ModelAdmin):
     )
 
     # define the raw_id_fields
-    raw_id_fields = ('dmusers_to_harvest',)
+    #raw_id_fields = ('dmusers_to_harvest',)
     # define the related_lookup_fields
-    related_lookup_fields = {
-        'm2m': ['dmusers_to_harvest',],
-    }
+    #related_lookup_fields = {
+    #    'm2m': ['dmusers_to_harvest',],
+    #}
+    filter_horizontal = ('dmusers_to_harvest',)
 
 class DMUserAdmin(admin.ModelAdmin):
     fields = [

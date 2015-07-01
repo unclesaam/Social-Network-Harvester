@@ -244,3 +244,8 @@ Ceci est un journal du travail effectué dans le cadre de la mise à niveau de l
   Un utilisateur Google+ peut potentiellement avoir plusieurs channels, ce qui change la structure profonde du SNH. Pour cela, il faudrait implémenter un
   scrapper différent pour Google+.
 - fins de journés (6h)(5h)(4h)(7h)(6h)(5h)(6h)(8h)
+
+30 juin 2015: 
+- Déploiement du code sur le serveur de production.
+- Combat sans mercie avec Apache et les virtualhosts.
+- fin de journée (7h)
