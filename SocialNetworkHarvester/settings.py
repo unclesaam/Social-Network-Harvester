@@ -8,19 +8,19 @@ from DebugLogger import DebugLogger
 PROJECT_PATH = os.path.abspath(os.path.split(__file__)[0])
 LOG_LEVEL = logging.INFO
 
-DEBUG = False
+DEBUG = True
 TEMPLATE_DEBUG = DEBUG
 
 dLogger = DebugLogger('debug'+__name__, os.path.join(PROJECT_PATH,"log/debugLogger.log"), '<%(thread)d>%(message)s')
 DEBUGCONTROL = {'commonmodel':      False,
-                'facebookmodel':    False,
+                'facebookmodel':    True,
                 'dailymotionmodel': False,
                 'twittermodel':     False,
-                'youtubemodel':     False,
-                'facebookch':       False,
+                'youtubemodel':     True,
+                'facebookch':       True,
                 'twitterch':        False,
                 'dailymotionch':    False,
-                'youtubech':        False
+                'youtubech':        True
                 }
 
 ADMINS = (
@@ -32,9 +32,9 @@ MANAGERS = ADMINS
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'snh_2015_schema',                
+        'NAME': 'aspira_test',                
         'USER': 'root',                       
-        'PASSWORD': 'admin2014',                
+        'PASSWORD': '1234',                
         'HOST': '127.0.0.1',                 
         'PORT': '3306',                          
         'OPTIONS': {
@@ -43,9 +43,9 @@ DATABASES = {
     }
 }
 
-FACEBOOK_APPLICATION_ID = '382086531988825'
-FACEBOOK_APPLICATION_SECRET_KEY = '7c7df5de5cf80ca403cb7959d7423f5b'
-FACEBOOK_APPLICATION_NAMESPACE = 'aspiratest'
+FACEBOOK_APPLICATION_ID = '336495213215911'
+FACEBOOK_APPLICATION_SECRET_KEY = '2079f3b96d08ef4edd8460fdab0db27c'
+FACEBOOK_APPLICATION_NAMESPACE = 'socnetapps'
 
 # Local time zone for this installation. Choices can be found here:
 # http://en.wikipedia.org/wiki/List_of_tz_zones_by_name
@@ -81,7 +81,7 @@ MEDIA_URL = ''
 
 # For videos downloaded from youtube and dailymotion. Also contains the 
 # related captions files when available
-DOWNLOADED_VIDEO_PATH = 'émnt/video/2015/'
+DOWNLOADED_VIDEO_PATH = 'C:/Users/Sam/Desktop/YoutubeVideos/'
 
 # Absolute path to the directory static files should be collected to.
 # Don't put anything in this directory yourself; store your static files
