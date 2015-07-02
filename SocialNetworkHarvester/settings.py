@@ -34,7 +34,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'snh_2015_schema',                
         'USER': 'root',                       
-        'PASSWORD': 'grcp2014',                
+        'PASSWORD': 'admin2014',                
         'HOST': '127.0.0.1',                 
         'PORT': '3306',                          
         'OPTIONS': {
@@ -43,7 +43,7 @@ DATABASES = {
     }
 }
 
-FACEBOOK_APPLICATION_ID = '336495213215911'
+FACEBOOK_APPLICATION_ID = '382086531988825'
 FACEBOOK_APPLICATION_SECRET_KEY = '7c7df5de5cf80ca403cb7959d7423f5b'
 FACEBOOK_APPLICATION_NAMESPACE = 'aspiratest'
 
@@ -81,7 +81,7 @@ MEDIA_URL = ''
 
 # For videos downloaded from youtube and dailymotion. Also contains the 
 # related captions files when available
-DOWNLOADED_VIDEO_PATH = '/mnt/video/2015'
+DOWNLOADED_VIDEO_PATH = 'émnt/video/2015/'
 
 # Absolute path to the directory static files should be collected to.
 # Don't put anything in this directory yourself; store your static files
