@@ -13,14 +13,14 @@ TEMPLATE_DEBUG = DEBUG
 
 dLogger = DebugLogger('debug'+__name__, os.path.join(PROJECT_PATH,"log/debugLogger.log"), '<%(thread)d>%(message)s')
 DEBUGCONTROL = {'commonmodel':      False,
-                'facebookmodel':    True,
+                'facebookmodel':    False,
                 'dailymotionmodel': False,
                 'twittermodel':     False,
-                'youtubemodel':     True,
-                'facebookch':       True,
+                'youtubemodel':     False,
+                'facebookch':       False,
                 'twitterch':        False,
                 'dailymotionch':    False,
-                'youtubech':        True
+                'youtubech':        False
                 }
 
 ADMINS = (
@@ -32,9 +32,9 @@ MANAGERS = ADMINS
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'aspira_test',                
+        'NAME': 'snh_2015_schema',                
         'USER': 'root',                       
-        'PASSWORD': '1234',                
+        'PASSWORD': 'grcp2014',                
         'HOST': '127.0.0.1',                 
         'PORT': '3306',                          
         'OPTIONS': {
@@ -43,7 +43,7 @@ DATABASES = {
     }
 }
 
-FACEBOOK_APPLICATION_ID = '336495213215911'
+FACEBOOK_APPLICATION_ID = '382086531988825'
 FACEBOOK_APPLICATION_SECRET_KEY = '2079f3b96d08ef4edd8460fdab0db27c'
 FACEBOOK_APPLICATION_NAMESPACE = 'socnetapps'
 
@@ -81,7 +81,7 @@ MEDIA_URL = ''
 
 # For videos downloaded from youtube and dailymotion. Also contains the 
 # related captions files when available
-DOWNLOADED_VIDEO_PATH = 'C:/Users/Sam/Desktop/YoutubeVideos/'
+DOWNLOADED_VIDEO_PATH = 'mnt/video/2015/'
 
 # Absolute path to the directory static files should be collected to.
 # Don't put anything in this directory yourself; store your static files

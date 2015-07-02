@@ -31,7 +31,7 @@ def run_twitter_harvester():
                     "active" if harvester.is_active else "inactive"))
         if harvester.is_active:
             
-            if harvester.remaining_user_timeline_hits <= 0 and remaining_user_lookup_hits <= 0:
+            if harvester.remaining_user_timeline_hits <= 0 and harvester.remaining_user_lookup_hits <= 0:
                 warn = u"The harvester %s has exceeded the status rate limits. Need to wait? %s" % (unicode(harvester), harvester.get_stats())
                 logger.warning(warn)
             else:
@@ -69,7 +69,7 @@ def get_latest_statuses_page(harvester, user):
     harvester.save()
     return latest_statuses_page
 
-@dLogger.debug
+@dLogger.debugz
 def sleeper(retry_count):
     if debugging: dLogger.log( "sleeper(retry_count: %s)"%retry_count)
     retry_delay = 1
