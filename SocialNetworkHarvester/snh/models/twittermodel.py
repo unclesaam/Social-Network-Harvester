@@ -43,8 +43,8 @@ class TwitterHarvester(AbstractHaverster):
     hourly_limit = models.IntegerField(null=True)
     reset_time = models.DateTimeField(null=True)
 
-    twusers_to_harvest = models.ManyToManyField('TWUser', related_name='twusers_to_harvest')
-    twsearch_to_harvest = models.ManyToManyField('TWSearch', related_name='twitterharvester.twsearch_to_harvest')
+    twusers_to_harvest = models.ManyToManyField('TWUser', related_name='twusers_to_harvest',blank=True)
+    twsearch_to_harvest = models.ManyToManyField('TWSearch', related_name='twitterharvester.twsearch_to_harvest', blank=True)
 
     #harvested user: Retrieving all statuses posted from user, plus it's infos
     last_harvested_user = models.ForeignKey('TWUser',  related_name='last_harvested_user', null=True)
@@ -55,6 +55,8 @@ class TwitterHarvester(AbstractHaverster):
 
     haverst_deque = None
     update_deque = None
+
+    keep_raw_statuses = models.BooleanField(default=False)
 
     @dLogger.debug
     def get_client(self):
@@ -292,6 +294,7 @@ class TWUser(models.Model):
 
     was_aborted = models.BooleanField()
     last_harvested_status = models.ForeignKey('TWStatus',  related_name='TWStatus.last_harvested_status', null=True)
+    last_valid_status_fid = models.CharField(max_length=255,null=True)
 
     @dLogger.debug
     def update_from_rawtwitter(self, twitter_model, twython=False):
@@ -468,6 +471,20 @@ class TWUser(models.Model):
 
 
 
+class TWStatusRaw(models.Model):
+
+    class Meta:
+        app_label = "snh"
+        verbose_name_plural = "Tw raw statuses"
+        verbose_name = "Tw raw status"
+
+    def __unicode__(self):
+        return str(self.snh_status)
+
+    pkm_id = models.AutoField(primary_key=True)
+
+    snh_status = models.ForeignKey('TWStatus', related_name='raw_twitter_response')
+    data = models.TextField(max_length=1000)
 
 
 
@@ -586,7 +603,11 @@ class TWStatus(models.Model):
 
                     if tag is None:
                         tag = Tag(text=twtag["text"])
-                        tag.save()
+                        try: 
+                            tag.save()
+                        except:
+                            tag = Tag(text=twtag["text"].encode('unicode-escape'))
+                            tag.save()
                         self.hash_tags.add(tag)
                         model_changed = True
                     else:
@@ -635,7 +656,6 @@ class TWStatus(models.Model):
                         if debugging: dLogger.log("    user created from user mention: %s"%usermention)
                     except:
                         if debugging: dLogger.exception("Exception occured while saving user:")
-                        pass
 
                     if usermention is None:
                         usermention = TWUser(
@@ -652,17 +672,16 @@ class TWStatus(models.Model):
                             model_changed = True    
 
         if model_changed:
-            text = re.sub(r'(\\\\x..)', '', self.text) #removing emojis from texts
-            self.text = self.text.encode('ascii', 'ignore')
             self.model_update_date = datetime.utcnow()
             self.error_on_update = False
             try:
                 self.save()
             except:
-                print self.text.encode('ascii', 'ignore')
+                self.text = self.text.encode('unicode-escape')
+                self.save()
 
     @dLogger.debug
-    def update_from_twitter(self, twitter_model, user):
+    def update_from_twitter(self, twitter_model, user, keepRaw):
         #if debugging: 
             #dLogger.log("update_from_twitter()")
             #dLogger.log("    twitter_model: %s"%twitter_model)
@@ -709,8 +728,12 @@ class TWStatus(models.Model):
                     pass
 
                 if tag is None:
-                    tag = Tag(text=twtag.text)
-                    tag.save()
+                    try:
+                        tag = Tag(text=twtag.text)
+                        tag.save()
+                    except:
+                        tag = Tag(text=twtag.text.encode('unicode-escape'))
+                        tag.save()
                     self.hash_tags.add(tag)
                     model_changed = True
                 else:
@@ -769,12 +792,19 @@ class TWStatus(models.Model):
         if model_changed:
             self.model_update_date = datetime.utcnow()
             self.error_on_update = False
+
+            if keepRaw:
+                raw_data = self.raw_twitter_response.all()
+                if len(raw_data) > 0:
+                    raw_data[0].data = twitter_model.AsDict()
+                    raw_data[0].save()
+                else:
+                    raw_data = TWStatusRaw.objects.create(snh_status=self,data=twitter_model.AsDict())
+
             try: 
                 self.save()
             except:
                 self.text = self.text.encode('unicode-escape')
+                self.source = self.source.encode('unicode-escape')
                 self.save()
             if debugging: dLogger.log("    Status %s has changed. Updated"%self)
-
-
-

@@ -249,3 +249,30 @@ Ceci est un journal du travail effectué dans le cadre de la mise à niveau de l
 - Déploiement du code sur le serveur de production.
 - Combat sans mercie avec Apache et les virtualhosts.
 - fin de journée (7h)
+
+1 juillet 2015:
+- Mise e place des harvesters "Qc2014", "Ontario 2014" et "Alberta 2015" sur le serveur de production
+- Backup de la DB à son état origninal
+- fin de journée (4h)
+
+2 juillet 2015:
+- Assemblée des membres du GRCP (présentation comme stagiaire)
+- tests des scrappers Facebook et Twitter: DB CAPPE EN 10 MIN!
+- Identification du problème: La table FBResult, qui a elle-seule prend 1000x plus de place que toute les autres tables.
+- Utilisation de la magie (et des symlinks...) pour que cette table soit sur un emplacement différent, plus volumineux.
+- fin de journée (7h)
+
+3 juillet 2015:
+- Entretien avec Mickael:
+	- TODO: collecter les données RAW pour "#abvote". période 7 avril 2015 - 24 mai 2015
+	- TODO: customizer le download en .csv des données Twitter, afin de fournir plus de data dans un même document (redondance...) 
+	- TODO: si possible, faire la collecte de tout les retweets des tweets principaux lors d'un harvest
+- Correction de la procédure de collecte de Twitter, élimination des cas de famine lorsque plusieurs harvesters sont utilisés
+- fin de journée (6h)
+
+6 juillet 2015:
+- Test plus exhaustif de twitter
+- Implémentation d'une option 'collecte des raw-statuses', soit des tweets à l'état brut en dict. (à la demande de Mickael)
+- Problème de connection à Twitter. (L'université me bloque l'accès? ou twitter?)
+- Test sur serveur de prod et patchs
+- Fin de journée (7h)

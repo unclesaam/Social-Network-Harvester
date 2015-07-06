@@ -277,7 +277,11 @@ class FBUser(models.Model):
             self.model_update_date = datetime.utcnow()
             self.error_on_update = False
             #print self.pmk_id, self.fid, self
-            self.save()
+            try:
+                self.save()
+            except:
+                self.name = self.name.encode('unicode-escape')
+                self.about = self.about.encode('unicode-excape')
             if debugging: dLogger.log("    updated user data: %s"%self)
 
         return model_changed
@@ -601,6 +605,19 @@ class FBComment(models.Model):
 
         return model_changed, self_prop
 
+    '''
+    {u'from': 
+        {   u'id': u'711962332264123', 
+            u'name': u'Christian Desch\xeanes'
+        }, 
+        u'like_count': 0, 
+        u'can_remove': False, 
+        u'created_time': u'2015-06-13T03:30:36+0000', 
+        u'message': u'', 
+        u'id': u'10153103006244620_10153103887959620', 
+        u'user_likes': False
+    }
+    '''
     @dLogger.debug
     def update_from_facebook(self, facebook_model, status):
         if debugging: dLogger.log("<FBComment: %s>::update_from_facebook()"%self.fid)
@@ -648,11 +665,10 @@ class FBComment(models.Model):
             try:
                 self.save()
             except:
-                self.message = facebook_model['message'].encode('unicode-escape')
+                self.message = self.message.encode('unicode-escape')
                 if debugging: dLogger.log("    Message needed unicode-escaping: '%s' (user: %s)"%(self.message, self.ffrom))
                 self.save()
             if debugging: dLogger.log("    updated comment %s"%self)
-
 
         #else:
         #    logger.debug(u">>>>>>>>>>>>>>>>>>FBComment exist and unchanged! %s" % (self.fid))

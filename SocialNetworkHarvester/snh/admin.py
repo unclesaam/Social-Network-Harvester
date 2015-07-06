@@ -18,6 +18,7 @@ class TwitterHarvesterAdmin(admin.ModelAdmin):
             'fields': (
                 u'harvester_name', 
                 u'is_active', 
+                u'keep_raw_statuses',
                 u'consumer_key',
                 u'consumer_secret',
                 u'access_token_key',

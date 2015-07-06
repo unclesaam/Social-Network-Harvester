@@ -491,7 +491,7 @@ def update_likes_from_batch(harvester, statusid, fblikes_page):
         if debugging: dLogger.log("    %s more likes to analyze"%likes_count)
         paging, new_page = get_comment_paging(fblikes_page)
 
-        usage = psutil.virtual_memory()
+        #usage = psutil.virtual_memory()
         #logger.debug(u"Updating %d likes. statusid:%s paging:%s Mem:%s MB" % (likes_count, statusid, paging, int(usage[4])/(1024.0)))
         
         if new_page:
@@ -571,11 +571,11 @@ class ThreadStatus(threading.Thread):
                 snh_status = FBPost.objects.get(fid=fbstatus["id"])
                 snh_status.update_from_facebook(fbstatus, user)
             except ObjectDoesNotExist:
-                msg = u"ERROR! Post already exist but not found %s for %s" % (unicode(fbstatus), user.fid if user.fid else "0")
+                msg = u"<p style='red'>ERROR! Post already exist but not found %s for %s</p>" % (unicode(fbstatus), user.fid if user.fid else "0")
                 logger.exception(msg) 
                 if debugging: dLogger.exception(msg)
         except:
-            msg = u"Cannot update status %s for %s" % (unicode(fbstatus)[:100], user.fid if user.fid else "0")
+            msg = u"<p style='red'>Cannot update status %s for %s</p>" % (unicode(fbstatus)[:100], user.fid if user.fid else "0")
             logger.exception(msg) 
             if debugging: dLogger.exception(msg)
         return snh_status
@@ -610,7 +610,7 @@ class ThreadComment(threading.Thread):
                 logger.info(u"ThreadComment %s. Queue is empty." % self)
                 break;
             except:
-                msg = u"ThreadComment %s. Error." % self
+                msg = u"<p style='red'>ThreadComment %s. Error.</p>" % self
                 logger.exception(msg)    
                 if debugging: dLogger.exception(msg)  
             finally:
@@ -641,7 +641,7 @@ class ThreadComment(threading.Thread):
                 logger.exception(msg) 
                 if debugging: dLogger.exception(msg) 
         except:
-            msg = u"Cannot update comment %s for %s" % (unicode(comment), post.fid if post.fid else "0")
+            msg = u"<p style='red'>Cannot update comment %s for %s</p>" % (unicode(comment), post.fid if post.fid else "0")
             logger.exception(msg) 
             if debugging: dLogger.exception(msg)
         return fbcomment
