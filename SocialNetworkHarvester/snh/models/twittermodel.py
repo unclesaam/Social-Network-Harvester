@@ -39,7 +39,7 @@ class TwitterHarvester(AbstractHaverster):
     remaining_user_timeline_hits = models.IntegerField(null=True)
     remaining_user_lookup_hits = models.IntegerField(null=True)
 
-    reset_time_in_seconds = models.IntegerField(null=True)
+    reset_time_in_seconds = models.IntegerField(null=True) 
     hourly_limit = models.IntegerField(null=True)
     reset_time = models.DateTimeField(null=True)
 
