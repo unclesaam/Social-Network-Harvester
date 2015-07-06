@@ -8,7 +8,7 @@ from django import template
 from django.template.defaultfilters import stringfilter
 from django.views.decorators.csrf import csrf_exempt
 
-from settings import PROJECT_PATH, DEBUG
+from settings import PROJECT_PATH
 
 from snh.models.twittermodel import *
 from snh.models.facebookmodel import *
