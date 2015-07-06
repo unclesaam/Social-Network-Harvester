@@ -8,44 +8,81 @@ from DebugLogger import DebugLogger
 PROJECT_PATH = os.path.abspath(os.path.split(__file__)[0])
 LOG_LEVEL = logging.INFO
 
-DEBUG = True
+DEBUG = False
 TEMPLATE_DEBUG = DEBUG
 
-dLogger = DebugLogger('debug'+__name__, os.path.join(PROJECT_PATH,"log/debugLogger.log"), '<%(thread)d>%(message)s')
-DEBUGCONTROL = {'commonmodel':      False,
-                'facebookmodel':    False,
-                'dailymotionmodel': False,
-                'twittermodel':     False,
-                'youtubemodel':     False,
-                'facebookch':       False,
-                'twitterch':        False,
-                'dailymotionch':    False,
-                'youtubech':        False
-                }
+PROD = True
 
+dLogger = DebugLogger('debug'+__name__, os.path.join(PROJECT_PATH,"log/debugLogger.log"), '<%(thread)d>%(message)s')
 ADMINS = (
     # ('Your Name', 'your_email@example.com'),
 )
-
 MANAGERS = ADMINS
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'snh_2015_schema',                
-        'USER': 'root',                       
-        'PASSWORD': 'grcp2014',                
-        'HOST': '127.0.0.1',                 
-        'PORT': '3306',                          
-        'OPTIONS': {
-            "init_command": "SET foreign_key_checks = 0;",
+if PROD: #en mode production:
+    DEBUGCONTROL = {'commonmodel':      False,
+                    'facebookmodel':    False,
+                    'dailymotionmodel': False,
+                    'twittermodel':     False,
+                    'youtubemodel':     False,
+                    'facebookch':       False,
+                    'twitterch':        False,
+                    'dailymotionch':    False,
+                    'youtubech':        False
+                    }
+
+    DOWNLOADED_VIDEO_PATH = 'mnt/video/2015/'
+
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.mysql',
+            'NAME': 'snh_2015_schema',                
+            'USER': 'root',                       
+            'PASSWORD': 'grcp2014',                
+            'HOST': '127.0.0.1',                 
+            'PORT': '3306',                          
+            'OPTIONS': {
+                "init_command": "SET foreign_key_checks = 0;",
+            }
         }
     }
-}
+    
+    FACEBOOK_APPLICATION_ID = '382086531988825'
+    FACEBOOK_APPLICATION_SECRET_KEY = '2079f3b96d08ef4edd8460fdab0db27c'
+    FACEBOOK_APPLICATION_NAMESPACE = 'socnetapps'
 
-FACEBOOK_APPLICATION_ID = '382086531988825'
-FACEBOOK_APPLICATION_SECRET_KEY = '2079f3b96d08ef4edd8460fdab0db27c'
-FACEBOOK_APPLICATION_NAMESPACE = 'socnetapps'
+else: # en ode développement:
+    DEBUGCONTROL = {'commonmodel':      False,
+                    'facebookmodel':    True,
+                    'dailymotionmodel': True,
+                    'twittermodel':     True,
+                    'youtubemodel':     True,
+                    'facebookch':       True,
+                    'twitterch':        True,
+                    'dailymotionch':    True,
+                    'youtubech':        True
+                    }
+    # For videos downloaded from youtube and dailymotion. Also contains the 
+    # related captions files when available
+    DOWNLOADED_VIDEO_PATH = 'C:\Users\Sam\Desktop\YoutubeVideos'
+
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.mysql',
+            #'NAME': 'aspira_test',         
+            'NAME': 'snh_2015_schema',       
+            'USER': 'root',                       
+            'PASSWORD': '1234',                
+            'HOST': '127.0.0.1',                 
+            'PORT': '3306',                          
+            'OPTIONS': {
+                "init_command": "SET foreign_key_checks = 0;",
+            }
+        }
+    }
+    FACEBOOK_APPLICATION_ID = '336495213215911'
+    FACEBOOK_APPLICATION_SECRET_KEY = '7c7df5de5cf80ca403cb7959d7423f5b'
+    FACEBOOK_APPLICATION_NAMESPACE = 'aspiratest'
 
 # Local time zone for this installation. Choices can be found here:
 # http://en.wikipedia.org/wiki/List_of_tz_zones_by_name
@@ -78,10 +115,6 @@ MEDIA_ROOT = os.path.join(PROJECT_PATH, "upload/")
 # trailing slash.
 # Examples: "http://media.lawrence.com/media/", "http://example.com/media/"
 MEDIA_URL = ''
-
-# For videos downloaded from youtube and dailymotion. Also contains the 
-# related captions files when available
-DOWNLOADED_VIDEO_PATH = 'mnt/video/2015/'
 
 # Absolute path to the directory static files should be collected to.
 # Don't put anything in this directory yourself; store your static files
@@ -144,6 +177,7 @@ TEMPLATE_DIRS = (
     # Always use forward slashes, even on Windows.
     # Don't forget to use absolute paths, not relative paths.
     os.path.join(PROJECT_PATH, "templates/"),
+    os.path.join(PROJECT_PATH, "templates/admin/"),
 )
 
 INSTALLED_APPS = (

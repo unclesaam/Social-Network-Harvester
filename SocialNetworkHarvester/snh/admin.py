@@ -18,6 +18,7 @@ class TwitterHarvesterAdmin(admin.ModelAdmin):
             'fields': (
                 u'harvester_name', 
                 u'is_active', 
+                u'keep_raw_statuses',
                 u'consumer_key',
                 u'consumer_secret',
                 u'access_token_key',
@@ -48,7 +49,7 @@ class TwitterHarvesterAdmin(admin.ModelAdmin):
 class TWUserAdmin(admin.ModelAdmin):
     search_fields = ('screen_name',)
     readonly_fields = (
-			    'model_update_date',
+                'model_update_date',
                             'lang', 
                             'description',
                             'location', 
@@ -60,7 +61,7 @@ class TWUserAdmin(admin.ModelAdmin):
                         )
     fieldsets = (   (None, {
                         'fields': (
-			    'screen_name',
+                'screen_name',
                             'error_triggered'
                         )
                     }),
