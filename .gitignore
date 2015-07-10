@@ -1,2 +1,4 @@
 SocialNetworkHarvester/py27env.bat
 *.log
+doc/
+*.bat

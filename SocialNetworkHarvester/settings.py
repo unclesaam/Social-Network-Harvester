@@ -8,10 +8,10 @@ from DebugLogger import DebugLogger
 PROJECT_PATH = os.path.abspath(os.path.split(__file__)[0])
 LOG_LEVEL = logging.INFO
 
-DEBUG = False
+DEBUG = True
 TEMPLATE_DEBUG = DEBUG
 
-PROD = True
+PROD = False
 
 dLogger = DebugLogger('debug'+__name__, os.path.join(PROJECT_PATH,"log/debugLogger.log"), '<%(thread)d>%(message)s')
 ADMINS = (
@@ -51,8 +51,8 @@ if PROD: #en mode production:
     FACEBOOK_APPLICATION_SECRET_KEY = '2079f3b96d08ef4edd8460fdab0db27c'
     FACEBOOK_APPLICATION_NAMESPACE = 'socnetapps'
 
-else: # en ode développement:
-    DEBUGCONTROL = {'commonmodel':      False,
+else: # en mode développement:
+    DEBUGCONTROL = {'commonmodel':      True,
                     'facebookmodel':    True,
                     'dailymotionmodel': True,
                     'twittermodel':     True,
@@ -80,8 +80,8 @@ else: # en ode développement:
             }
         }
     }
-    FACEBOOK_APPLICATION_ID = '336495213215911'
-    FACEBOOK_APPLICATION_SECRET_KEY = '7c7df5de5cf80ca403cb7959d7423f5b'
+    FACEBOOK_APPLICATION_ID = '382086531988825'
+    FACEBOOK_APPLICATION_SECRET_KEY = '2079f3b96d08ef4edd8460fdab0db27c'
     FACEBOOK_APPLICATION_NAMESPACE = 'aspiratest'
 
 # Local time zone for this installation. Choices can be found here:

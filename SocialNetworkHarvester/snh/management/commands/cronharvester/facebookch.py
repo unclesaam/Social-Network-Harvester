@@ -39,20 +39,39 @@ E_CRITICALS = [E_DNEXIST, E_PATH, E_FALSE, E_UNMAN, E_USER_QUOTA]
 def run_facebook_harvester():
     if debugging: dLogger.log("run_facebook_harvester()")
 
-    harvester_list = FacebookHarvester.objects.all()
     sessionKey = FacebookSessionKey.objects.all()
     if not sessionKey:
         raise(Exception('A user needs to be connected to facebook through the SNH admin page first.'))
-    for harvester in harvester_list:
-        client = facebook.GraphAPI(access_token=sessionKey[0].get_access_token())
-        extendedToken = client.extend_access_token(app_id=FACEBOOK_APPLICATION_ID, app_secret=FACEBOOK_APPLICATION_SECRET_KEY)
-        sessionKey[0].set_access_token(extendedToken['access_token']) # Insure that the token will be valid for another two months
+    client = facebook.GraphAPI(access_token=sessionKey[0].get_access_token())
+    extendedToken = client.extend_access_token(app_id=FACEBOOK_APPLICATION_ID, app_secret=FACEBOOK_APPLICATION_SECRET_KEY)
+    sessionKey[0].set_access_token(extendedToken['access_token']) # Insure that the token will be valid for another two months
+
+    all_harvesters = sort_harvesters_by_priority()
+    for harvester in all_harvesters:
+        harverster.harvest_in_progress = False
+        harvester.save()
+
+    for harvester in sort_harvesters_by_priority():
         harvester.set_client(client)
-        logger.info(u"The harvester %s is %s" % 
-                                                (unicode(harvester), 
-                                                "active" if harvester.is_active else "inactive"))
+        logger.info(u"The harvester %s is %s" % (unicode(harvester), "active" if harvester.is_active else "inactive"))
         if harvester.is_active:
             run_harvester_v3(harvester)
+
+@dLogger.debug
+def sort_harvesters_by_priority():
+    if debugging: dLogger.log("sort_harvesters_by_priority()")
+
+    all_harvesters = FacebookHarvester.objects.all()
+    aborted_harvesters = [harv for harv in all_harvesters if harv.current_harvest_start_time != None]
+    clean_harvesters = [harv for harv in all_harvesters if harv not in aborted_harvesters]
+
+    sorted_harvester_list = sorted(clean_harvesters, key=lambda harvester: harvester.last_harvest_start_time)
+    sorted_harvester_list += sorted(aborted_harvesters, key=lambda harvester: harvester.current_harvest_start_time)
+
+    return sorted_harvester_list
+
+
+
 
 @dLogger.debug
 def gbp_error_man(bman_obj, fbobj):
@@ -216,7 +235,7 @@ def generic_batch_processor_v2(harvester, bman_list):
                 lap_start = time.time()
                 error = gbp_core(harvester, bman_chunk, error_map, next_bman_list, failed_list)
                 error_sum = error_sum + 1 if error else 0
-                logger.info(u"gbp_core: len(next_bman_list): %s" % len(next_bman_list))
+                #logger.info(u"gbp_core: len(next_bman_list): %s" % len(next_bman_list))
             elif E_USER_QUOTA in error_map:
                 logger.error("bman(%d/%d) User quota reached. Aborting the harvest!" % (counter, bman_total))
                 failed_list += bman_chunk

@@ -438,7 +438,6 @@ def run_harvester_timeline(harvester):
         harvester.update_client_stats()
 
     finally:
-        harvester.end_current_harvest()
         if harvester.last_user_harvest_was_aborted:
             aborted_user = harvester.get_current_harvested_user()
             aborted_user.was_aborted = True
@@ -459,7 +458,6 @@ def run_harvester_search(harvester):
         logger.exception(msg)    
         if debugging: dLogger.exception(msg)
     finally:
-        harvester.end_current_harvest()
         logger.info(u"End SEARCH API: %s Stats:%s" % (harvester,unicode(harvester.get_stats())))
         
     logger.info(u"End: %s Stats:%s" % (harvester,unicode(harvester.get_stats())))

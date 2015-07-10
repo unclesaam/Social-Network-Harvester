@@ -1,3 +1,4 @@
+
 # coding=UTF-8
 from collections import deque
 import datetime
@@ -281,7 +282,8 @@ class FBUser(models.Model):
                 self.save()
             except:
                 self.name = self.name.encode('unicode-escape')
-                self.about = self.about.encode('unicode-excape')
+                if self.about:
+                    self.about = self.about.encode('unicode-escape')
             if debugging: dLogger.log("    updated user data: %s"%self)
 
         return model_changed
@@ -549,6 +551,8 @@ class FBComment(models.Model):
     def __unicode__(self):
         if self.message:
             return self.message[:50]
+        else:
+            return '-- No message --'
 
     pmk_id =  models.AutoField(primary_key=True)
 

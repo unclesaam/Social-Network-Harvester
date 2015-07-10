@@ -43,13 +43,19 @@ class AbstractHaverster(models.Model):
 
     full_harvest_on_next_run = models.BooleanField()
 
+    @dLogger.debug
     def start_new_harvest(self):
+        if debugging: dLogger.log('start_new_harvest()')
+
         self.current_harvest_start_time = datetime.utcnow()
         self.current_harvest_call_count = 0
         self.harvest_in_progress = True
         self.save()
 
+    @dLogger.debug
     def end_current_harvest(self):
+        if debugging: dLogger.log('start_new_harvest()')
+
         self.last_harvest_start_time = self.current_harvest_start_time
         self.last_harvest_end_time = datetime.utcnow()
         self.current_harvest_start_time = None
