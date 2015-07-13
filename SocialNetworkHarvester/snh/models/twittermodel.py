@@ -210,12 +210,12 @@ class TwitterHarvester(AbstractHaverster):
 
     @dLogger.debug
     def get_stats(self):
-        if debugging: 
-            dLogger.log( "get_stats()")
-            dLogger.log( "    remaining_hits (search)(timeline)(user): (%s)(%s)(%s)"%(self.remaining_search_hits, self.remaining_user_timeline_hits, self.remaining_user_lookup_hits))
-            dLogger.log( "    reset_time: %s"%self.reset_time)
-            dLogger.log( "    last_harvested_user: %s"%self.last_harvested_user)
-            dLogger.log( "    current_harvested_user: %s"%self.last_harvested_user)
+        #if debugging: 
+        #    dLogger.log( "get_stats()")
+        #    dLogger.log( "    remaining_hits (search)(timeline)(user): (%s)(%s)(%s)"%(self.remaining_search_hits, self.remaining_user_timeline_hits, self.remaining_user_lookup_hits))
+        #    dLogger.log( "    reset_time: %s"%self.reset_time)
+        #    dLogger.log( "    last_harvested_user: %s"%self.last_harvested_user)
+        #    dLogger.log( "    current_harvested_user: %s"%self.last_harvested_user)
         parent_stats = super(TwitterHarvester, self).get_stats()
         parent_stats["concrete"] = {
                                     "remaining_hits (search)(timeline)(user)":(self.remaining_search_hits, self.remaining_user_timeline_hits, self.remaining_user_lookup_hits),
@@ -552,7 +552,7 @@ class TWStatus(models.Model):
         return user
 
     @dLogger.debug
-    def update_from_rawtwitter(self, twitter_model, user, twython=False):
+    def update_from_rawtwitter(self, twitter_model, user, keepRaw, twython=False):
         if debugging: dLogger.log("%s::update_from_rawtwitter()"%self)
 
         model_changed = False
@@ -674,6 +674,15 @@ class TWStatus(models.Model):
         if model_changed:
             self.model_update_date = datetime.utcnow()
             self.error_on_update = False
+
+            if keepRaw:
+                raw_data = self.raw_twitter_response.all()
+                if len(raw_data) > 0:
+                    raw_data[0].data = twitter_model.AsDict()
+                    raw_data[0].save()
+                else:
+                    raw_data = TWStatusRaw.objects.create(snh_status=self,data=twitter_model.AsDict())
+
             try:
                 self.save()
             except:
@@ -783,7 +792,6 @@ class TWStatus(models.Model):
                         if debugging: dLogger.log("    user created from user mention: %s"%usermention)
                 except:
                     if debugging: dLogger.exception("AN EXCEPTION OCCURED WHILE CREATING NEW USER:")
-                    pass
 
                 if usermention and usermention not in self.user_mentions.all():
                     self.user_mentions.add(usermention)

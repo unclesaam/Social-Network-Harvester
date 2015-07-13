@@ -4,6 +4,7 @@ import twitter
 import time
 import datetime
 import urllib
+import json
 
 from twython import *
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
@@ -25,8 +26,10 @@ logger = snhlogger.init_logger(__name__, "twitter.log")
 @dLogger.debug
 def run_twitter_harvester():
     if debugging: dLogger.log( "run_twitter_harvester()")
-    harvester_list = TwitterHarvester.objects.all()
 
+    #custom_export()
+    #'''
+    harvester_list = TwitterHarvester.objects.all()
     for harvester in harvester_list:
         logger.info(u"The harvester %s is %s" % 
                     (unicode(harvester), 
@@ -58,6 +61,7 @@ def run_twitter_harvester():
                 run_users_update(harvester)
 
             harvester.end_current_harvest()
+        #'''
 
 
 
@@ -241,7 +245,7 @@ def status_from_search(harvester, tw_status):
                                     )
             snh_status.save()
             if debugging: dLogger.log('New Status saved for %s: %s'%(user, snh_status))
-        snh_status.update_from_rawtwitter(tw_status, user)
+        snh_status.update_from_rawtwitter(tw_status, user, harvester.keep_raw_statuses)
     except:
         msg = u"Cannot update status %s for user %s:%s)" % (tw_status.id, twUser.screen_name, twUser.id)
         logger.exception(msg) 
@@ -251,15 +255,14 @@ def status_from_search(harvester, tw_status):
 
 @dLogger.debug
 def update_search(snh_search, snh_status):
-    #if debugging: dLogger.log( "update_search(snh_search: %s, snh_status: %s)"%(snh_search, snh_status))
+    if debugging: dLogger.log( "update_search(snh_search: %s, snh_status: %s)"%(snh_search, snh_status))
 
     if snh_status and snh_search.status_list.filter(fid__exact=snh_status.fid).count() == 0:
         snh_search.status_list.add(snh_status)
-        snh_search.latest_status_harvested = snh_status
         snh_search.save()
 
 @dLogger.debug
-def call_search(harvester, term, since_id=None):
+def call_search(harvester, term, until=None, max_id=None):
     if debugging: dLogger.log( "call_search(harvester: %s, term: %s)"%(harvester, term.encode('ascii', 'ignore')))
 
     retry = 0
@@ -271,21 +274,23 @@ def call_search(harvester, term, since_id=None):
 
             params = {   
                         u"term":uniterm, 
-                        u"since_id":since_id, 
                         u"count": 200,
                         "include_entities":"True",
-                        'until':harvester.harvest_window_to.strftime('%Y-%m-%d'),
                         }
+            if until:
+                params['until'] = until
+            elif max_id:
+                params['max_id'] = max_id
 
             logger.info(u"Getting new retry:%d, params:%s" % (retry,params))
             data = harvester.api_call(u"GetSearch", params)
 
-            #dLogger.pretty(data)
+            dLogger.pretty(data)
 
             harvester.remaining_search_hits -= 1
             harvester.save()
 
-            if len(data) > 0:
+            if len(data) > 1:
                 status_list = data
                 has_more = True
                 #dLogger.log('    it has more!')
@@ -304,7 +309,7 @@ def call_search(harvester, term, since_id=None):
 
     logger.info(u"Next page for %s: %s Hits to go: %d, len:%d" % (term, harvester, harvester.remaining_search_hits,len(status_list)))
     return status_list, has_more
-
+'''
 @dLogger.debug
 def search_term(harvester, twsearch):
     if debugging: dLogger.log( "search_term(harvester: %s, twsearch: %s)"%(harvester, twsearch))
@@ -330,56 +335,52 @@ def search_term(harvester, twsearch):
         logger.info(u"last status date: %s" % status_time)
         if next_page:
             status_list, next_page = call_search(harvester, twsearch.term, since_id)
-
+'''
 @dLogger.debug
 def para_search_term(harvester, all_twsearch):
     if debugging: dLogger.log( "para_search_term(harvester: %s, all_twsearch: %s)"%(harvester, all_twsearch))
     
-    searches = []
-    for twsearch in all_twsearch:
-        since_id = None
-        if twsearch.latest_status_harvested is not None:
-            since_id = unicode(twsearch.latest_status_harvested.fid)
-        searches.append({
-                            "twsearch":twsearch,
-                            "page":1,
-                            "has_more":True,
-                            "since_id":since_id,
-                        })
-    new_page_in_the_box = True
+    searches = [twsearch for twsearch in all_twsearch]
 
-    while new_page_in_the_box:
-        new_page_in_the_box = False
+    while len(searches) > 0:
+        snh_search = searches.pop(0)
 
-        for search in searches:
-            if debugging: dLogger.log('    search: %s'%search)
-            if search["has_more"]:
-                new_page_in_the_box = True
+        last_harvested_status = snh_search.latest_status_harvested
 
-                logger.info(u"Will search for %s, since_id:%s" % (search["twsearch"].term, search["since_id"]))
-                status_list, has_more = call_search(harvester, search["twsearch"].term, search["since_id"])
 
-                search["page"] += 1
-                search["has_more"] = has_more
+        logger.info(u"Will search for %s," % (snh_search.term))
+        if last_harvested_status:
+            max_id = last_harvested_status.fid
+            status_list, has_more = call_search(harvester, snh_search.term, max_id=max_id)
+        else:
+            until = datetime.strftime(harvester.harvest_window_to, '%Y-%m-%d')
+            status_list, has_more = call_search(harvester, snh_search.term, until=until)
 
-                status_time = None
-                for status in status_list:
+        status_time = None
+        for status in status_list:
+            status_time = datetime.strptime(status.created_at,'%a %b %d %H:%M:%S +0000 %Y')
 
-                    status_time = datetime.strptime(status.created_at,'%a %b %d %H:%M:%S +0000 %Y')
-                    if status_time > harvester.harvest_window_from and \
-                            status_time < harvester.harvest_window_to:
+            dLogger.log('    created_at: %s'%datetime.strftime(status_time, '%Y-%m-%d'))
 
-                        snh_status = status_from_search(harvester, status)
-                        update_search(search["twsearch"], snh_status)
+            if status_time > harvester.harvest_window_from and \
+                    status_time < harvester.harvest_window_to:
 
-                    if status_time < harvester.harvest_window_from:
-                        search["has_more"] = False
-                        break
+                snh_status = status_from_search(harvester, status)
+                update_search(snh_search, snh_status)
 
-                if status_time is None or len(status_list) == 0:
-                    search["has_more"] = False
-                 
-                logger.info(u"last status date: %s" % status_time)
+                snh_search.latest_status_harvested = snh_status
+                snh_search.save()
+
+            if status_time < harvester.harvest_window_from:
+                has_more = False
+
+        if status_time is None or len(status_list) == 0:
+            has_more = False
+
+        if has_more:
+            searches.append(snh_search)
+         
+        logger.info(u"last status date: %s" % status_time)
 
 
 @dLogger.debug
@@ -508,3 +509,20 @@ def custom_migration():
         harv.save()
         dLogger.log('copied %s'%harv)
         
+def custom_export():
+    harv = TwitterHarvester.objects.get(pk=4)
+    hashtag = TWSearch.objects.get(pk=31)
+
+    raws = TWStatusRaw.objects.all()
+
+    statuses = hashtag.status_list.all()
+    open("C:\Users\Sam\Desktop\\abvote.json", 'w').close()
+    f = open("C:\Users\Sam\Desktop\\abvote.json", 'w')
+
+    for status in raws:
+        #print status.data
+        #print status.raw_twitter_response.all()
+        f.write(status.snh_status.text.encode('utf-8', 'ignore')+'\n')
+        f.write(status.data.encode('utf-8','ignore'))
+        f.write('\n\n')
+    f.close()

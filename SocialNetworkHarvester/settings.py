@@ -11,7 +11,7 @@ LOG_LEVEL = logging.INFO
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
 
-PROD = False
+PROD = True
 
 dLogger = DebugLogger('debug'+__name__, os.path.join(PROJECT_PATH,"log/debugLogger.log"), '<%(thread)d>%(message)s')
 ADMINS = (

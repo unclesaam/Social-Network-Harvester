@@ -77,8 +77,8 @@ class AbstractHaverster(models.Model):
         raise NotImplementedError( "Should have implemented this" )
 
     def get_stats(self):
-        if debugging: 
-            dLogger.log('<Harvester: \'%s\'>::get_stats()'%self)
+        #if debugging: 
+        #    dLogger.log('<Harvester: \'%s\'>::get_stats()'%self)
             #dLogger.log('    harvester_type: %s'%self.harvester_type)
             #dLogger.log('    harvester_name: %s'%self.harvester_name)
             #dLogger.log('    is_active: %s'%self.is_active)

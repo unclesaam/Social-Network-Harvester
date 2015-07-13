@@ -48,7 +48,7 @@ def run_facebook_harvester():
 
     all_harvesters = sort_harvesters_by_priority()
     for harvester in all_harvesters:
-        harverster.harvest_in_progress = False
+        harvester.harvest_in_progress = False
         harvester.save()
 
     for harvester in sort_harvesters_by_priority():
