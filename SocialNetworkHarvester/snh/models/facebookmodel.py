@@ -537,6 +537,7 @@ class FBPost(models.Model):
                 self.save()
             except:
                 self.message = facebook_model['message'].encode('unicode-escape')
+                self.name = self.name.encode('unicode-escape')
                 if debugging: dLogger.log("    Message needed unicode-escaping: '%s' (user: %s)"%(self.message, self.ffrom))
                 self.save()
             if debugging: dLogger.log("    Message updated: %s"%self)

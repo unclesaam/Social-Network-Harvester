@@ -35,7 +35,7 @@ class TwitterHarvester(AbstractHaverster):
 
     #remaining_hits = models.IntegerField(null=True)
 
-    remaining_search_hits = models.IntegerField(null=True)
+    remaining_search_hits = models.IntegerField(null=True) #actually corresponds to statuses/lookup/
     remaining_user_timeline_hits = models.IntegerField(null=True)
     remaining_user_lookup_hits = models.IntegerField(null=True)
 
@@ -93,7 +93,7 @@ class TwitterHarvester(AbstractHaverster):
         userLookupRates = rates["users"]["/users/lookup"]
         statusTimelineRates = rates["statuses"]["/statuses/user_timeline"]
 
-        self.remaining_search_hits = searchRates["remaining"]
+        self.remaining_search_hits = rates["statuses"]["/statuses/lookup"]['remaining']
         self.remaining_user_timeline_hits = statusTimelineRates["remaining"]
         self.remaining_user_lookup_hits = userLookupRates["remaining"]
 
@@ -210,12 +210,12 @@ class TwitterHarvester(AbstractHaverster):
 
     @dLogger.debug
     def get_stats(self):
-        #if debugging: 
-        #    dLogger.log( "get_stats()")
-        #    dLogger.log( "    remaining_hits (search)(timeline)(user): (%s)(%s)(%s)"%(self.remaining_search_hits, self.remaining_user_timeline_hits, self.remaining_user_lookup_hits))
-        #    dLogger.log( "    reset_time: %s"%self.reset_time)
-        #    dLogger.log( "    last_harvested_user: %s"%self.last_harvested_user)
-        #    dLogger.log( "    current_harvested_user: %s"%self.last_harvested_user)
+        if debugging: 
+            dLogger.log( "get_stats()")
+            dLogger.log( "    remaining_hits (search)(timeline)(user): (%s)(%s)(%s)"%(self.remaining_search_hits, self.remaining_user_timeline_hits, self.remaining_user_lookup_hits))
+            dLogger.log( "    reset_time: %s"%self.reset_time)
+            dLogger.log( "    last_harvested_user: %s"%self.last_harvested_user)
+            dLogger.log( "    current_harvested_user: %s"%self.last_harvested_user)
         parent_stats = super(TwitterHarvester, self).get_stats()
         parent_stats["concrete"] = {
                                     "remaining_hits (search)(timeline)(user)":(self.remaining_search_hits, self.remaining_user_timeline_hits, self.remaining_user_lookup_hits),
@@ -553,7 +553,9 @@ class TWStatus(models.Model):
 
     @dLogger.debug
     def update_from_rawtwitter(self, twitter_model, user, keepRaw, twython=False):
-        if debugging: dLogger.log("%s::update_from_rawtwitter()"%self)
+        #if debugging: 
+            #dLogger.log("%s::update_from_rawtwitter()"%self)
+            #dLogger.pretty(twitter_model)
 
         model_changed = False
         props_to_check = {
@@ -572,15 +574,16 @@ class TWStatus(models.Model):
 
         for prop in props_to_check:
             prop_name = props_to_check[prop]
-            if hasattr(twitter_model, prop_name):
-                tw_prop_val = getattr(twitter_model, prop_name)
+            if prop_name in twitter_model:
+                tw_prop_val = twitter_model[prop_name]
                 if self.__dict__[prop] != tw_prop_val:
                     self.__dict__[prop] = tw_prop_val
                     model_changed = True
+                    dLogger.log('    %s has changed: %s'%(prop, self.__dict__[prop]))
 
         for prop in date_to_check:
-            if hasattr(twitter_model, prop):
-                tw_prop_val = getattr(twitter_model, prop)
+            if prop in twitter_model:
+                tw_prop_val = twitter_model[prop]
                 format = '%a %b %d %H:%M:%S +0000 %Y'              
                 if twython:
                     format = '%a %b %d %H:%M:%S +0000 %Y'
@@ -590,8 +593,8 @@ class TWStatus(models.Model):
                     model_changed = True
 
 
-        if hasattr(twitter_model, "entities"):
-            entities = getattr(twitter_model, "entities")
+        if "entities" in twitter_model:
+            entities = twitter_model["entities"]
             if "hashtags" in entities:
                 tw_prop_val = entities["hashtags"]
                 for twtag in tw_prop_val:
@@ -616,39 +619,37 @@ class TWStatus(models.Model):
                             self.hash_tags.add(tag)
                             model_changed = True
 
-            if hasattr(entities, "urls"):
-                tw_prop_val = getattr(entities, "urls")
+            if "urls" in entities:
+                tw_prop_val = entities["urls"]
                 for twurl in tw_prop_val:
                     url = None
                     try:
-                        url = URL.objects.get(original_url__exact=twurl.url)
+                        url = URL.objects.get(original_url__exact=twurl['url'])
                     except:
                         pass
 
                     if url is None:
-                        url = URL(original_url=twurl.url)
+                        url = URL(original_url=twurl['url'])
                         url.save()
                         self.text_urls.add(url)
                         model_changed = True
-                    else:
-                        
-                        if url not in self.text_urls.all():
-                            self.text_urls.add(url)
-                            model_changed = True                        
+                    elif url not in self.text_urls.all():
+                        self.text_urls.add(url)
+                        model_changed = True                        
 
-            if hasattr(entities, "user_mentions"):
-                tw_prop_val = getattr(entities, "user_mentions")
+            if "user_mentions" in entities:
+                tw_prop_val = entities["user_mentions"]
                 for tw_mention in tw_prop_val:
                     usermention = None
                     try:
-                        usermention = self.get_existing_user({"fid__exact":tw_mention.id})
+                        usermention = self.get_existing_user({"fid__exact":tw_mention['id']})
                         #if debugging: dLogger.log("    usermention: %s"%usermention)
                         if not usermention:
-                            usermention = self.get_existing_user({"screen_name__exact":tw_mention.screen_name})
+                            usermention = self.get_existing_user({"screen_name__exact":tw_mention['screen_name']})
                         if not usermention:
                             usermention = TWUser(
-                                            fid=tw_mention.id,
-                                            screen_name=tw_mention.screen_name,
+                                            fid=tw_mention['id'],
+                                            screen_name=tw_mention['screen_name'],
                                             harvester=user.harvester
                                          )
                         usermention.update_from_rawtwitter(tw_mention,twython)
@@ -659,7 +660,7 @@ class TWStatus(models.Model):
 
                     if usermention is None:
                         usermention = TWUser(
-                                        fid=tw_mention.id,
+                                        fid=tw_mention['id'],
                                         harvester=user.harvester
                                      )
                         usermention.update_from_rawtwitter(tw_mention, twython)
@@ -678,15 +679,16 @@ class TWStatus(models.Model):
             if keepRaw:
                 raw_data = self.raw_twitter_response.all()
                 if len(raw_data) > 0:
-                    raw_data[0].data = twitter_model.AsDict()
+                    raw_data[0].data = twitter_model
                     raw_data[0].save()
                 else:
-                    raw_data = TWStatusRaw.objects.create(snh_status=self,data=twitter_model.AsDict())
+                    raw_data = TWStatusRaw.objects.create(snh_status=self,data=twitter_model)
 
             try:
                 self.save()
             except:
                 self.text = self.text.encode('unicode-escape')
+                self.source = self.source.encode('unicode-escape')
                 self.save()
 
     @dLogger.debug
@@ -709,6 +711,7 @@ class TWStatus(models.Model):
         date_to_check = ["created_at"]
 
         self.user = user
+
         for prop in props_to_check:
             prop_name = "_"+props_to_check[prop]
             if prop_name in twitter_model.__dict__:

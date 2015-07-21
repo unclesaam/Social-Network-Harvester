@@ -292,4 +292,30 @@
 9-10 juillet 2015:
 - Migration du serveur de production avec Francois Vaillancourt vers Ubuntu 14.04
 - Débug de la procédure Facebook, qui semble planter apres un certain temps de collecte sur le serveur.
-- 
+- Patching divers.
+
+13 juillet 2015:
+- Collecte des donnés brutes de #abvote pour Mickael.
+- Correction d'une erreur dans la procédure de collecte des donnés brutes de twitter.
+- fin de journée (6h)
+
+14 juillet 2015:
+- Création d'un script spécialisé pour collecter les tweets par hashtags. Celui-ci utilise la page web de twitter comme collecte préliminaire (ids)
+- Collection de abvote (~25000 tweets)
+- fin de journée (7h)
+
+15 juillet 2015:
+- Étude du fonctionnement des DNS, subdomains et virtualhosts avec Apache.
+- Courriel à François Vaillancourt pour mettre a jour l'adressage des sous-domaines qc, fr et francedebat sur le nouveau serveur de production
+- fin de journée (4h)
+
+16 juillet 2015:
+- Implémentation du script pour collecter les hashtags de twitter a partir de la page web (html) dans la procédure de collecte
+- TODO:
+	- Implementer la possibilité de downloader les listes de tweets en format json à partir du 'raw data'
+	- Donner le choix a l'utilistateur de downloader en .csv ou en .json les champs voulus. (sélection préalable dans l'interface)
+- fin de journée (6h)
+
+20 juillet 2015:
+- Reformatage du code pour la procédure de collecte des hashtags à partir d'une page html. Débugging
+- Fin de journée (6h)
