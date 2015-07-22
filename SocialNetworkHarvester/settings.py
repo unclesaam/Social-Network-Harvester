@@ -28,7 +28,8 @@ if PROD: #en mode production:
                     'facebookch':       False,
                     'twitterch':        False,
                     'dailymotionch':    False,
-                    'youtubech':        False
+                    'youtubech':        False,
+                    'twitterview':      False
                     }
 
     DOWNLOADED_VIDEO_PATH = 'mnt/video/2015/'
@@ -60,7 +61,8 @@ else: # en mode développement:
                     'facebookch':       True,
                     'twitterch':        True,
                     'dailymotionch':    True,
-                    'youtubech':        True
+                    'youtubech':        True,
+                    'twitterview':      True
                     }
     # For videos downloaded from youtube and dailymotion. Also contains the 
     # related captions files when available

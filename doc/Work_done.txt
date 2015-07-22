@@ -319,3 +319,14 @@
 20 juillet 2015:
 - Reformatage du code pour la procédure de collecte des hashtags à partir d'une page html. Débugging
 - Fin de journée (6h)
+
+21 juillet 2015:
+- Correction de bugs associés à Twitter et Facebook
+- Tests
+- fin de journée (5h)
+
+22 juillet 2015:
+- Continuation des tests
+- Réparation de l'affichage du "hit count" pour les recherches par mot-clefs de Twitter ~3h30
+- Vérification que chaque TWUser est collecté comme il faut (pas de famine)
+- Fin de journée (7h)

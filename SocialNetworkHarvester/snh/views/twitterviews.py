@@ -24,6 +24,10 @@ logger = snhlogger.init_logger(__name__, "view.log")
 import time
 import types
 
+from settings import DEBUGCONTROL, dLogger
+debugging = DEBUGCONTROL['twitterview']
+if debugging: print "DEBBUGING ENABLED IN %s"%__name__
+
 
 #
 # TWITTER
@@ -113,12 +117,17 @@ def get_tw_list(request, call_type, harvester_id):
                             5 : u'friends_count',
                             6 : u'statuses_count',
                             7 : u'listed_count',
+                            8 : u'location',
                             }
     #call to generic function from utils
     return get_datatables_records(request, querySet, columnIndexNameMap, call_type)
 
 @login_required(login_url=u'/login/')
+@dLogger.debug
 def get_twsearch_list(request, call_type, harvester_id):
+    if debugging:
+        dLogger.log('get_twsearch_list()')
+
     querySet = None
 
     if harvester_id == "0":
@@ -131,10 +140,12 @@ def get_twsearch_list(request, call_type, harvester_id):
     columnIndexNameMap = {
                             0 : u'pmk_id',
                             1 : u'term',
-                            #2 : u'len#status_list'
+                            2 : u'len#status_list'
                             }
     #call to generic function from utils
-    return get_datatables_records(request, querySet, columnIndexNameMap, call_type)
+    db_record = get_datatables_records(request, querySet, columnIndexNameMap, call_type)
+    #dLogger.log('    db_record: %s'%db_record)
+    return db_record
 
 @login_required(login_url=u'/login/')
 def get_tw_status_list(request, call_type, screen_name):

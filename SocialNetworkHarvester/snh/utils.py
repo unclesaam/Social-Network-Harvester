@@ -54,12 +54,12 @@ def generate_csv_response(d):
 
     return response
 
+#@dLogger.debug
 def get_datatables_records(request, querySet, columnIndexNameMap, call_type='web', jsonTemplatePath = None, *args):
-    
     #dLogger.log('get_datatables_records()')
     #dLogger.log('    request: %s'%request)
     #dLogger.log('    querySet: %s'%querySet)
-    #dLogger.log('    columnIndexNameMap: %s'%columnIndexNameMap)
+   # dLogger.log('    columnIndexNameMap: %s'%columnIndexNameMap)
     #dLogger.log('    call_type: %s'%call_type)
     #dLogger.log('    jsonTemplatePath: %s'%jsonTemplatePath)
     """
@@ -78,14 +78,14 @@ def get_datatables_records(request, querySet, columnIndexNameMap, call_type='web
     keys = columnIndexNameMap.keys()
     lenList = []
     keys.sort()
-    colitems = [columnIndexNameMap[key] for key in keys]
+    #colitems = [columnIndexNameMap[key] for key in keys]
+    colitems = []
     for key in keys:
         if "len#" in columnIndexNameMap[key]:
-            columnIndexNameMap[key] = re.sub(r'.*#', '', columnIndexNameMap[key])
+            #columnIndexNameMap[key] = re.sub(r'.*#', '', columnIndexNameMap[key])
             lenList.append(columnIndexNameMap[key])
-            columnIndexNameMap.pop(key)
-        else:
-            colitems.append(columnIndexNameMap[key])
+            #columnIndexNameMap.pop(key)
+        colitems.append(columnIndexNameMap[key])
     sColumns = ",".join(map(unicode,colitems))
 
 
@@ -97,7 +97,6 @@ def get_datatables_records(request, querySet, columnIndexNameMap, call_type='web
         #prevent from caching datatables result
         add_never_cache_headers(response)
         return response
-
     
     # Ordering data
     iSortingCols =  int(request.GET.get('iSortingCols',0))
@@ -139,30 +138,40 @@ def get_datatables_records(request, querySet, columnIndexNameMap, call_type='web
     if outputQ: querySet = querySet.filter(outputQ)
         
     iTotalRecords = iTotalDisplayRecords = querySet.count() #count how many records match the final criteria
+    total_query_set = querySet
     if call_type != "csv":
         querySet = querySet[startRecord:endRecord] #get the slice
     sEcho = int(request.GET.get('sEcho',0)) # required echo response
     
+    # Construct the response table
     if jsonTemplatePath:
         jstonString = render_to_string(jsonTemplatePath, locals()) #prepare the JSON with the response, consider using : from django.template.defaultfilters import escapejs
         response = HttpResponse(jstonString, mimetype="application/javascript")
     
     else:
         aaData = []
-        a = querySet.values(*columnIndexNameMap.values())
-        #print 'a: %s'%a
+        values = [value for value in columnIndexNameMap.values() if value not in lenList]
+        a = querySet.values(*values)
+
+        # retrieve the length of dataset-size related columns
+        if len(lenList) > 0:
+            for elem in a:
+                for new_elem in lenList:
+                    len_elem = re.sub(r'len#', '', new_elem)
+                    kwarg = {elem.keys()[0]:elem[elem.keys()[0]]}
+                    elem[new_elem] = getattr(total_query_set.get(**kwarg),len_elem).count()
+
+
         for row in a:
-            #print ' row: %s'%row
             rowkeys = row.keys()
             rowvalues = row.values()
             rowlist = []
+
             for col in range(0,len(colitems)):
                 for idx, val in enumerate(rowkeys):
                     if val == colitems[col]:
                         rowlist.append(unicode(rowvalues[idx]))
-            #print ' rowlist: %s'%rowlist
             aaData.append(rowlist)
-        #print 'aaData: %s'%aaData
         response_dict = {}
         response_dict.update({'aaData':aaData})
         response_dict.update({'sEcho': sEcho, 'iTotalRecords': iTotalRecords, 'iTotalDisplayRecords':iTotalDisplayRecords, 'sColumns':sColumns})

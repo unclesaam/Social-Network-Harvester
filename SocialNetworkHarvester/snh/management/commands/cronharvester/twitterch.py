@@ -293,18 +293,16 @@ def update_statuses(harvester, snh_search, status_id_list):
         tw_user = tw_status['user']
         snh_user, new = TWUser.objects.get_or_create(screen_name=tw_user['screen_name'])
         if new: 
-            try:
-                dLogger.log('    new user created: %s'%snh_user)
-            except:
-                dLogger.pretty(tw_status)
-                raise
-
+            dLogger.log('    new user created: %s'%snh_user)
+            logger.info('New user created from search: %s'%snh_user)
             snh_user.harvester = harvester
             snh_user.save()
 
         snh_status, new = TWStatus.objects.get_or_create(fid=tw_status['id_str'],
                                                 user=snh_user)
-        if new: dLogger.log('    new status created: %s'%snh_status)
+        if new: 
+            dLogger.log('    new status created: %s'%snh_status)
+            logger.info('New status created from search: %s'%snh_status)
 
         try:
             snh_status.update_from_rawtwitter(tw_status, snh_user, harvester.keep_raw_statuses)

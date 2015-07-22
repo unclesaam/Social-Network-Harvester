@@ -35,8 +35,9 @@
                     $('td:eq(0)', nRow).html( '<a href="/tw_search_detail/'+{{harvester_id}}+'/'+aData[0]+'">'+aData[1]+'</a>' );
                 },
 		        "aoColumns": [ 
-			        /* Version */  { "bVisible":    false },
-			        /* Version */  { "bVisible":    true },
+			        /* Id */         { "bVisible":    false },
+			        /* Term */       { "bVisible":    true },
+                    /* Hit count */  { "bVisible":    true },
 		        ],
                 "oTableTools": {
                   "aButtons": [ {
@@ -72,6 +73,7 @@
         <th>Friends count</th>
         <th>Statuses count</th>
         <th>Listed count</th>
+        <th>Location</th>
     </tr>
     </thead>
     <tbody>
