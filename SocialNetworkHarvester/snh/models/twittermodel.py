@@ -251,7 +251,12 @@ class TWUser(models.Model):
         app_label = "snh"
 
     def __unicode__(self):
-        return self.screen_name.encode('utf-8')
+        if self.screen_name:
+            return self.screen_name.encode('utf-8')
+        elif self.fid:
+            return 'TWUser %s'%self.fid
+        else:
+            return 'Unidentified TWUser'
 
     def related_label(self):
         return u"%s (%s)" % (self.screen_name, self.pmk_id)

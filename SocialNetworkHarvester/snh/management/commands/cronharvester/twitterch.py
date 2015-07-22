@@ -51,14 +51,14 @@ def run_twitter_harvester():
                 run_harvester_timeline(harvester)
                 harvester.update_client_stats()
             
-            if harvester.remaining_search_hits == 0:
+            if harvester.remaining_search_hits <= 0:
                 warn = u"The harvester %s has exceeded the search rate limit. Need to wait? %s" % (unicode(harvester), harvester.get_stats())
                 logger.warning(warn)
             else:
                 run_harvester_search(harvester)
                 harvester.update_client_stats()
             
-            if harvester.remaining_user_lookup_hits == 0:
+            if harvester.remaining_user_lookup_hits <= 0:
                 warn = u"The harvester %s has exceeded the user lookup rate limit. Need to wait? %s" % (unicode(harvester), harvester.get_stats())
                 logger.warning(warn)
             else:
@@ -66,12 +66,13 @@ def run_twitter_harvester():
                 harvester.update_client_stats()
 
             harvester.end_current_harvest()
+    if debugging: dLogger.log('Harvest has ended for all harvesters')
 
 
 
 @dLogger.debug
 def get_latest_statuses_page(harvester, user):
-    if debugging: dLogger.log( "get_latest_statuses_page(harvester: %s, user: %s)"%(harvester, user.screen_name.encode('utf-8')))
+    if debugging: dLogger.log("get_latest_statuses_page(harvester: %s, user: %s)"%(harvester, user.screen_name.encode('utf-8')))
 
     
     if user.last_harvested_status:
@@ -230,8 +231,8 @@ def update_search(snh_search, snh_status):
 
 @dLogger.debug
 def search_all_terms(harvester, snh_searches):
-    if debugging: dLogger.log( "search_all_terms(snh_searches: %s)"%snh_searches)
-    logger.info(u"Will search for %s," % snh_searches)
+    if debugging: dLogger.log( "search_all_terms()")
+    logger.info(u"Will search for %s," % [search.term.encode('utf-8', 'ignore') for search in snh_searches])
     
     searches = [snh_search for snh_search in snh_searches]
 
@@ -349,16 +350,18 @@ def collect_tweets_from_html(harvester,snh_search,max_id=None):
 
     since = datetime.strftime(harvester.harvest_window_from, '%Y-%m-%d')
     until = datetime.strftime(harvester.harvest_window_to, '%Y-%m-%d')
-    query = snh_search.term
-    URL = 'http://www.twitter.com/search?q=%s%%20%%23%s%%20since%%3A%s%%20until%%3A%s'%(query,query,since,until)
-    if max_id: URL += '%%20max_id%%3A%s'%max_id
 
-    dLogger.log('    URL: %s'%URL)
+    query = snh_search.term.encode('utf-8')
+    params = '%s #%s since:%s until:%s'%(query,query,since,until)
+    if max_id: params += ' max_id:%s'%max_id
+    safe_url = 'https://twitter.com/search?q=' + urllib.quote(params)
+
+    dLogger.log('    URL: %s'%safe_url)
     try:
-        data = urllib2.urlopen(URL)
+        data = urllib2.urlopen(safe_url)
     except:
         time.sleep(1)
-        data = urllib2.urlopen(URL)
+        data = urllib2.urlopen(safe_url)
     page = bs(data, "html.parser")
     tweetBox = page.find('ol', id='stream-items-id')
     tweets = tweetBox.findAll('li')
@@ -424,7 +427,7 @@ def run_harvester_timeline(harvester):
         harvester.update_client_stats()
 
     finally:
-        if harvester.last_user_harvest_was_aborted:
+        if harvester.last_user_harvest_was_aborted and harvester.get_current_harvested_user():
             aborted_user = harvester.get_current_harvested_user()
             aborted_user.was_aborted = True
             aborted_user.save()

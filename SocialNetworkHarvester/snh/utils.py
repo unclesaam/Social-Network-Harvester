@@ -10,6 +10,8 @@ import re
 import snhlogger
 logger = snhlogger.init_logger(__name__, "view.log")
 
+from settings import dLogger
+
 class UnicodeWriter:
     """
     A CSV writer which will write rows to CSV file "f",
@@ -53,6 +55,13 @@ def generate_csv_response(d):
     return response
 
 def get_datatables_records(request, querySet, columnIndexNameMap, call_type='web', jsonTemplatePath = None, *args):
+    
+    #dLogger.log('get_datatables_records()')
+    #dLogger.log('    request: %s'%request)
+    #dLogger.log('    querySet: %s'%querySet)
+    #dLogger.log('    columnIndexNameMap: %s'%columnIndexNameMap)
+    #dLogger.log('    call_type: %s'%call_type)
+    #dLogger.log('    jsonTemplatePath: %s'%jsonTemplatePath)
     """
     Usage: 
         querySet: query set to draw data from.
@@ -141,9 +150,9 @@ def get_datatables_records(request, querySet, columnIndexNameMap, call_type='web
     else:
         aaData = []
         a = querySet.values(*columnIndexNameMap.values())
-        print 'a: %s'%a
+        #print 'a: %s'%a
         for row in a:
-            print ' row: %s'%row
+            #print ' row: %s'%row
             rowkeys = row.keys()
             rowvalues = row.values()
             rowlist = []
@@ -151,9 +160,9 @@ def get_datatables_records(request, querySet, columnIndexNameMap, call_type='web
                 for idx, val in enumerate(rowkeys):
                     if val == colitems[col]:
                         rowlist.append(unicode(rowvalues[idx]))
-            print ' rowlist: %s'%rowlist
+            #print ' rowlist: %s'%rowlist
             aaData.append(rowlist)
-        print 'aaData: %s'%aaData
+        #print 'aaData: %s'%aaData
         response_dict = {}
         response_dict.update({'aaData':aaData})
         response_dict.update({'sEcho': sEcho, 'iTotalRecords': iTotalRecords, 'iTotalDisplayRecords':iTotalDisplayRecords, 'sColumns':sColumns})
