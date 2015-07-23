@@ -33,6 +33,7 @@ if PROD: #en mode production:
                     }
 
     DOWNLOADED_VIDEO_PATH = 'mnt/video/2015/'
+    TEMPO_JSON_FILE_PATH = 'mnt/video/2015/JSON/Statuses.json'
 
     DATABASES = {
         'default': {
@@ -67,6 +68,7 @@ else: # en mode développement:
     # For videos downloaded from youtube and dailymotion. Also contains the 
     # related captions files when available
     DOWNLOADED_VIDEO_PATH = 'C:\Users\Sam\Desktop\YoutubeVideos'
+    TEMPO_JSON_FILE_PATH = 'C:\Users\Sam\Desktop/Statuses.json'
 
     DATABASES = {
         'default': {

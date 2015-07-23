@@ -43,7 +43,12 @@
 {% endblock %}
 
 {% block content %}
-<h3>Search results for {{ search.term }} </h3>
+<h3>Search results for {{ search.term }} </h3> 
+<span>Download raw JSON data <a href='/get_tw_status_json?search_id={{ search.pmk_id }}'>here</a></span>
+
+
+
+
 <table id="search_table" class="pretty">
     <thead>
         <tr>

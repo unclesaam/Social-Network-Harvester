@@ -67,6 +67,7 @@
 
 {% block content %}
 <h3>{{ user.name }} </h3>
+
 <table id="user_table" class="pretty">
     <thead>
     <tr class="head">
@@ -105,6 +106,7 @@
 </table>
 
 <h3>Statuses</h3>
+<span>Download raw JSON data <a href='/get_tw_status_json?user_id={{ user.pmk_id }}'>here</a></span>
 <div  id='status_chart' style='margin:0 auto; width: 1024px; height: 240px;'></div>
 <table id="status_table" class="pretty">
     <thead>

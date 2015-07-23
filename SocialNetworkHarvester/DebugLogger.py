@@ -18,8 +18,8 @@ class DebugLogger():
         fh.setFormatter(formatter)
         self.logger.addHandler(fh)
 
-    def log(self, message):
-        self.logger.info('%s%s'%(' '*self.indent_level, message))
+    def log(self, message, indent=True):
+        self.logger.info('%s%s'%(' '*(self.indent_level+1*indent), message))
 
     def pretty(self, message):
         self.logger.info(self.pp.pformat(message).encode('utf8'))

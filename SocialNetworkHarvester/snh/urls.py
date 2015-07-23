@@ -19,6 +19,8 @@ urlpatterns = patterns('snh.views',
     (r'^get_tw_statussearch_list/(?P<call_type>[\w\.]+)/(?P<screen_name>\w+)/$', 'get_tw_statussearch_list'),
     (r'^get_tw_searchdetail_list/(?P<call_type>[\w\.]+)/(?P<search_id>\d+)/$', 'get_tw_searchdetail_list'),
 
+    (r'^get_tw_status_json/', 'get_tw_status_json'),
+
     (r'^get_status_chart/(?P<harvester_id>\d+)/(?P<screen_name>\w+)/$', 'get_status_chart'),
     (r'^get_at_chart/(?P<harvester_id>\d+)/(?P<screen_name>\w+)/$', 'get_at_chart'),
 

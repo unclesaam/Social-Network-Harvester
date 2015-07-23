@@ -16,7 +16,7 @@ from snh.models.facebookmodel import *
 from snh.models.youtubemodel import *
 from snh.models.dailymotionmodel import *
 
-from snh.utils import get_datatables_records
+from snh.utils import get_datatables_records, Twitter_raw_json_posts_data
 from datetime import datetime
 
 import snhlogger
@@ -276,3 +276,33 @@ def get_at_chart(request, harvester_id, screen_name):
     response =  HttpResponse(data_table.ToJSon(), mimetype='application/javascript')
     return response
 
+@login_required
+def get_tw_status_json(request):
+    if debugging: dLogger.log('get_tw_status_json()')
+
+    if 'search_id' in request.GET:
+        search_id = request.GET['search_id']
+        dLogger.log('search_id: %s'%search_id)
+        try:
+            search = TWSearch.objects.get(pk=search_id)
+            querySet = search.status_list.all()
+            queryName = search.term.encode('ascii', 'replace')
+        except:
+            raise
+            return HttpResponse('<strong>Wrong request</strong>')
+
+    elif 'user_id' in request.GET:
+        user_id = request.GET['user_id']
+        dLogger.log('user_id: %s'%user_id)
+        try:
+            user = TWUser.objects.get(pk=user_id)
+            querySet = user.postedStatuses.all()
+            queryName = user.screen_name.encode('ascii', 'replace')
+        except:
+            raise
+            return HttpResponse('<strong>Wrong request</strong>')
+
+    else:
+        return HttpResponse('<strong>Wrong request</strong>')
+    #dLogger.log(querySet)
+    return Twitter_raw_json_posts_data(queryName, querySet)
