@@ -242,7 +242,7 @@ class TWSearch(models.Model):
 
     pmk_id =  models.AutoField(primary_key=True)
     term = models.TextField(null=True)
-    status_list = models.ManyToManyField('TWStatus', related_name='twsearch.status_list')
+    status_list = models.ManyToManyField('TWStatus', related_name='TWSearch_hit')
     latest_status_harvested = models.ForeignKey('TWStatus',  related_name='TWSearch.latest_status_harvested', null=True)
 
 class TWUser(models.Model):
@@ -484,7 +484,7 @@ class TWStatusRaw(models.Model):
         verbose_name = "Tw raw status"
 
     def __unicode__(self):
-        return str(self.snh_status)
+        return unicode(self.snh_status)
 
     pkm_id = models.AutoField(primary_key=True)
 

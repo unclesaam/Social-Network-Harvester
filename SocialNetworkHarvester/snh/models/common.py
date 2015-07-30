@@ -112,7 +112,10 @@ class URL(models.Model):
         app_label = "snh"
 
     def __unicode__(self):
-        return self.original_url or 'None'
+        if self.original_url:
+            return self.original_url.encode('unicode-escape')
+        else:
+            return 'None'
 
     pmk_id =  models.AutoField(primary_key=True)
     original_url = models.TextField(null=True)
@@ -126,7 +129,7 @@ class Tag(models.Model):
         app_label = "snh"
 
     def __unicode__(self):
-        return self.text
+        return self.text.encode('unicode-escape')
 
     pmk_id =  models.AutoField(primary_key=True)
     text = models.TextField(null=True)

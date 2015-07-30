@@ -46,6 +46,60 @@
                   } ]
                 },
             });
+        var oTable1 = $('#status_table').dataTable(
+            {
+                "iDisplayLength": iDisplayLength, 
+                "sPaginationType": sPaginationType,
+                "sDom": sDom,
+                "aaSorting": aaSorting,
+                "bAutoWidth": bAutoWidth,
+                "bServerSide": bServerSide, 
+                "sAjaxSource": "{% url snh.views.get_tw_harvester_status_list 'web' harvester_id  %}",
+                "fnRowCallback": function( nRow, aData, iDisplayIndex ) {
+                    $('td:eq(1)', nRow).html( '<a href="/tw_status_detail/{{ harvester_id }}/'+aData[1]+'">'+aData[1]+'</a>' );
+                },
+                "aoColumnDefs": [ 
+                    { 
+                        "bSearchable": false, "aTargets": [ 0 ] 
+                    }
+                ],
+                "oTableTools": {
+                  "aButtons": [ {
+                    "sExtends": "download",
+                    "sUrl": "{% url snh.views.get_tw_harvester_status_list 'csv' harvester_id  %}",
+                  } ]
+                },
+            });
+        $('#ToolTables_status_table_0').unbind('click' )
+        $('#ToolTables_status_table_0').click(function(){
+            document.getElementById('centerPopupInner').innerHTML = '\
+                <br><center>Please select the fields to include:</center><br><hr>\
+                <form action="/dwld_tw_status_csv" method="GET">\
+                    <table>\
+                        <tr><td><input type="checkbox" id="checkAll"></td><td><b> Select/deselect all</b></td></tr>\
+                        {% for fieldlist in status_fields %}\
+                        <tr>\
+                            {% for field in fieldlist %}\
+                            <td><input type="checkbox" name="fields" value={{ field }}></td><td> {{ field }}</td>\
+                            {% endfor %}\
+                        </tr>\
+                        {% endfor %}\
+                    </table>\
+                    <input type="hidden" name="harvester_id" value="{{ harvester_id }}">\
+                    <input type="submit" id="submitButton" value="submit">\
+                </form>\
+            ';
+            $('#checkAll').click(function(event) {   
+                var checkBox = this
+                $(':checkbox').each(function() {
+                    this.checked = checkBox.checked;                        
+                });
+            });
+            $('#submitButton').click(function(){
+                document.getElementById('centerPopupOutter').style.display = 'None';
+            })
+            document.getElementById('centerPopupOutter').style.display = 'inline-block';
+        })
 	} );
 </script>
 {% endblock %}
@@ -87,6 +141,22 @@
         <th>Term</th>
         <th>Hit count</th>
     </tr>
+    </thead>
+    <tbody>
+    </tbody>
+</table>
+
+<h3>List of statuses (from all the users and hashtags above)</h3>
+<table id="status_table" class="pretty">
+    <thead>
+        <tr>
+            <th>Created at</th>
+            <th>ID</th>
+            <th>text</th>
+            <th>Retweet count</th>
+            <th>Retweeted</th>
+            <th>source</th>
+        </tr>
     </thead>
     <tbody>
     </tbody>

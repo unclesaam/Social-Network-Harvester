@@ -330,3 +330,30 @@
 - Réparation de l'affichage du "hit count" pour les recherches par mot-clefs de Twitter ~3h30
 - Vérification que chaque TWUser est collecté comme il faut (pas de famine)
 - Fin de journée (7h)
+
+23 juillet 2015:
+- Implémentation d'un lien pour downloader les tweets en format JSON, à partir d'Aspira.
+- Débuggage de Facebook. Le serveur fait un memory overflow pendant le traitement des "fbresults". Changement de la stratégie de traitement
+- Téléchargement en local de la table fbResult, afin de débugger en local.
+- Fin de journée (7h)
+
+24 juillet 2015:
+- Entretien avec Mickael. Points a aborder:
+	- Pages Facebook vs Comptes Facebook. (https://www.facebook.com/pages/Mike-Schreiner/121887537855675?fref=ts vs https://www.facebook.com/mike.schreiner?ref=ts&fref=ts)
+	- Montrer le progrès avec les hashtags. Download en JSON, option de collecte en rawdata, scrapping en HTML légal?
+	- Principe de redondance des donnés. (Taille de la DB vs vitesse de traitement)
+	- MongoDB VS MySQL: Redondance, indexage, etc. Un bon exemple est la table FbResult (17.9 Gb)
+	- Livestream Twitter vraiement nécéssaire? En python 3.4? (temps de développement, pertinence vis-à-vis des besoins, peu d'intérêt de Thierry)
+	- Nouvelles capacités serveur (600 Gb plutot que 200Gb). Coûts.
+	- Présentation orale de stage. Superviseur invité.
+- temps estimé de collecte twitter et couriels
+-fin de journée (6h)
+
+27 - 28 juillet 2015:
+- Debug de la procédure de traitement des FBResults (multithread) qui est mal optimisée pour une grosse Database
+- Début de code d'une option de selection des champs lors du download en CSV des tweets. 
+- Débugging et compréhjension de la structure javascript et des 'tableTools' utilisées par Pier-Yves. Celles-ci sont trop limitées pour nos 
+besoin. J'implémente une django-view à part pour cette fonction.
+- fins de journées (4h) (6h)
+
+29

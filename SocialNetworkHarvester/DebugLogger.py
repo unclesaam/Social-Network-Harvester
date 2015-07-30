@@ -24,7 +24,7 @@ class DebugLogger():
     def pretty(self, message):
         self.logger.info(self.pp.pformat(message).encode('utf8'))
 
-    def exception(self, message):
+    def exception(self, message='EXCEPTION'):
         self.logger.exception(message)
 
     def debug(self, func):

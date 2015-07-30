@@ -4,12 +4,11 @@ import os
 import logging
 import sys
 from DebugLogger import DebugLogger
+from warnings import filterwarnings, resetwarnings
+import MySQLdb as Database
 
 PROJECT_PATH = os.path.abspath(os.path.split(__file__)[0])
 LOG_LEVEL = logging.INFO
-
-DEBUG = True
-TEMPLATE_DEBUG = DEBUG
 
 PROD = True
 
@@ -20,6 +19,7 @@ ADMINS = (
 MANAGERS = ADMINS
 
 if PROD: #en mode production:
+    DEBUG = False
     DEBUGCONTROL = {'commonmodel':      False,
                     'facebookmodel':    False,
                     'dailymotionmodel': False,
@@ -52,8 +52,11 @@ if PROD: #en mode production:
     FACEBOOK_APPLICATION_ID = '382086531988825'
     FACEBOOK_APPLICATION_SECRET_KEY = '2079f3b96d08ef4edd8460fdab0db27c'
     FACEBOOK_APPLICATION_NAMESPACE = 'socnetapps'
+    filterwarnings('ignore', category = Database.Warning)
+
 
 else: # en mode développement:
+    DEBUG = True
     DEBUGCONTROL = {'commonmodel':      True,
                     'facebookmodel':    True,
                     'dailymotionmodel': True,
@@ -87,6 +90,9 @@ else: # en mode développement:
     FACEBOOK_APPLICATION_ID = '382086531988825'
     FACEBOOK_APPLICATION_SECRET_KEY = '2079f3b96d08ef4edd8460fdab0db27c'
     FACEBOOK_APPLICATION_NAMESPACE = 'aspiratest'
+    resetwarnings()
+
+TEMPLATE_DEBUG = DEBUG
 
 # Local time zone for this installation. Choices can be found here:
 # http://en.wikipedia.org/wiki/List_of_tz_zones_by_name

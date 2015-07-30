@@ -1,5 +1,18 @@
 {% extends "snh/snh_base.html" %}
+
+
+{% block extrahead %}
+<style>
+    a.harvesterName {
+        color:#333;
+    }
+</style>
+
+{% endblock %}
+
+
 {% block content %}
+
 
 <h1>Harvesters stats</h1>
 
@@ -15,16 +28,20 @@
             {% for th in twitter_harvesters %}
             <table width="100%" class="pretty">
                 <thead>
-                    <th colspan="2">{{ th.harvester_name }}</th>
+                    <th colspan="2"><a class="harvesterName" href="tw/{{ th.pmk_id }}">{{ th.harvester_name }}</a></th>
                 </thead>
                 <tbody>
                     <tr>
-                        <td>Is active</td>
+                        <td>Is enabled</td>
                         <td>{{ th.is_active }}</td>
                     </tr>
                     <tr>
                         <td>Harvest in progress</td>
+                        {% if th.harvest_in_progress %}
+                        <td style="background-color:#0099FF">{{ th.harvest_in_progress }}</td>
+                        {% else %}
                         <td>{{ th.harvest_in_progress }}</td>
+                        {% endif %}
                     </tr>
                     <tr>
                         <td>Current harvest start time</td>
@@ -82,16 +99,20 @@
             {% for th in facebook_harvesters %}
             <table width="100%" class="pretty">
                 <thead>
-                    <th colspan="2">{{ th.harvester_name }}</th>
+                    <th colspan="2"><a class="harvesterName" href="fb/{{ th.pmk_id }}">{{ th.harvester_name }}</a></th>
                 </thead>
                 <tbody>
                     <tr>
-                        <td>Is active</td>
+                        <td>Is enabled</td>
                         <td>{{ th.is_active }}</td>
                     </tr>
                     <tr>
                         <td>Harvest in progress</td>
+                        {% if th.harvest_in_progress %}
+                        <td style="background-color:#0099FF">{{ th.harvest_in_progress }}</td>
+                        {% else %}
                         <td>{{ th.harvest_in_progress }}</td>
+                        {% endif %}
                     </tr>
                     <tr>
                         <td>Current harvest start time</td>
@@ -146,16 +167,20 @@
             {% for th in dailymotion_harvesters %}
             <table width="100%" class="pretty">
                 <thead>
-                    <th colspan="2">{{ th.harvester_name }}</th>
+                    <th colspan="2"><a class="harvesterName" href="dm/{{ th.pmk_id }}">{{ th.harvester_name }}</a></th>
                 </thead>
                 <tbody>
                     <tr>
-                        <td>Is active</td>
+                        <td>Is enabled</td>
                         <td>{{ th.is_active }}</td>
                     </tr>
                     <tr>
                         <td>Harvest in progress</td>
+                        {% if th.harvest_in_progress %}
+                        <td style="background-color:#0099FF">{{ th.harvest_in_progress }}</td>
+                        {% else %}
                         <td>{{ th.harvest_in_progress }}</td>
+                        {% endif %}
                     </tr>
                     <tr>
                         <td>Current harvest start time</td>
@@ -202,16 +227,20 @@
             {% for th in youtube_harvesters %}
             <table width="100%" class="pretty">
                 <thead>
-                    <th colspan="2">{{ th.harvester_name }}</th>
+                    <th colspan="2"><a class="harvesterName" href="yt/{{ th.pmk_id }}">{{ th.harvester_name }}</a></th>
                 </thead>
                 <tbody>
                     <tr>
-                        <td>Is active</td>
+                        <td>Is enabled</td>
                         <td>{{ th.is_active }}</td>
                     </tr>
                     <tr>
                         <td>Harvest in progress</td>
+                        {% if th.harvest_in_progress %}
+                        <td style="background-color:#0099FF">{{ th.harvest_in_progress }}</td>
+                        {% else %}
                         <td>{{ th.harvest_in_progress }}</td>
+                        {% endif %}
                     </tr>
                     <tr>
                         <td>Current harvest start time</td>

@@ -6,6 +6,8 @@ from django.shortcuts import render_to_response, get_object_or_404, get_list_or_
 from django.core.exceptions import ObjectDoesNotExist
 from django import template
 from django.template.defaultfilters import stringfilter
+from django.core.servers.basehttp import FileWrapper
+from django.db.models import Q
 
 import gviz_api
 import datetime as dt
@@ -16,13 +18,14 @@ from snh.models.facebookmodel import *
 from snh.models.youtubemodel import *
 from snh.models.dailymotionmodel import *
 
-from snh.utils import get_datatables_records, Twitter_raw_json_posts_data
+from snh.utils import get_datatables_records, Twitter_raw_json_posts_data,generate_csv_response
 from datetime import datetime
 
 import snhlogger
 logger = snhlogger.init_logger(__name__, "view.log")
 import time
 import types
+import re
 
 from settings import DEBUGCONTROL, dLogger
 debugging = DEBUGCONTROL['twitterview']
@@ -32,6 +35,25 @@ if debugging: print "DEBBUGING ENABLED IN %s"%__name__
 #
 # TWITTER
 #
+status_fields = [['fid','text'],
+    ['created_at','favorited'],
+    ['retweet_count','retweeted'],
+    ['truncated','text_urls'],
+    ['hash_tags','user_mentions'],
+    ['source','user__screen_name'],
+    ['user__fid','user__name'],
+    ['user__description','user__url'],
+    ['user__location','user__time_zone'],
+    ['user__utc_offset','user__protected'],
+    ['user__favourites_count','user__followers_count'],
+    ['user__friends_count','user__statuses_count'],
+    ['user__listed_count','user__created_at'],
+    ['user__lang','user__profile_text_color'],
+    ['user__profile_background_color','user__profile_background_tile'],
+    ['user__profile_background_image_url','user__profile_image_url'],
+    ['user__profile_link_color','user__profile_sidebar_fill_color']]
+
+
 @login_required(login_url=u'/login/')
 def tw(request, harvester_id):
     twitter_harvesters = TwitterHarvester.objects.all()
@@ -48,6 +70,7 @@ def tw(request, harvester_id):
                                                     u'harvester_id':harvester_id,
                                                     u'user_list': user_list,
                                                     u'stags_list': stags_list,
+                                                    'status_fields':status_fields
                                                   })
 
 @login_required(login_url=u'/login/')
@@ -64,6 +87,7 @@ def tw_user_detail(request, harvester_id, screen_name):
                                                     u'user':user,
                                                     u'status_list': status_list,
                                                     u'mention_list': mention_list,
+                                                    'status_fields': status_fields
                                                   })
 @login_required(login_url=u'/login/')
 def tw_search_detail(request, harvester_id, search_id):
@@ -71,13 +95,13 @@ def tw_search_detail(request, harvester_id, search_id):
     search = get_list_or_404(TWSearch, pmk_id=search_id)[0]
 
     status_list = [status.digest_source() for status in search.status_list.all()]
-
     return  render_to_response(u'snh/twitter_search_detail.html',{
                                                     u'tw_selected':True,
                                                     u'all_harvesters':twitter_harvesters,
                                                     u'harvester_id':harvester_id,
                                                     u'search':search,
                                                     u'status_list':status_list,
+                                                    'status_fields': status_fields,
                                                   })
 @login_required(login_url=u'/login/')
 def tw_status_detail(request, harvester_id, status_id):
@@ -162,6 +186,32 @@ def get_tw_status_list(request, call_type, screen_name):
     try:
         user = get_list_or_404(TWUser, screen_name=screen_name)[0]
         querySet = TWStatus.objects.filter(user=user)#.values(*columnIndexNameMap.values())
+    except ObjectDoesNotExist:
+        pass
+
+    #call to generic function from utils
+    return get_datatables_records(request, querySet, columnIndexNameMap, call_type)
+
+@login_required(login_url=u'/login/')
+def get_tw_harvester_status_list(request, call_type, harvester_id):
+    querySet = None
+    columnIndexNameMap = {
+                            0 : u'created_at',
+                            1 : u'fid',
+                            2 : u'text',
+                            3 : u'retweet_count',
+                            4 : u'retweeted',
+                            5 : u'source',
+                            }
+    try:
+        harvester = get_list_or_404(TwitterHarvester, pmk_id=harvester_id)[0]
+        #querySet = [user.postedStatuses.all() for user in harvester.twusers_to_harvest.all()]
+
+        # merge two conditional filter in queryset:
+        conditionList = [Q(user=user) for user in harvester.twusers_to_harvest.all()]
+        conditionList += [Q(TWSearch_hit=search) for search in harvester.twsearch_to_harvest.all()]
+        querySet = TWStatus.objects.filter(reduce(lambda x, y: x | y, conditionList))
+
     except ObjectDoesNotExist:
         pass
 
@@ -306,3 +356,54 @@ def get_tw_status_json(request):
         return HttpResponse('<strong>Wrong request</strong>')
     #dLogger.log(querySet)
     return Twitter_raw_json_posts_data(queryName, querySet)
+
+@dLogger.debug
+@login_required(login_url=u'/login/')
+def dwld_tw_status_csv(request):
+    if debugging: dLogger.log('dwld_tw_status_csv')
+
+    columns = request.GET.getlist('fields')
+    sColumns = ''
+    for column in columns:
+        sColumns += str(column)+','
+
+    aadata = []
+    dLogger.log('    request.GET: %s'%request.GET)
+    if 'search_id' in request.GET:
+        search_id = request.GET['search_id']
+        search = get_object_or_404(TWSearch, pk=search_id)
+        statuses = search.status_list.all()
+
+    elif 'harvester_id' in request.GET:
+        harvester_id = request.GET['harvester_id']
+        harvester = get_object_or_404(TwitterHarvester, pmk_id=harvester_id)
+        # merge two conditional filter in queryset:
+        conditionList = [Q(user=user) for user in harvester.twusers_to_harvest.all()]
+        conditionList += [Q(TWSearch_hit=search) for search in harvester.twsearch_to_harvest.all()]
+        statuses = TWStatus.objects.filter(reduce(lambda x, y: x | y, conditionList))
+
+    elif 'TWUser_id' in request.GET:
+        TWUser_id = request.GET['TWUser_id']
+        user = get_object_or_404(TWUser, pmk_id=TWUser_id)
+        statuses = user.postedStatuses.all()
+
+
+    for status in statuses:
+        #dLogger.log('    status: %s'%status)
+        adata = []
+        user = status.user
+        for column in columns:
+            if 'user__' in column:
+                value = getattr(user, re.sub('user__', '', column))
+            elif column in ['text_urls', 'hash_tags', 'user_mentions']:
+                manager = getattr(status, column)
+                value = manager.all()
+            else:
+                value = getattr(status, column)
+            #dLogger.log('    %s: %s'%(column, value))
+            adata.append(unicode(value))
+        aadata.append(adata)
+
+
+    data = {'sColumns': sColumns, 'aaData': aadata}
+    return generate_csv_response(data)

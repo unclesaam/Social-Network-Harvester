@@ -6,16 +6,61 @@
 	@import "/static/complete.css"; 
 	@import "/static/snh_base.css"; 
 	@import "/static/css/TableTools.css"; 
-</style>
+    .modal {
+        display:    none;
+        position:   fixed;
+        z-index:    1000;
+        top:        0;
+        left:       0;
+        height:     100%;
+        width:      100%;
+        background: rgba( 255, 255, 255, .6 ) 
+                    url('http://i.stack.imgur.com/FhHRx.gif') 
+                    50% 50% 
+                    no-repeat;
+    }
+    body.loading {
+        overflow: hidden;   
+    }
+    body.loading .modal {
+        display: block;
+    }
+    #centerPopupOutter {
+        position:fixed; 
+        width:100%; 
+        height:100%; 
+        background:rgba(100,100,100,0.9); 
+        top:0px; 
+        display: None
+    }
+    #centerPopupmiddle {
+        vertical-align:middle;
+        width:0px;
+    }
+    #centerPopupInner {
+        background-color:#FFF;
+        box-shadow:0px 0px 30px;
+        padding:5px;
+    }
+    </style>
 <script type="text/javascript" language="javascript" src="/static/jquery.js"></script>
 <script src="//code.jquery.com/jquery-1.11.2.min.js"></script>
 <script src="//code.jquery.com/jquery-migrate-1.2.1.min.js"></script>
 <script type="text/javascript" language="javascript" src="/static/jquery.dataTables.js"></script>
 <script type="text/javascript" charset="utf-8" src="/static/js/TableTools.js"></script>
 <script type="text/javascript" charset="utf-8" src="/static/js/ZeroClipboard.js"></script>
+<script type="text/javascript" charset="utf-8" src="/static/js/jquery.fileDownload.js"></script>
 <script type="text/javascript" charset="utf-8" src="/static/snh.js"></script>
+<script>
+    function startLoading(){$("body").addClass("loading");};
+    function stopLoading(){$("body").removeClass("loading");};
+    function closeCenterPopup(){
+        document.getElementById('centerPopupOutter').style.display = 'None'
+    }
+</script>
 {% block extrahead %}{% endblock %}
 {% block blockbots %}<meta name="robots" content="NONE,NOARCHIVE" />{% endblock %}
+
 </head>
 <body>
 
@@ -62,13 +107,30 @@
     <div id="footer">
     <p><a href="https://github.com/unclesaam/Social-Network-Harvester">Social Network Harverster v 0.2</a></p>
     <p>Legacy SNHs: 
-        <span><a href='http://qc.aspira.ulaval.ca'>Quebec 2014</span><span> | </span>
-        <span><a href='http://fr.aspira.ulaval.ca'>France 2014</span><span> | </span>
-        <span><a href='http://francedebat.aspira.ulaval.ca'>France-Débat 2014</span>
+        <span><a href='http://qc.aspira.ulaval.ca'>Quebec 2014</a></span><span> | </span>
+        <span><a href='http://fr.aspira.ulaval.ca'>France 2014</a></span><span> | </span>
+        <span><a href='http://francedebat.aspira.ulaval.ca'>France-Débat 2014</a></span>
     </p>
     </div>{% endblock %}
 </div>
 <!-- END Container -->
-
+<div id="centerPopupOutter">
+    <table style="height:100%;width:100%;">
+        <tr>
+            <td></td>
+            <td id="centerPopupmiddle">
+                <center>
+                    <div id='centerPopupInner'>
+                    </div>
+                    <br>
+                    <div>
+                        <b><a href="#" onclick="closeCenterPopup()" style="color:#000">Cancel</a></b>
+                    </div>
+                </center>
+            </td>
+            <td></td>
+        </tr>
+    </table>
+</div><!-- END CenterPopup -->
 </body>
 </html>

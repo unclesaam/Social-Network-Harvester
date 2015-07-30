@@ -253,8 +253,8 @@ def Twitter_raw_json_posts_data(queryName,querySet):
                 formated_user['profile_background_image_url'] = query.user.profile_background_image_url.original_url
 
             data['user'] = formated_user
-            dLogger.pretty(data)
-            temporary_file.write(json.dumps(data)+'\n')
+        temporary_file.write(json.dumps(data)+'\n')
+        dLogger.pretty(data)
 
     temporary_file.close()
     temporary_file = open(TEMPO_JSON_FILE_PATH, 'r')

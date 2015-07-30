@@ -16,10 +16,12 @@ urlpatterns = patterns('snh.views',
     (r'^get_tw_list/(?P<call_type>[\w\.]+)/(?P<harvester_id>\d+)/$', 'get_tw_list'),
     (r'^get_twsearch_list/(?P<call_type>[\w\.]+)/(?P<harvester_id>\d+)/$', 'get_twsearch_list'),
     (r'^get_tw_status_list/(?P<call_type>[\w\.]+)/(?P<screen_name>\w+)/$', 'get_tw_status_list'),
+    (r'^get_tw_harvester_status_list/(?P<call_type>[\w\.]+)/(?P<harvester_id>\w+)/$', 'get_tw_harvester_status_list'),
     (r'^get_tw_statussearch_list/(?P<call_type>[\w\.]+)/(?P<screen_name>\w+)/$', 'get_tw_statussearch_list'),
     (r'^get_tw_searchdetail_list/(?P<call_type>[\w\.]+)/(?P<search_id>\d+)/$', 'get_tw_searchdetail_list'),
 
     (r'^get_tw_status_json/', 'get_tw_status_json'),
+    (r'^dwld_tw_status_csv/', 'dwld_tw_status_csv'),
 
     (r'^get_status_chart/(?P<harvester_id>\d+)/(?P<screen_name>\w+)/$', 'get_status_chart'),
     (r'^get_at_chart/(?P<harvester_id>\d+)/(?P<screen_name>\w+)/$', 'get_at_chart'),

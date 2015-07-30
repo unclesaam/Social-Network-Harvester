@@ -51,6 +51,36 @@
                   } ]
                 },
             });
+        $('#ToolTables_status_table_0').unbind('click' )
+        $('#ToolTables_status_table_0').click(function(){
+            document.getElementById('centerPopupInner').innerHTML = '\
+                <br><center>Please select the fields to include:</center><br><hr>\
+                <form action="/dwld_tw_status_csv" method="GET">\
+                    <table>\
+                        <tr><td><input type="checkbox" id="checkAll"></td><td><b> Select/deselect all</b></td></tr>\
+                        {% for fieldlist in status_fields %}\
+                        <tr>\
+                            {% for field in fieldlist %}\
+                            <td><input type="checkbox" name="fields" value={{ field }}></td><td> {{ field }}</td>\
+                            {% endfor %}\
+                        </tr>\
+                        {% endfor %}\
+                    </table>\
+                    <input type="hidden" name="TWUser_id" value="{{ user.pmk_id }}">\
+                    <input type="submit" id="submitButton" value="submit">\
+                </form>\
+            ';
+            $('#checkAll').click(function(event) {   
+                var checkBox = this
+                $(':checkbox').each(function() {
+                    this.checked = checkBox.checked;                        
+                });
+            });
+            $('#submitButton').click(function(){
+                document.getElementById('centerPopupOutter').style.display = 'None';
+            })
+            document.getElementById('centerPopupOutter').style.display = 'inline-block';
+        })
 	} );
 </script>
 {% endblock %}
@@ -107,7 +137,7 @@
 
 <h3>Statuses</h3>
 <span>Download raw JSON data <a href='/get_tw_status_json?user_id={{ user.pmk_id }}'>here</a></span>
-<div  id='status_chart' style='margin:0 auto; width: 1024px; height: 240px;'></div>
+<div  id='status_chart' style='margin:0 auto; width: 100%; height: 240px;'></div>
 <table id="status_table" class="pretty">
     <thead>
         <tr>
@@ -124,7 +154,7 @@
 </table>
 
 <h3>Search results for @{{ user.screen_name }} </h3>
-<div  id='at_chart' style='margin:0 auto; width: 1024px; height: 240px;'></div>
+<div  id='at_chart' style='margin:0 auto; width: 100%; height: 240px;'></div>
 <table id="search_table" class="pretty">
     <thead>
         <tr>

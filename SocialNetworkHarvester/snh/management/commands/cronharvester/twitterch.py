@@ -33,12 +33,15 @@ def run_twitter_harvester():
 
     #custom_export()
 
-    harvester_list = TwitterHarvester.objects.all()
+    harvester_list = sort_harvesters_by_priority(TwitterHarvester.objects.all())
+    for harvester in harvester_list:
+        harvester.harvest_in_progress = False
+        harvester.save()
+
     for harvester in harvester_list:
         logger.info(u"The harvester %s is %s" % 
                     (unicode(harvester), 
                     "active" if harvester.is_active else "inactive"))
-
 
         if harvester.is_active:    
             harvester.start_new_harvest()
@@ -67,6 +70,21 @@ def run_twitter_harvester():
 
             harvester.end_current_harvest()
     if debugging: dLogger.log('Harvest has ended for all harvesters')
+    for harvester in harvester_list:
+        harvester.harvest_in_progress = False
+        harvester.save()
+
+@dLogger.debug
+def sort_harvesters_by_priority(all_harvesters):
+    if debugging: dLogger.log("sort_harvesters_by_priority()")
+
+    aborted_harvesters = [harv for harv in all_harvesters if harv.current_harvest_start_time != None]
+    clean_harvesters = [harv for harv in all_harvesters if harv not in aborted_harvesters]
+
+    sorted_harvester_list = sorted(clean_harvesters, key=lambda harvester: harvester.last_harvest_start_time)
+    sorted_harvester_list += sorted(aborted_harvesters, key=lambda harvester: harvester.current_harvest_start_time)
+    dLogger.log('    sorted_harvester_list: %s'%sorted_harvester_list)
+    return sorted_harvester_list
 
 
 

@@ -16,6 +16,8 @@ from facepy.exceptions import FacepyError
 from fandjango.models import User as FanUser, OAuthToken
 from fandjango.decorators import *
 from snh.models.facebookmodel import *
+from django.core import serializers
+
 
 import snhlogger
 logger = snhlogger.init_logger(__name__, "facebook.log")
@@ -38,7 +40,7 @@ E_CRITICALS = [E_DNEXIST, E_PATH, E_FALSE, E_UNMAN, E_USER_QUOTA]
 
 def run_facebook_harvester():
     if debugging: dLogger.log("run_facebook_harvester()")
-
+    #fill_db()
     sessionKey = FacebookSessionKey.objects.all()
     if not sessionKey:
         raise(Exception('A user needs to be connected to facebook through the SNH admin page first.'))
@@ -51,12 +53,16 @@ def run_facebook_harvester():
         harvester.harvest_in_progress = False
         harvester.save()
 
-    for harvester in sort_harvesters_by_priority():
+    for harvester in all_harvesters:
         harvester.set_client(client)
         logger.info(u"The harvester %s is %s" % (unicode(harvester), "active" if harvester.is_active else "inactive"))
         if harvester.is_active:
             run_harvester_v3(harvester)
 
+    for harvester in all_harvesters:
+        harvester.harvest_in_progress = False
+        harvester.save()
+            
 @dLogger.debug
 def sort_harvesters_by_priority():
     if debugging: dLogger.log("sort_harvesters_by_priority()")
@@ -548,7 +554,7 @@ class ThreadStatus(threading.Thread):
                 if qsize % 100 == 0: logger.debug("    less than %s posts left in queue"%self.queue.qsize())
                 #signals to queue job is done
             except ObjectDoesNotExist:
-                logger.exception("<p style='color:red;'>DEVED %s %s</p>" % (fbpost.parent, fbpost.ftype))
+                logger.exception("DEVED %s %s" % (fbpost.parent, fbpost.ftype))
                 if debugging: dLogger.exception(msg)
             except Queue.Empty:
                 logger.info(u"ThreadStatus %s. Queue is empty." % self)
@@ -683,6 +689,8 @@ def compute_new_post(harvester):
         t.start()
       
     queue.join()
+    del queue
+
 
 @dLogger.debug
 def compute_new_comment(harvester):
@@ -708,7 +716,7 @@ def compute_new_comment(harvester):
 def compute_results(harvester):
     if debugging: 
         dLogger.log("compute_results()")
-        dLogger.log("    %s items to analyze"%len(FBResult.objects.all()))
+        dLogger.log("    %s items to analyze"%FBResult.objects.count())
 
     if FBResult.objects.filter(harvester=harvester).count() != 0: 
         start = time.time()
@@ -726,9 +734,9 @@ def run_harvester_v3(harvester):
     try:
         #launch result computation in case where the previous harvest was interrupted
         compute_results(harvester)
-        update_user_batch(harvester)
-        update_user_statuses_batch(harvester)
-        compute_results(harvester)
+        #update_user_batch(harvester)
+        #update_user_statuses_batch(harvester)
+        #compute_results(harvester)
     except:
         logger.exception(u"EXCEPTION: %s" % harvester)
         if debugging: dLogger.exception(u"EXCEPTION: %s" % harvester)
@@ -737,3 +745,32 @@ def run_harvester_v3(harvester):
         harvester.end_current_harvest()
         logger.info(u"End: %s Stats:%s" % (harvester,unicode(harvester.get_stats())))
 
+def fill_db():
+    try:
+        dLogger.log('fill_db()')
+        all_queries = FBResult.objects.all()
+        count = FBResult.objects.count()
+        BAR_LENGTH = 50
+        print 'db_count: %i\n'%count,
+        print 'Progress:[%s]0%%'%(' '*BAR_LENGTH),
+        for i in range(0,count-1):
+            if i%100 == 0:
+                print '\r',
+                print 'Progress:[%s%s]%s/%s'%('#'*(i*BAR_LENGTH//count),
+                                ' '*(BAR_LENGTH - i*BAR_LENGTH//count),
+                                i, count),
+                if i%1000 == 0:
+                    print '\r\r',
+                    print 'db_count: %i\n'%FBResult.objects.count(),
+            create_post(all_queries[i])
+    except:
+        dLogger.exception('EXCEPTION:')
+
+def create_post(post):
+    #dLogger.log('create_post()')
+    post2 = FBResult.objects.create(harvester = post.harvester)
+    post2.result = post.result
+    post2.fid = post.fid
+    post2.ftype = post.ftype
+    post2.parent = post.parent
+    post2.save()

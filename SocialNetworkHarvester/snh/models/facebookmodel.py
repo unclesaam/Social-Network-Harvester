@@ -101,7 +101,7 @@ class FBResult(models.Model):
         app_label = "snh"
 
     def __unicode__(self):
-        return unicode(self.fid)   
+        return self.fid
 
     harvester = models.ForeignKey("FacebookHarvester")
     result = models.TextField(null=True)
