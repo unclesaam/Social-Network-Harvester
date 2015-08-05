@@ -6,6 +6,7 @@ urlpatterns = patterns('snh.views',
 
     #ROOT
     (r'^$', 'index'),
+    (r'^toggle_harvester$', 'toggle_harvester'),
 
     #TWITTER
     (r'^tw/(?P<harvester_id>\d+)$', 'tw'),

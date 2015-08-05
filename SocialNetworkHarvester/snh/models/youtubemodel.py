@@ -118,7 +118,12 @@ class YTUser(models.Model):
         app_label = "snh"
 
     def __unicode__(self):
-        return self.title if self.title else self.username or u'Unamed User'
+        if self.title:
+            return self.title[:20]+'...'*(len(self.title) > 20)
+        elif self.username:
+            return self.username[:20]+'...'*(len(self.username) > 20)
+        else:
+            return u'Unamed User'
 
     def related_label(self):
         return u"%s (%s)" % (self.username, self.pmk_id)
@@ -196,7 +201,12 @@ class YTUser(models.Model):
 
         if model_changed:
             self.model_update_date = datetime.utcnow()
-            self.save()
+            try:
+                self.save()
+            except:
+                self.description = self.description.encode('unicode-escape')
+                self.title = self.title.encode('unicode-escape')
+                self.save()
 
         return model_changed
 
@@ -207,7 +217,10 @@ class YTVideo(models.Model):
         app_label = "snh"
 
     def __unicode__(self):
-        return self.title[:20] if self.title else 'Untitled video'
+        if self.title:
+            return self.title[:20]+'...'*(len(self.title) > 20)
+        else:
+            return 'Untitled video'
 
     pmk_id =  models.AutoField(primary_key=True)
     
@@ -298,7 +311,12 @@ class YTVideo(models.Model):
         if model_changed:
             self.model_update_date = datetime.utcnow()
             #print self.pmk_id, self.fid, self, self.__dict__, yt_video
-            self.save()
+            try:
+                self.save()
+            except:
+                self.title = self.title.encode('unicode-escape')
+                self.description = self.description.encode('unicode-escape')
+                self.save()
 
         return model_changed
 
@@ -314,6 +332,7 @@ class YTVideoCaption(models.Model):
 
     video = models.ForeignKey('YTVideo', related_name='YTCaptionFiles', null=True)
     srt_file_path = models.TextField(null=True)
+
     language = models.CharField(max_length=5, null=True)
     auto_generated = models.BooleanField(default=True)
 

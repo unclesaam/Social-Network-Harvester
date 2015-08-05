@@ -297,7 +297,7 @@ class YoutubeHarvesterAdmin(admin.ModelAdmin):
                         ),
         }),
         ('Users to harvest', {
-            'classes': ('collapse closed',),
+            'classes': ('collapse open',),
             'fields' : ('ytusers_to_harvest',),
         }),
     )

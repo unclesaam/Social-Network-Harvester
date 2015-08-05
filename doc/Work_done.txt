@@ -356,4 +356,23 @@
 besoin. J'implémente une django-view à part pour cette fonction.
 - fins de journées (4h) (6h)
 
-29
+29 juillet 2015: 
+- Ajouté le download selectif des champs des posts Twitter, incluant ceux relatif aux Users: user__fid, user__description, etc. Redondant, mais plus facile a interpréter qu'un JSON.
+- fin de journée (7h)
+
+30-31 juillet 2015:
+- debug de Facebook, limitation du nombre de FBResults a traiter plus tard (500 000)
+- Ajout d'un controle des harvesters sur la page d'acceil (is enabled/disabled)
+- fin de journées (2h) (6h)
+
+3 aout 2015:
+- Test de chaque code (YT, FB, TW) et correction de problemes
+- Mise en place de la collecte 2015
+- TODO: Tester le upload des videos locales sur un serveur test (avec Youtube)
+
+4 aout 2015:
+- Test de youtube avec multiple harvesters, réglage des problèmes de famine etc.
+- Tweaks de l'interface d'Aspira
+- Upload et tests.
+- Programmation des Harvest de la campagne federale 2015
+- Fin de journée (9h)

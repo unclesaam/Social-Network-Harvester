@@ -70,7 +70,7 @@ else: # en mode développement:
                     }
     # For videos downloaded from youtube and dailymotion. Also contains the 
     # related captions files when available
-    DOWNLOADED_VIDEO_PATH = 'C:\Users\Sam\Desktop\YoutubeVideos'
+    DOWNLOADED_VIDEO_PATH = 'C:\Users\Sam\Desktop\YoutubeVideos\\'
     TEMPO_JSON_FILE_PATH = 'C:\Users\Sam\Desktop/Statuses.json'
 
     DATABASES = {

@@ -26,25 +26,50 @@ logger.info(" "*500)
 
 @dLogger.debug
 def run_youtube_harvester():
-    harvester_list = YoutubeHarvester.objects.all()
-    for harvester in harvester_list:
-        logger.info(u"The harvester %s is %s" % 
-                                                (unicode(harvester), 
-                                                "active" if harvester.is_active else "inactive"))
-        try:
-            pass
-            #custom_migration(harvester)
-        except:
-            if debugging: dLogger.exception('AN ERROR HAS OCCURED:')
+    harvester_list = sort_harvesters_by_priority(YoutubeHarvester.objects.all())
 
-        if harvester.is_active:
-            langs = ['en','fr',]
-            params = {  'client_id': harvester.dev_key,
-                    'caption_languages': langs
-                }
-            client = YoutubeAPIClient(params)
-            harvester.client = client
-            run_harvester_v1(harvester)
+    for harvester in harvester_list:
+        harvester.harvest_in_progress = False
+        harvester.save()
+
+    try:
+        for harvester in harvester_list:
+            logger.info(u"The harvester %s is %s" % 
+                                                    (unicode(harvester), 
+                                                    "active" if harvester.is_active else "inactive"))
+            try:
+                pass
+                #custom_migration(harvester)
+                #set_comments_enabled(harvester)
+                #test_getOrCreate(harvester)
+            except:
+                if debugging: dLogger.exception('AN ERROR HAS OCCURED:')
+
+            if harvester.is_active:
+                langs = ['en','fr',]
+                params = {  'client_id': harvester.dev_key,
+                        'caption_languages': langs
+                    }
+                client = YoutubeAPIClient(params)
+                harvester.client = client
+                run_harvester_v1(harvester)
+    except:
+        for harvester in harvester_list:
+            harvester.harvest_in_progress = False
+            harvester.save()
+        raise
+
+@dLogger.debug
+def sort_harvesters_by_priority(all_harvesters):
+    if debugging: dLogger.log("sort_harvesters_by_priority()")
+
+    aborted_harvesters = [harv for harv in all_harvesters if harv.current_harvest_start_time != None]
+    clean_harvesters = [harv for harv in all_harvesters if harv not in aborted_harvesters]
+
+    sorted_harvester_list = sorted(clean_harvesters, key=lambda harvester: harvester.last_harvest_start_time)
+    sorted_harvester_list += sorted(aborted_harvesters, key=lambda harvester: harvester.current_harvest_start_time)
+    dLogger.log('    sorted_harvester_list: %s'%sorted_harvester_list)
+    return sorted_harvester_list
 
 def sleeper(retry_count):
     retry_delay = 1
@@ -73,12 +98,15 @@ def update_user(harvester, ytUser):
         dLogger.log("update_user()")
         #dLogger.pretty(ytUser)
 
-    kwargs = {}
-    fid = ytUser['id']
-    snh_user = YTUser.objects.get_or_create(fid=fid, harvester=harvester)[0]
-    logger.debug(u"New user created: %s", snh_user)
 
-    if debugging: dLogger.log('    new user created: %s'%snh_user)
+    fid = ytUser['id']
+    snh_user, new = YTUser.objects.get_or_create(fid=fid)
+
+    if new: 
+        logger.debug(u"New user created: %s", snh_user)
+        if debugging: dLogger.log('    new user created: %s'%snh_user)
+        snh_user.harvester = harvester
+        snh_user.save()
 
     snh_user.update_from_youtube(ytUser)
 
@@ -91,7 +119,10 @@ def update_users(harvester):
 
     for snhuser in all_users:
         if not snhuser.error_triggered:
-            harvester.last_harvested_user = harvester.current_harvested_user
+            try:
+                harvester.last_harvested_user = harvester.current_harvested_user
+            except:
+                harvester.last_harvested_user = None
             harvester.current_harvested_user = snhuser
             harvester.save()
             if snhuser.fid: 
@@ -99,23 +130,28 @@ def update_users(harvester):
                     channelIdList.append(snhuser.fid)
             elif snhuser.username: 
                 response = harvester.api_call('channel_lookup', {'userName': snhuser.username})
-                dLogger.pretty(response)
+                #dLogger.pretty(response)
                 if len(response[0]['items']) > 0:
-                    update_user(harvester, response[0]['items'][0])
+                    snhuser.update_from_youtube(response[0]['items'][0])
         else:
             logger.info(u"Skipping user update: %s(%s) because user has triggered the error flag." % (unicode(snhuser), snhuser.fid if snhuser.fid else "0"))
 
-    #dLogger.log('    channelIdList: %s'%channelIdList)
     subLists = [channelIdList[i:i+49] for i in range(0, len(channelIdList), 49)]
     for subList in subLists:
         stringList = ''
         for channelId in subList:
             stringList += channelId + ','
-        
-        response = harvester.api_call('channel_lookup',{'channelId':stringList})
-        #dLogger.pretty(response)
-        for ytUser in response[0]['items']:
-            update_user(harvester, ytUser)
+        try:
+            response = harvester.api_call('channel_lookup',{'channelId':stringList})
+            for ytUser in response[0]['items']:
+                update_user(harvester, ytUser)
+        except:
+            time.sleep(1)
+            if debugging: dLogger.log('    ERROR 500 received from youtube, retrying.')
+            response = harvester.api_call('channel_lookup',{'channelId':stringList})
+            for ytUser in response[0]['items']:
+                update_user(harvester, ytUser)
+
 
 
     #usage = psutil.virtual_memory()
@@ -155,7 +191,12 @@ def update_comment(harvester, comment, snhvideo, parentComment=None):
         userId = re.sub(r'.*/', '',comment['snippet']['authorChannelUrl'])
     else:
         userId = comment['snippet']['authorChannelId']['value']
-    snhuser = YTUser.objects.get_or_create(fid=userId, username=author_username,harvester=harvester)[0]
+
+    snhuser, new = YTUser.objects.get_or_create(fid=userId)
+    if new:
+        if debugging: dLogger.log('    New user created from comment: %s'%snhuser)
+        snhuser.harvester = harvester
+        snhuser.save()
 
     fid = comment['id']
     try:
@@ -201,8 +242,10 @@ def update_all_comment_helper(harvester, snhvideo, comment_list):
     if debugging: dLogger.log("<YTVideo: '%s'>::update_all_comment_helper()"%snhvideo)
     for comment in comment_list[0]['items']:
         update_comment_thread(harvester, snhvideo, comment)
-    
-    return comment_list[0]['nextPageToken']
+    if 'nextPageToken' in comment_list[0]:
+        return comment_list[0]['nextPageToken']
+    else:
+        return None
 
 @dLogger.debug
 def update_all_comment(harvester,snhvideo):
@@ -221,7 +264,7 @@ def update_all_comment(harvester,snhvideo):
             next_page_token = update_all_comment_helper(harvester, snhvideo, comment_list)
 
         #usage = psutil.virtual_memory()
-        logger.info(u"Comment harvest completed for this video: %s %s" % (snhvideo.fid, harvester))
+        logger.info(u"Comment harvest completed for video: %s" % snhvideo)
     except HttpError as err:
         dLogger.exception(u"HttpError received for this video: %s (%s)" % (snhvideo.fid, err))
     except Exception as err:
@@ -251,7 +294,7 @@ def update_all_videos(harvester):
                                                     })
 
                 for item in activities_list['items']:
-                    if 'upload' in item['contentDetails']:
+                    if 'contentDetails' in item and 'upload' in item['contentDetails']:
                         videoId_list.append(item['contentDetails']['upload']['videoId'])
 
                 nextPageToken = (True, activities_list['nextPageToken']) if 'nextPageToken' in activities_list else (False, None)
@@ -293,7 +336,7 @@ def download_video(harvester, snhVideo):
             video.close()
             snhVideo.video_file_path = filename
             snhVideo.save()
-            logger.info('Video has been downloaded successfully')
+            logger.info('Video %s has been downloaded successfully'%snhVideo)
         except:
             dLogger.exception('Video download failed') 
             logger.info('Video download has failed')
@@ -307,27 +350,21 @@ def download_video_captions(harvester, snhVideo):
         for lang in response[0]:
             filename = '%syoutube_%s_%s_%s.srt'%(DOWNLOADED_VIDEO_PATH,
                 snhVideo.user.fid, snhVideo.fid, lang)
-            snhCaption = YTVideoCaption.objects.get_or_create(srt_file_path=filename)
-            if snhCaption[1]:
+            snhCaption, new = YTVideoCaption.objects.get_or_create(srt_file_path=filename)
+            if new:
                 try:
                     dwld = urllib.urlopen(response[0][lang]).read()
                     caption = open(filename, 'wb')
                     caption.write(dwld)
                     caption.close()
-                    snhCaption[0].language = lang
-                    snhCaption[0].video = snhVideo
-                    snhCaption[0].auto_generated = response[1]
-                    snhCaption[0].save()
+                    snhCaption.language = lang
+                    snhCaption.video = snhVideo
+                    snhCaption.auto_generated = response[1]
+                    snhCaption.save()
                     logger.info('%s caption have been downloaded successfully'%lang)
                 except:
                     if debugging: dLogger.exception('Caption download failed')
                     logger.info('%s caption download has failed'%lang)
-
-
-
-
-
-
 
 @dLogger.debug
 def run_harvester_v1(harvester):
@@ -336,7 +373,7 @@ def run_harvester_v1(harvester):
     try:
 
         start = time.time()
-        #update_users(harvester)
+        update_users(harvester)
         update_all_videos(harvester)
         logger.info(u"Results computation complete in %ss" % (time.time() - start))
 
@@ -373,3 +410,15 @@ def custom_migration(harvester):
             comment_count = vid.comment_count,
             video_file_path = vid.video_file_path)
         dLogger.log('    newVid created: %s'%newVid)
+
+def set_comments_enabled(harvester):
+    all_vids = YTVideo.objects.filter(comments_enabled=False)
+    for vid in all_vids:
+        vid.comments_enabled = True
+        vid.save()
+
+def test_getOrCreate(harvester):
+    user, new = YTUser.objects.get_or_create(fid='sadbhakjhdkhajgsjdhbaskgdfasbdjhgf')
+    dLogger.log('harvester: %s'%harvester)
+    dLogger.log('    user: %s'%user)
+    dLogger.log('    new: %s'%new)

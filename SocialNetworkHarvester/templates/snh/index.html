@@ -6,34 +6,93 @@
     a.harvesterName {
         color:#333;
     }
+    span.enabledHarvester, span.disabledHarvester {
+        float: right;
+        cursor: pointer;
+    }
 </style>
+<script>
+    $(document).ready(function() {
+        $('.harvesterToggler').click(function(){
+            this.form.submit()
+        })
 
+        //Open/Close the harvester blocks
+        function openBlock(button){
+            $(button.parentElement.parentElement.parentElement.nextElementSibling).css('display', 'table-row-group')
+            button.innerHTML = '<strong>▲</strong>'
+            $(button).click(function(){closeBlock(button)})
+        }
+        function closeBlock(button){
+            $(button.parentElement.parentElement.parentElement.nextElementSibling).css('display', 'none')
+            button.innerHTML = '<strong>▼</strong>'
+            $(button).click(function(){openBlock(button)})
+        }
+        $('.disabledHarvester').click(function(){openBlock(this)})
+        $('.enabledHarvester').click(function(){closeBlock(this)})
+    })
+</script>
 {% endblock %}
-
-
 {% block content %}
-
-
 <h1>Harvesters stats</h1>
 
 <table width="100%">
     <thead>
-        <th>Twitter (<a href="/event_logs/twitterlog">log-></a>) </th>
-        <th>Facebook (<a href="/event_logs/facebooklog">log-></a>)</th>
-        <th>Dailymotion (<a href="/event_logs/dailymotionlog">log-></a>)</th>
-        <th>Youtube (<a href="/event_logs/youtubelog">log-></a>)</th>
+        {% if twitter_harvesters %}
+        <th>Twitter {% if user.is_superuser %}(<a href="/event_logs/twitterlog">log-></a>) {% endif %}</th>
+        {% endif %}
+        {% if facebook_harvesters %}
+        <th>Facebook {% if user.is_superuser %}(<a href="/event_logs/facebooklog">log-></a>){% endif %}</th>
+        {% endif %}
+        {% if dailymotion_harvesters %}
+        <th>Dailymotion {% if user.is_superuser %}(<a href="/event_logs/dailymotionlog">log-></a>){% endif %}</th>
+        {% endif %}
+        {% if youtube_harvesters %}
+        <th>Youtube {% if user.is_superuser %}(<a href="/event_logs/youtubelog">log-></a>){% endif %}</th>
+        {% endif %}
     </thead>
     <tbody>
+        {% if twitter_harvesters %}
         <td>
             {% for th in twitter_harvesters %}
             <table width="100%" class="pretty">
                 <thead>
-                    <th colspan="2"><a class="harvesterName" href="tw/{{ th.pmk_id }}">{{ th.harvester_name }}</a></th>
+                    {% if th.is_active %}
+                    <th colspan="2"><a class="harvesterName" href="tw/{{ th.pmk_id }}">{{ th.harvester_name }}</a> 
+                        <span class='enabledHarvester'>
+                            <strong>▲</strong>
+                        </span>
+                    </th>
+                    {% else %}
+                    <th colspan="2" style="background-color:#CCCCFF"><a class="harvesterName" href="tw/{{ th.pmk_id }}">{{ th.harvester_name }}</a>
+                        <span class='disabledHarvester'>
+                            <strong>▼</strong>
+                        </span>
+                    </th>
+                    {% endif %}
                 </thead>
+                {% if th.is_active %}
                 <tbody>
+                {% else %}
+                <tbody style='display:none'>
+                {% endif %}
                     <tr>
                         <td>Is enabled</td>
-                        <td>{{ th.is_active }}</td>
+                        <td>
+                        {% if user.is_superuser %}
+                            <form action='/toggle_harvester' method='POST'>
+                                {% if th.is_active %}
+                                <input class='harvesterToggler' type='checkbox' name='enabled' checked='True'></input>
+                                {% else %}
+                                <input class='harvesterToggler' type='checkbox' name='enabled'></input>
+                                {% endif %}
+                                <input type='hidden' name='type' value='twitterHarvester'>
+                                <input type='hidden' name='id' value='{{ th.pmk_id }}'>
+                            </form>
+                        {% else %}
+                            {{ th.is_active }}
+                        {% endif %}
+                        </td>
                     </tr>
                     <tr>
                         <td>Harvest in progress</td>
@@ -95,16 +154,48 @@
             </table>
             {% endfor %}
         </td>
+        {% endif %}
+        {% if facebook_harvesters %}
         <td>
             {% for th in facebook_harvesters %}
             <table width="100%" class="pretty">
                 <thead>
-                    <th colspan="2"><a class="harvesterName" href="fb/{{ th.pmk_id }}">{{ th.harvester_name }}</a></th>
+                    {% if th.is_active %}
+                    <th colspan="2"><a class="harvesterName" href="fb/{{ th.pmk_id }}">{{ th.harvester_name }}</a> 
+                        <span class='enabledHarvester'>
+                            <strong>▲</strong>
+                        </span>
+                    </th>
+                    {% else %}
+                    <th colspan="2" style="background-color:#CCCCFF"><a class="harvesterName" href="fb/{{ th.pmk_id }}">{{ th.harvester_name }}</a>
+                        <span class='disabledHarvester'>
+                            <strong>▼</strong>
+                        </span>
+                    </th>
+                    {% endif %}
                 </thead>
+                {% if th.is_active %}
                 <tbody>
+                {% else %}
+                <tbody style='display:none'>
+                {% endif %}
                     <tr>
                         <td>Is enabled</td>
-                        <td>{{ th.is_active }}</td>
+                        <td>
+                        {% if user.is_superuser %}
+                            <form action='/toggle_harvester' method='POST'>
+                                {% if th.is_active %}
+                                <input class='harvesterToggler' type='checkbox' name='enabled' checked='True'></input>
+                                {% else %}
+                                <input class='harvesterToggler' type='checkbox' name='enabled'></input>
+                                {% endif %}
+                                <input type='hidden' name='type' value='facebookHarvester'>
+                                <input type='hidden' name='id' value='{{ th.pmk_id }}'>
+                            </form>
+                        {% else %}
+                            {{ th.is_active }}
+                        {% endif %}
+                        </td>
                     </tr>
                     <tr>
                         <td>Harvest in progress</td>
@@ -163,16 +254,48 @@
             </table>
             {% endfor %}
         </td>
+        {% endif %}
+        {% if dailymotion_harvesters %}
         <td>
             {% for th in dailymotion_harvesters %}
             <table width="100%" class="pretty">
                 <thead>
-                    <th colspan="2"><a class="harvesterName" href="dm/{{ th.pmk_id }}">{{ th.harvester_name }}</a></th>
+                    {% if th.is_active %}
+                    <th colspan="2"><a class="harvesterName" href="dm/{{ th.pmk_id }}">{{ th.harvester_name }}</a> 
+                        <span class='enabledHarvester'>
+                            <strong>▲</strong>
+                        </span>
+                    </th>
+                    {% else %}
+                    <th colspan="2" style="background-color:#CCCCFF"><a class="harvesterName" href="dm/{{ th.pmk_id }}">{{ th.harvester_name }}</a>
+                        <span class='disabledHarvester'>
+                            <strong>▼</strong>
+                        </span>
+                    </th>
+                    {% endif %}
                 </thead>
+                {% if th.is_active %}
                 <tbody>
+                {% else %}
+                <tbody style='display:none'>
+                {% endif %}
                     <tr>
                         <td>Is enabled</td>
-                        <td>{{ th.is_active }}</td>
+                        <td>
+                        {% if user.is_superuser %}
+                            <form action='/toggle_harvester' method='POST'>
+                                {% if th.is_active %}
+                                <input class='harvesterToggler' type='checkbox' name='enabled' checked='True'></input>
+                                {% else %}
+                                <input class='harvesterToggler' type='checkbox' name='enabled'></input>
+                                {% endif %}
+                                <input type='hidden' name='type' value='dailyMotionHarvester'>
+                                <input type='hidden' name='id' value='{{ th.pmk_id }}'>
+                            </form>
+                        {% else %}
+                            {{ th.is_active }}
+                        {% endif %}
+                        </td>
                     </tr>
                     <tr>
                         <td>Harvest in progress</td>
@@ -223,16 +346,48 @@
             </table>
             {% endfor %}
         </td>
+        {% endif %}
+        {% if youtube_harvesters %}
         <td>
             {% for th in youtube_harvesters %}
             <table width="100%" class="pretty">
                 <thead>
-                    <th colspan="2"><a class="harvesterName" href="yt/{{ th.pmk_id }}">{{ th.harvester_name }}</a></th>
+                    {% if th.is_active %}
+                    <th colspan="2"><a class="harvesterName" href="yt/{{ th.pmk_id }}">{{ th.harvester_name }}</a> 
+                        <span class='enabledHarvester'>
+                            <strong>▲</strong>
+                        </span>
+                    </th>
+                    {% else %}
+                    <th colspan="2" style="background-color:#CCCCFF"><a class="harvesterName" href="yt/{{ th.pmk_id }}">{{ th.harvester_name }}</a>
+                        <span class='disabledHarvester'>
+                            <strong>▼</strong>
+                        </span>
+                    </th>
+                    {% endif %}
                 </thead>
+                {% if th.is_active %}
                 <tbody>
+                {% else %}
+                <tbody style='display:none'>
+                {% endif %}
                     <tr>
                         <td>Is enabled</td>
-                        <td>{{ th.is_active }}</td>
+                        <td>
+                        {% if user.is_superuser %}
+                            <form action='/toggle_harvester' method='POST'>
+                                {% if th.is_active %}
+                                <input class='harvesterToggler' type='checkbox' name='enabled' checked='True'></input>
+                                {% else %}
+                                <input class='harvesterToggler' type='checkbox' name='enabled'></input>
+                                {% endif %}
+                                <input type='hidden' name='type' value='youtubeHarvester'>
+                                <input type='hidden' name='id' value='{{ th.pmk_id }}'>
+                            </form>
+                        {% else %}
+                            {{ th.is_active }}
+                        {% endif %}
+                        </td>
                     </tr>
                     <tr>
                         <td>Harvest in progress</td>
@@ -283,6 +438,7 @@
             </table>
             {% endfor %}
         </td>
+        {% endif %}
     </tbody>
 </table>
 

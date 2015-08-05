@@ -53,15 +53,18 @@ def run_facebook_harvester():
         harvester.harvest_in_progress = False
         harvester.save()
 
-    for harvester in all_harvesters:
-        harvester.set_client(client)
-        logger.info(u"The harvester %s is %s" % (unicode(harvester), "active" if harvester.is_active else "inactive"))
-        if harvester.is_active:
-            run_harvester_v3(harvester)
-
-    for harvester in all_harvesters:
-        harvester.harvest_in_progress = False
-        harvester.save()
+    try:
+        for harvester in all_harvesters:
+            harvester.set_client(client)
+            logger.info(u"The harvester %s is %s" % (unicode(harvester), "active" if harvester.is_active else "inactive"))
+            if harvester.is_active:
+                run_harvester_v3(harvester)
+        if debugging: dLogger.log('Harvest has ended for all harvesters')
+    except:
+        for harvester in all_harvesters:
+            harvester.harvest_in_progress = False
+            harvester.save()
+        raise
             
 @dLogger.debug
 def sort_harvesters_by_priority():
@@ -209,7 +212,7 @@ def generic_batch_processor_v2(harvester, bman_list):
     bman_total = 1
     error_sum = 0
 
-    while bman_list:
+    while bman_list and FBResult.objects.count() < 500000:
         #usage = psutil.virtual_memory()
         logger.info(u"New batch. Size:%d for %s" % (len(bman_list), harvester))
 
@@ -240,7 +243,8 @@ def generic_batch_processor_v2(harvester, bman_list):
 
                 lap_start = time.time()
                 error = gbp_core(harvester, bman_chunk, error_map, next_bman_list, failed_list)
-                error_sum = error_sum + 1 if error else 0
+                if error:
+                    error_sum += 1
                 #logger.info(u"gbp_core: len(next_bman_list): %s" % len(next_bman_list))
             elif E_USER_QUOTA in error_map:
                 logger.error("bman(%d/%d) User quota reached. Aborting the harvest!" % (counter, bman_total))
@@ -732,11 +736,10 @@ def run_harvester_v3(harvester):
 
     harvester.start_new_harvest()
     try:
-        #launch result computation in case where the previous harvest was interrupted
         compute_results(harvester)
-        #update_user_batch(harvester)
-        #update_user_statuses_batch(harvester)
-        #compute_results(harvester)
+        update_user_batch(harvester)
+        update_user_statuses_batch(harvester)
+        compute_results(harvester)
     except:
         logger.exception(u"EXCEPTION: %s" % harvester)
         if debugging: dLogger.exception(u"EXCEPTION: %s" % harvester)

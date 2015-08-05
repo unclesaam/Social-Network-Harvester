@@ -28,10 +28,14 @@ def int_to_string(value):
 
 @login_required(login_url=u'/login/')
 def index(request):
-    twitter_harvesters = TwitterHarvester.objects.all()
-    facebook_harvesters = FacebookHarvester.objects.all()
-    dailymotion_harvesters = DailyMotionHarvester.objects.all()
-    youtube_harvesters = YoutubeHarvester.objects.all()
+    twitter_harvesters = list(TwitterHarvester.objects.filter(is_active=True))
+    twitter_harvesters += list(TwitterHarvester.objects.filter(is_active=False))
+    facebook_harvesters = list(FacebookHarvester.objects.filter(is_active=True))
+    facebook_harvesters += list(FacebookHarvester.objects.filter(is_active=False))
+    dailymotion_harvesters = list(DailyMotionHarvester.objects.filter(is_active=True))
+    dailymotion_harvesters += list(DailyMotionHarvester.objects.filter(is_active=False))
+    youtube_harvesters = list(YoutubeHarvester.objects.filter(is_active=True))
+    youtube_harvesters += list(YoutubeHarvester.objects.filter(is_active=False))
 
     return  render_to_response(u'snh/index.html',{
                                                     u'home_selected':True,
@@ -39,6 +43,7 @@ def index(request):
                                                     u'facebook_harvesters':facebook_harvesters,
                                                     u'dailymotion_harvesters':dailymotion_harvesters,
                                                     u'youtube_harvesters':youtube_harvesters,
+                                                    'user': request.user,
                                                   })
 
 @csrf_exempt
@@ -83,3 +88,29 @@ def get_event_logs(request, **kwargs):
         
     return render_to_response('snh/getLogger.html', {'logfile': logfile,
                                                     'title': title})
+
+@csrf_exempt
+@login_required(login_url=u'/login/')
+def toggle_harvester(request):
+    if request.POST['type'] == 'twitterHarvester':
+        harvester = TwitterHarvester.objects.get(pk=request.POST['id'])
+
+    elif request.POST['type'] == 'facebookHarvester':
+        harvester = FacebookHarvester.objects.get(pk=request.POST['id'])
+
+    elif request.POST['type'] == 'youtubeHarvester':
+        harvester = YoutubeHarvester.objects.get(pk=request.POST['id'])
+
+    elif request.POST['type'] == 'dailyMotionHarvester':
+        harvester = DailymotionHarvester.objects.get(pk=request.POST['id'])
+    else: 
+        return redirect('/')
+
+    if 'enabled' in request.POST:
+        harvester.is_active = True
+    else:
+        harvester.is_active = False
+
+    harvester.save()
+
+    return redirect('/')

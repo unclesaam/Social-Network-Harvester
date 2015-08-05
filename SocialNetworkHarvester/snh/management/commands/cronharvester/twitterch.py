@@ -38,41 +38,43 @@ def run_twitter_harvester():
         harvester.harvest_in_progress = False
         harvester.save()
 
-    for harvester in harvester_list:
-        logger.info(u"The harvester %s is %s" % 
-                    (unicode(harvester), 
-                    "active" if harvester.is_active else "inactive"))
+    try:
+        for harvester in harvester_list:
+            logger.info(u"The harvester %s is %s" % 
+                        (unicode(harvester), 
+                        "active" if harvester.is_active else "inactive"))
 
-        if harvester.is_active:    
-            harvester.start_new_harvest()
+            if harvester.is_active:    
+                harvester.start_new_harvest()
 
-            harvester.update_client_stats()
-            if harvester.remaining_user_timeline_hits <= 0 and harvester.remaining_user_lookup_hits <= 0:
-                warn = u"The harvester %s has exceeded the status rate limits. Need to wait? %s" % (unicode(harvester), harvester.get_stats())
-                logger.warning(warn)
-            else:
-                run_harvester_timeline(harvester)
                 harvester.update_client_stats()
-            
-            if harvester.remaining_search_hits <= 0:
-                warn = u"The harvester %s has exceeded the search rate limit. Need to wait? %s" % (unicode(harvester), harvester.get_stats())
-                logger.warning(warn)
-            else:
-                run_harvester_search(harvester)
-                harvester.update_client_stats()
-            
-            if harvester.remaining_user_lookup_hits <= 0:
-                warn = u"The harvester %s has exceeded the user lookup rate limit. Need to wait? %s" % (unicode(harvester), harvester.get_stats())
-                logger.warning(warn)
-            else:
-                run_users_update(harvester)
-                harvester.update_client_stats()
-
-            harvester.end_current_harvest()
-    if debugging: dLogger.log('Harvest has ended for all harvesters')
-    for harvester in harvester_list:
-        harvester.harvest_in_progress = False
-        harvester.save()
+                if harvester.remaining_user_timeline_hits <= 0 and harvester.remaining_user_lookup_hits <= 0:
+                    warn = u"The harvester %s has exceeded the status rate limits. Need to wait? %s" % (unicode(harvester), harvester.get_stats())
+                    logger.warning(warn)
+                else:
+                    run_harvester_timeline(harvester)
+                    harvester.update_client_stats()
+                
+                if harvester.remaining_search_hits <= 0:
+                    warn = u"The harvester %s has exceeded the search rate limit. Need to wait? %s" % (unicode(harvester), harvester.get_stats())
+                    logger.warning(warn)
+                else:
+                    run_harvester_search(harvester)
+                    harvester.update_client_stats()
+                
+                if harvester.remaining_user_lookup_hits <= 0:
+                    warn = u"The harvester %s has exceeded the user lookup rate limit. Need to wait? %s" % (unicode(harvester), harvester.get_stats())
+                    logger.warning(warn)
+                else:
+                    run_users_update(harvester)
+                    harvester.update_client_stats()
+                harvester.end_current_harvest()
+        if debugging: dLogger.log('Harvest has ended for all harvesters')
+    except:
+        for harvester in harvester_list:
+            harvester.harvest_in_progress = False
+            harvester.save()
+        raise
 
 @dLogger.debug
 def sort_harvesters_by_priority(all_harvesters):
