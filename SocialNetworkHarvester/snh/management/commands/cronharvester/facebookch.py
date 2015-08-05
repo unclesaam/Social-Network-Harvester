@@ -47,8 +47,8 @@ def run_facebook_harvester():
     client = facebook.GraphAPI(access_token=sessionKey[0].get_access_token())
     extendedToken = client.extend_access_token(app_id=FACEBOOK_APPLICATION_ID, app_secret=FACEBOOK_APPLICATION_SECRET_KEY)
     sessionKey[0].set_access_token(extendedToken['access_token']) # Insure that the token will be valid for another two months
-
-    all_harvesters = sort_harvesters_by_priority()
+    
+    all_harvesters = sort_harvesters_by_priority(FacebookHarvester.objects.all())
     for harvester in all_harvesters:
         harvester.harvest_in_progress = False
         harvester.save()
@@ -67,16 +67,17 @@ def run_facebook_harvester():
         raise
             
 @dLogger.debug
-def sort_harvesters_by_priority():
+def sort_harvesters_by_priority(all_harvesters):
     if debugging: dLogger.log("sort_harvesters_by_priority()")
 
-    all_harvesters = FacebookHarvester.objects.all()
-    aborted_harvesters = [harv for harv in all_harvesters if harv.current_harvest_start_time != None]
-    clean_harvesters = [harv for harv in all_harvesters if harv not in aborted_harvesters]
-
-    sorted_harvester_list = sorted(clean_harvesters, key=lambda harvester: harvester.last_harvest_start_time)
+    new_harvesters = [harv for harv in all_harvesters if harv.last_harvest_start_time == None]
+    aborted_harvesters = [harv for harv in all_harvesters if harv.current_harvest_start_time != None and harv not in new_harvesters]
+    clean_harvesters = [harv for harv in all_harvesters if harv not in aborted_harvesters and harv not in new_harvesters]
+    
+    sorted_harvester_list = new_harvesters
+    sorted_harvester_list += sorted(clean_harvesters, key=lambda harvester: harvester.last_harvest_start_time)
     sorted_harvester_list += sorted(aborted_harvesters, key=lambda harvester: harvester.current_harvest_start_time)
-
+    if debugging : dLogger.log('    sorted_harvester_list: %s'%sorted_harvester_list)
     return sorted_harvester_list
 
 
