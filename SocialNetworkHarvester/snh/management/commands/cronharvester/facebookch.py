@@ -213,7 +213,7 @@ def generic_batch_processor_v2(harvester, bman_list):
     bman_total = 1
     error_sum = 0
 
-    while bman_list and FBResult.objects.count() < 500000:
+    while bman_list and FBResult.objects.count() < 100000:
         #usage = psutil.virtual_memory()
         logger.info(u"New batch. Size:%d for %s" % (len(bman_list), harvester))
 

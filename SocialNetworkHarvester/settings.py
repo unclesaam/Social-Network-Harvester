@@ -32,8 +32,8 @@ if PROD: #en mode production:
                     'twitterview':      False
                     }
 
-    DOWNLOADED_VIDEO_PATH = 'mnt/video/2015/'
-    TEMPO_JSON_FILE_PATH = 'mnt/video/2015/JSON/Statuses.json'
+    DOWNLOADED_VIDEO_PATH = '/mnt/video/2015/'
+    TEMPO_JSON_FILE_PATH = '/mnt/video/2015/JSON/Statuses.json'
 
     DATABASES = {
         'default': {
