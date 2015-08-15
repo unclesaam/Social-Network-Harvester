@@ -76,6 +76,7 @@
 {% block content %}
 
 <h3>Search results for {{ search.term }} </h3> 
+<div  id='status_chart' style='margin:0 auto; width: 100%; height: 240px;'></div>
 <span>Download raw JSON data <a id='jsonButton' href='/get_tw_status_json?search_id={{ search.pmk_id }}'>here</a></span>
 <table id="search_table" class="pretty">
     <thead>
@@ -99,5 +100,25 @@
         {% endfor %}
     </tbody>
 </table>
+<script type="text/javascript" src="https://www.google.com/jsapi"></script>
+<script type='text/javascript'>google.load('visualization', '1', {packages: ['annotatedtimeline']});</script>
+<script type="text/javascript">
+    function buildChart($url_to_get, $dest_tag){
+        var jsonData = $.ajax({
+            url: $url_to_get,
+            dataType:"json",
+            async: true,
+            success: function(html){
+                    // Succesful, load visualization API and send data      
+                    var data = new google.visualization.DataTable(html);
+                    var annotatedtimeline = new google.visualization.AnnotatedTimeLine(document.getElementById($dest_tag));
+                    annotatedtimeline.draw(data, {'displayAnnotations': false});
+                }
+              });
+    }
+
+    buildChart("{% url snh.views.get_search_status_chart harvester_id search.term %}", 'status_chart')
+    //buildChart("/get_status_chart/7/premierministre/", 'status_chart')
+</script>
 
 {% endblock %}

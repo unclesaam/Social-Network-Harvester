@@ -26,6 +26,7 @@ urlpatterns = patterns('snh.views',
 
     (r'^get_status_chart/(?P<harvester_id>\d+)/(?P<screen_name>\w+)/$', 'get_status_chart'),
     (r'^get_at_chart/(?P<harvester_id>\d+)/(?P<screen_name>\w+)/$', 'get_at_chart'),
+    (r'^get_search_status_chart/(?P<harvester_id>\d+)/(?P<search_term>\w+)/$', 'get_search_status_chart'),
 
     #FACEBOOK
     (r'^request_fb_token$', 'request_fb_token'),

@@ -11,6 +11,8 @@ from bs4 import BeautifulSoup as bs
 from twython import *
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 from snh.models.twittermodel import *
+from django.core import serializers
+
 
 
 import snhlogger
@@ -46,21 +48,7 @@ def run_twitter_harvester():
 
             if harvester.is_active:    
                 harvester.start_new_harvest()
-
                 harvester.update_client_stats()
-                if harvester.remaining_user_timeline_hits <= 0 and harvester.remaining_user_lookup_hits <= 0:
-                    warn = u"The harvester %s has exceeded the status rate limits. Need to wait? %s" % (unicode(harvester), harvester.get_stats())
-                    logger.warning(warn)
-                else:
-                    run_harvester_timeline(harvester)
-                    harvester.update_client_stats()
-                
-                if harvester.remaining_search_hits <= 0:
-                    warn = u"The harvester %s has exceeded the search rate limit. Need to wait? %s" % (unicode(harvester), harvester.get_stats())
-                    logger.warning(warn)
-                else:
-                    run_harvester_search(harvester)
-                    harvester.update_client_stats()
                 
                 if harvester.remaining_user_lookup_hits <= 0:
                     warn = u"The harvester %s has exceeded the user lookup rate limit. Need to wait? %s" % (unicode(harvester), harvester.get_stats())
@@ -68,6 +56,21 @@ def run_twitter_harvester():
                 else:
                     run_users_update(harvester)
                     harvester.update_client_stats()
+
+                if harvester.remaining_user_timeline_hits <= 0 and harvester.remaining_user_lookup_hits <= 0:
+                    warn = u"The harvester %s has exceeded the status rate limits. Need to wait? %s" % (unicode(harvester), harvester.get_stats())
+                    logger.warning(warn)
+                else:
+                    run_harvester_timeline(harvester)
+                    harvester.update_client_stats()
+
+                if harvester.remaining_search_hits <= 0:
+                    warn = u"The harvester %s has exceeded the search rate limit. Need to wait? %s" % (unicode(harvester), harvester.get_stats())
+                    logger.warning(warn)
+                else:
+                    run_harvester_search(harvester)
+                    harvester.update_client_stats()
+
                 harvester.end_current_harvest()
         if debugging: dLogger.log('Harvest has ended for all harvesters')
     except:
@@ -267,7 +270,7 @@ def search_all_terms(harvester, snh_searches):
             update_statuses(harvester, snh_search, status_id_list)
         else:
             # finished the harvest for that term. starting over next time
-            dLogger.log('    %s HAS FINISHED!'%snh_search)
+            if debugging: dLogger.log('    %s HAS FINISHED!'%snh_search)
             snh_search.latest_status_harvested = None 
             snh_search.save()
 
@@ -281,7 +284,7 @@ def search_term(harvester, snh_search):
     max_id = None
     if last_harvested_status:
         max_id = int(last_harvested_status.fid) -1
-        dLogger.log('    Latest statuse harvested date: %s'%last_harvested_status.created_at)
+        if debugging: dLogger.log('    Latest statuse harvested date: %s'%last_harvested_status.created_at)
 
     while len(new_statuses_list) < 80:
         status_id_list = collect_tweets_from_html(harvester, snh_search, max_id)
@@ -313,17 +316,28 @@ def update_statuses(harvester, snh_search, status_id_list):
         #dLogger.log(tw_status['created_at'])
 
         tw_user = tw_status['user']
-        snh_user, new = TWUser.objects.get_or_create(screen_name=tw_user['screen_name'])
+        snh_user, new = TWUser.objects.get_or_create(fid=tw_user['id'])
         if new: 
-            dLogger.log('    new user created: %s'%snh_user)
+            snh_user.screen_name = tw_user['screen_name']
+            if debugging: dLogger.log('    new user created: %s'%snh_user)
             logger.info('New user created from search: %s'%snh_user)
             snh_user.harvester = harvester
+            try:
+                snh_user.save()
+            except:
+                dLogger.log('    GODDAMNIT')
+                user = TWUser.objects.get(screen_name=tw_user['screen_name'])
+                for post in user.postedStatuses.all():
+                    post.user = snh_user
+                    post.save()
+                user.delete()
             snh_user.save()
 
-        snh_status, new = TWStatus.objects.get_or_create(fid=tw_status['id_str'],
-                                                user=snh_user)
-        if new: 
-            dLogger.log('    new status created: %s'%snh_status)
+        try:
+            snh_status = TWStatus.objects.get(fid=tw_status['id_str'])
+        except:
+            snh_status = TWStatus.objects.create(fid=tw_status['id_str'], user=snh_user)
+            if debugging: dLogger.log('    new status created: %s'%snh_status)
             logger.info('New status created from search: %s'%snh_status)
 
         try:
@@ -376,7 +390,7 @@ def collect_tweets_from_html(harvester,snh_search,max_id=None):
     if max_id: params += ' max_id:%s'%max_id
     safe_url = 'https://twitter.com/search?q=' + urllib.quote(params)
 
-    dLogger.log('    URL: %s'%safe_url)
+    if debugging: dLogger.log('    URL: %s'%safe_url)
     try:
         data = urllib2.urlopen(safe_url)
     except:
@@ -399,8 +413,9 @@ def update_user_batch(harvester, user_batch):
     try:
         for user in user_batch:
             userList.append(user.screen_name)
-            userObjects[user.screen_name.lower()] = user
-
+            if user.fid:
+                userObjects[user.fid] = user
+        #dLogger.log('    userObjects: %s'%userObjects)
         twModels = harvester.api_call('UsersLookup', {
                         'screen_name': userList, 
                         'include_entities': True
@@ -409,10 +424,30 @@ def update_user_batch(harvester, user_batch):
         harvester.save()
 
         for twModel in twModels:
+            #dLogger.pretty(twModel.AsDict())
             try:
-                userObjects[twModel.screen_name.lower()].update_from_twitter(twModel)
+                userObjects[twModel.id].update_from_twitter(twModel)
+            except KeyError:
+                try:
+                    snh_user = TWUser.objects.get(fid=twModel.id)
+                except:
+                    dLogger.log('    GETTING USER BY SCREEN_NAME')
+                    snh_user = TWUser.objects.get(screen_name=twModel.screen_name)
+                try:
+                    snh_user.update_from_twitter(twModel)
+                except:
+                    dLogger.log('    NEED TO TRANSFER USER!')
+                    user = TWUser.objects.get(screen_name=twModel.screen_name)
+                    for status in user.postedStatuses.all():
+                        status.user = snh_user
+                        status.save()
+                    user.delete()
+                    snh_user.update_from_twitter(twModel)
+
+
             except:
-                if debugging: dLogger.exception("ERROR UPDATING FROM TWITTER: %s"%twModel.screen_name.lower())
+                if debugging: dLogger.exception("ERROR UPDATING FROM TWITTER: %s"%twModel.screen_name)
+                pass
     except:
         if debugging: dLogger.exception( "ERROR WHILE UPDATING USER BATCH:")
 
@@ -515,12 +550,12 @@ def custom_migration():
             dLogger.log('param: %s'%param)
             setattr(harv, param, getattr(harv2, param))
         harv.save()
-        dLogger.log('copied %s'%harv)
+        if debugging: dLogger.log('copied %s'%harv)
         
 def custom_export():
     harv = TwitterHarvester.objects.get(pk=4)
     harv.update_client_stats()
-    dLogger.log(harv.get_client().GetRateLimitStatus('statuses')['resources']['statuses']['/statuses/lookup'])
+    if debugging: dLogger.log(harv.get_client().GetRateLimitStatus('statuses')['resources']['statuses']['/statuses/lookup'])
 
 
     open("C:\Users\Sam\Desktop\\abvote.json", 'w').close()

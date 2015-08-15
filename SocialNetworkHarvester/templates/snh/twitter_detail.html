@@ -1,5 +1,6 @@
 {% extends "snh/snh_base.html" %}
 {% block extrahead %}
+<script type="text/javascript" src="https://www.google.com/jsapi"></script>
 <script type="text/javascript" charset="utf-8">
 	$(document).ready(function() {
 		var oTable1 = $('#status_table').dataTable(
@@ -169,9 +170,9 @@
     </tbody>
 </table>
 <script type="text/javascript" src="https://www.google.com/jsapi"></script>
+<script type='text/javascript'>google.load('visualization', '1', {packages: ['annotatedtimeline']});</script>
 <script type="text/javascript">
     function buildChart($url_to_get, $dest_tag){
-
         var jsonData = $.ajax({
             url: $url_to_get,
             dataType:"json",
@@ -185,7 +186,6 @@
               });
     }
 
-    google.load('visualization', '1', {packages: ['annotatedtimeline']});
     buildChart("{% url snh.views.get_status_chart harvester_id user.screen_name %}", 'status_chart')
     buildChart("{% url snh.views.get_at_chart harvester_id user.screen_name %}", 'at_chart')
 </script>

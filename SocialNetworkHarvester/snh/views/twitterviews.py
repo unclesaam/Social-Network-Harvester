@@ -210,7 +210,7 @@ def get_tw_harvester_status_list(request, call_type, harvester_id):
         # merge two conditional filter in queryset:
         conditionList = [Q(user=user) for user in harvester.twusers_to_harvest.all()]
         conditionList += [Q(TWSearch_hit=search) for search in harvester.twsearch_to_harvest.all()]
-        querySet = TWStatus.objects.filter(reduce(lambda x, y: x | y, conditionList))
+        querySet = TWStatus.objects.filter(reduce(lambda x, y: x | y, conditionList)).distinct()
 
     except ObjectDoesNotExist:
         pass
@@ -291,7 +291,43 @@ def get_status_chart(request, harvester_id, screen_name):
         response =  HttpResponse(data_table.ToJSon(), mimetype='application/javascript')
         return response
     except:
-        logger.exception('AN ERROR HAS OCCURED WHILE RENDERING A STATUS CHART')
+        logger.exception('AN ERROR HAS OCCURED WHILE RENDERING A STATUS CHART. SCREEN_NAME: %s'%screen_name)
+
+@login_required(login_url=u'/login/')
+def get_search_status_chart(request, harvester_id, search_term):
+    try:
+        search = get_list_or_404(TWSearch, term=search_term)[0]
+        count = search.status_list.count()
+
+        fromto = search.status_list.order_by(u"created_at")
+        base = fromto[0].created_at if count != 0 else dt.datetime.now()
+        order = 1
+        while fromto[0].created_at == None and order < len(fromto):
+            base = fromto[order].created_at
+            order += 1
+        to = fromto[count-1].created_at if count != 0 else dt.datetime.now()
+
+        logger.debug("to: %s"%to)
+        logger.debug("base: %s"%base)
+        days = (to - base).days + 1
+        dateList = [ base + dt.timedelta(days=x) for x in range(0,days) ]
+        description = {"date_val": ("date", "Date"),
+                       "status_count": ("number", "Status count"),
+                      }
+        data = []
+        for date in dateList:
+            c = search.status_list.filter(created_at__year=date.year,created_at__month=date.month,created_at__day=date.day).count()
+            data.append({"date_val":date, "status_count":c})
+
+        data_table = gviz_api.DataTable(description)
+        data_table.LoadData(data)
+        logger.debug(data_table.ToJSon())
+        response =  HttpResponse(data_table.ToJSon(), mimetype='application/javascript')
+        return response
+    except:
+        dLogger.exception("AN ERROR HAS OCCURED WHILE RENDERING STATUS CHART: SEARCH_TERM: %s"%search_term)
+
+
 
 @login_required(login_url=u'/login/')
 def get_at_chart(request, harvester_id, screen_name):
@@ -380,7 +416,7 @@ def dwld_tw_status_csv(request):
         # merge two conditional filter in queryset:
         conditionList = [Q(user=user) for user in harvester.twusers_to_harvest.all()]
         conditionList += [Q(TWSearch_hit=search) for search in harvester.twsearch_to_harvest.all()]
-        statuses = TWStatus.objects.filter(reduce(lambda x, y: x | y, conditionList))
+        statuses = TWStatus.objects.filter(reduce(lambda x, y: x | y, conditionList)).distinct()
 
     elif 'TWUser_id' in request.GET:
         TWUser_id = request.GET['TWUser_id']

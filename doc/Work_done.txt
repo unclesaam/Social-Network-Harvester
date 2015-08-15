@@ -376,3 +376,15 @@ besoin. J'implémente une django-view à part pour cette fonction.
 - Upload et tests.
 - Programmation des Harvest de la campagne federale 2015
 - Fin de journée (9h)
+
+5 au 13 aout 2015:
+- Design de la nouvelle interface du SNH
+- Supervision de la collecte Canadienne. Inspection régulière du serveur de production et des processus, gestion de la memoire, etc.
+- Démarage du développement du SNH v1.0
+- (~ 25h)
+
+14 aout 2015:
+- Apparition d'un nouveau bug avec twitter: Les users peuvent apparement changer de screen_name a volonté, ce qui n'était pas pris en compte dans le code.
+- Fix d'un bug avec Twitter. Tests exhaustifs de l'intégrité de la base de donné. backups, etc.
+- Ajout d'une table de visualisation des status dans la page des hashtags. (chartre du nombre de status par jour)
+- fin de journée (8h)

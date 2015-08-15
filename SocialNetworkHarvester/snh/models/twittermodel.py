@@ -422,7 +422,7 @@ class TWUser(models.Model):
                 if self.__dict__[prop] != tw_val:
                     self.__dict__[prop] = tw_val
                     model_changed = True
-                    if debugging: dLogger.log('    %s has changed: %s'%(prop, self.__dict__[prop]))
+                    #if debugging: dLogger.log('    %s has changed: %s'%(prop, self.__dict__[prop]))
         
         for elem in ('protected', 'profile_background_tile'):
             if getattr(self, elem) == None:
@@ -511,7 +511,7 @@ class TWStatus(models.Model):
 
     pmk_id =  models.AutoField(primary_key=True)
 
-    user = models.ForeignKey('TWUser', related_name='postedStatuses')
+    user = models.ForeignKey('TWUser', related_name='postedStatuses', blank=True, null=True)
 
     fid = models.BigIntegerField(null=True, unique=True)
     created_at = models.DateTimeField(null=True)
@@ -584,7 +584,7 @@ class TWStatus(models.Model):
                 if self.__dict__[prop] != tw_prop_val:
                     self.__dict__[prop] = tw_prop_val
                     model_changed = True
-                    dLogger.log('    %s has changed: %s'%(prop, self.__dict__[prop]))
+                    #if debugging: dLogger.log('    %s has changed: %s'%(prop, self.__dict__[prop]))
 
         for prop in date_to_check:
             if prop in twitter_model:
@@ -647,10 +647,8 @@ class TWStatus(models.Model):
                 for tw_mention in tw_prop_val:
                     usermention = None
                     try:
-                        usermention = self.get_existing_user({"fid__exact":tw_mention['id']})
+                        usermention = self.get_existing_user({"fid":tw_mention['id']})
                         #if debugging: dLogger.log("    usermention: %s"%usermention)
-                        if not usermention:
-                            usermention = self.get_existing_user({"screen_name__exact":tw_mention['screen_name']})
                         if not usermention:
                             usermention = TWUser(
                                             fid=tw_mention['id'],
@@ -659,7 +657,7 @@ class TWStatus(models.Model):
                                          )
                         usermention.update_from_rawtwitter(tw_mention,twython)
                         usermention.save()
-                        if debugging: dLogger.log("    user created from user mention: %s"%usermention)
+                        #if debugging: dLogger.log("    user created from user mention: %s"%usermention)
                     except:
                         if debugging: dLogger.exception("Exception occured while saving user:")
 
@@ -724,7 +722,7 @@ class TWStatus(models.Model):
                 if self.__dict__[prop] != tw_prop_val:
                     self.__dict__[prop] = tw_prop_val
                     model_changed = True
-                    if debugging: dLogger.log('    %s has changed: %s'%(prop, self.__dict__[prop]))
+                    #if debugging: dLogger.log('    %s has changed: %s'%(prop, self.__dict__[prop]))
 
         for prop in date_to_check:
             prop_name = "_"+prop
@@ -784,11 +782,10 @@ class TWStatus(models.Model):
             for tw_mention in tw_prop_val:
                 usermention = None
                 try:
-
-                    usermention = self.get_existing_user({"fid__exact":tw_mention.id})
+                    usermention = self.get_existing_user({"fid":tw_mention.id})
                     #if debugging: dLogger.log("    usermention: %s"%usermention)
                     if not usermention:
-                        usermention = self.get_existing_user({"screen_name__exact":tw_mention.screen_name})
+                        usermention = self.get_existing_user({"screen_name":tw_mention.screen_name})
                     if not usermention:
                         usermention = TWUser(
                                         fid=tw_mention.id,
