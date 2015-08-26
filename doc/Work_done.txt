@@ -388,3 +388,14 @@ besoin. J'implémente une django-view à part pour cette fonction.
 - Fix d'un bug avec Twitter. Tests exhaustifs de l'intégrité de la base de donné. backups, etc.
 - Ajout d'une table de visualisation des status dans la page des hashtags. (chartre du nombre de status par jour)
 - fin de journée (8h)
+
+17 au 25 aout 2015:
+- Ajout de fonctionnalités. retouches mineures de l'interface.
+- Supervision constante du bon déroulement de la collecte Canadienne.
+- Continuation du design de la nouvelle interface.
+- (~ 30h)
+
+26 aout 2015:
+- Test d'une update à la collecte de facebook. Les FBUsers sont maintenant updatés avec des infos pertinentes. (si disponibles.)
+- Ajout de comptes à la collecte Twitter, Fournis par David Dumouchel.
+- fin de journée (6h)

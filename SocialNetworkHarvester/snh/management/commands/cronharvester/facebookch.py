@@ -643,7 +643,7 @@ class ThreadComment(threading.Thread):
                     #if debugging: dLogger.log("    deleted fbcomment result %s"%fbcomment)
                     qsize = self.queue.qsize()
                     if debugging: dLogger.log("    %s Comments left in queue"%qsize)
-                    if qsize % 1000 == 0: logger.info("    less than %s comments left in queue"%qsize)
+                    if qsize % 10000 == 0: logger.info("    less than %s comments left in queue"%qsize)
                 else:
                     logger.error(u"ThreadComment %s. fid is none! %s." % (self, fid))
                 #signals to queue job is done

@@ -39,20 +39,16 @@ class TwitterHarvesterAdmin(admin.ModelAdmin):
         }),
     )
 
-    # define the raw_id_fields
-    #raw_id_fields = ('twusers_to_harvest','twsearch_to_harvest',)
-    # define the related_lookup_fields
-    #related_lookup_fields = {
-    #    'm2m': ['twusers_to_harvest','twsearch_to_harvest',],
-    #}
-
+    raw_id_fields = ('twusers_to_harvest','twsearch_to_harvest',)
+    related_lookup_fields = {'m2m': ['twusers_to_harvest','twsearch_to_harvest',],}
+    '''
     def formfield_for_manytomany(self, db_field, request, **kwargs):
         if db_field.name == "twusers_to_harvest":
             conditionList = [models.Q(fid__isnull=True), models.Q(followers_count__gte=1000)]
-            kwargs["queryset"] = TWUser.objects.filter(reduce(lambda x, y: x | y, conditionList)).distinct()[:10000]
+            kwargs["queryset"] = TWUser.objects.filter(reduce(lambda x, y: x | y, conditionList)).distinct()
         return super(TwitterHarvesterAdmin, self).formfield_for_manytomany(db_field, request, **kwargs)
-
-    filter_horizontal = ('twusers_to_harvest','twsearch_to_harvest',)
+    '''
+    #filter_horizontal = ('twusers_to_harvest','twsearch_to_harvest',)
 
 class TWUserAdmin(admin.ModelAdmin):
     search_fields = ('screen_name',)
@@ -140,16 +136,16 @@ class FacebookHarvesterAdmin(admin.ModelAdmin):
         }),
     )
 
-    #raw_id_fields = ('fbusers_to_harvest',)
-    #related_lookup_fields = {'m2m': ['fbusers_to_harvest',],}
-
+    raw_id_fields = ('fbusers_to_harvest',)
+    related_lookup_fields = {'m2m': ['fbusers_to_harvest',],}
+    '''
     def formfield_for_manytomany(self, db_field, request, **kwargs):
         if db_field.name == "fbusers_to_harvest":
             kwargs["queryset"] = FBUser.objects.exclude(username__isnull=True)
         return super(FacebookHarvesterAdmin, self).formfield_for_manytomany(db_field, request, **kwargs)
 
     filter_horizontal = ('fbusers_to_harvest',)
-
+    '''
 
 class FBUserAdmin(admin.ModelAdmin):
     list_per_page = 500
