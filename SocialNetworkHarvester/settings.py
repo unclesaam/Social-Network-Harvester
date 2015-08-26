@@ -18,6 +18,23 @@ ADMINS = (
 )
 MANAGERS = ADMINS
 
+DEFAULT_API_APPS = {
+    'facebook':{
+        'app_id': '382086531988825',
+        'app_secret': '2079f3b96d08ef4edd8460fdab0db27c',
+        'app_namespace': 'socnetapps'
+    },
+    'twitter':{
+        'consumer_key':'viRLlErnlP7EX5h58bJ4GQ',
+        'consumer_secret': '6bQn4MPZ3P9BpiT4OLRUEoLswmFlacV5Bv1e8Kajcic',
+        'token_key': '128214033-yPkYjTHxuPXPO6dajWcnv7fXVKT17gLu049UDF0c',
+        'token_secret': '628QkGRv7lkEu7TTshJqgR89vUicHdajr2Xw6s2vo'
+    },
+    'youtube':{
+        'dev_key':'AIzaSyAPjZOwwNlwR3vusrQuix_RjSh2aGd6__I'
+    },
+}
+
 if PROD: #en mode production:
     DEBUG = False
     DEBUGCONTROL = {'commonmodel':      False,
@@ -48,7 +65,9 @@ if PROD: #en mode production:
             }
         }
     }
-    
+
+    DEFAULT_API_APPS['facebook']['app_namespace'] = 'socnetapps'
+
     FACEBOOK_APPLICATION_ID = '382086531988825'
     FACEBOOK_APPLICATION_SECRET_KEY = '2079f3b96d08ef4edd8460fdab0db27c'
     FACEBOOK_APPLICATION_NAMESPACE = 'socnetapps'
@@ -89,10 +108,12 @@ else: # en mode développement:
     }
     FACEBOOK_APPLICATION_ID = '382086531988825'
     FACEBOOK_APPLICATION_SECRET_KEY = '2079f3b96d08ef4edd8460fdab0db27c'
-    FACEBOOK_APPLICATION_NAMESPACE = 'aspiratest'
-    resetwarnings()
+    FACEBOOK_APPLICATION_NAMESPACE = 'socnetapps'
+
 
 TEMPLATE_DEBUG = DEBUG
+
+
 
 # Local time zone for this installation. Choices can be found here:
 # http://en.wikipedia.org/wiki/List_of_tz_zones_by_name
@@ -204,7 +225,7 @@ INSTALLED_APPS = (
     'django.contrib.admin',
 )
 
-GRAPPELLI_ADMIN_TITLE = "<a href='/admin'>SNH Admin</a> |\
+GRAPPELLI_ADMIN_TITLE = "<a href='/admin'>Admin</a> |\
                          <a href='/'>Consultation</a> |\
                          <a href='/test_fb_token'>Facebook token</a> |\
                          <a href='/event_logs'>Event logs</a>"

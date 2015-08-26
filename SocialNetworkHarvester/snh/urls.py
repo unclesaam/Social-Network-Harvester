@@ -8,6 +8,7 @@ urlpatterns = patterns('snh.views',
     (r'^$', 'index'),
     (r'^toggle_harvester$', 'toggle_harvester'),
 
+
     #TWITTER
     (r'^tw/(?P<harvester_id>\d+)$', 'tw'),
     (r'^tw_user_detail/(?P<harvester_id>\d+)/(?P<screen_name>\w+)/$', 'tw_user_detail'),
@@ -40,8 +41,10 @@ urlpatterns = patterns('snh.views',
     #FACEBOOK AJAX
     (r'^get_fb_list/(?P<call_type>[\w\.]+)/(?P<harvester_id>\d+)/$', 'get_fb_list'),
     (r'^get_fb_post_list/(?P<call_type>[\w\.]+)/(?P<userfid>[\w\.]+)/$', 'get_fb_post_list'),
+    (r'^get_fb_harvester_post_list/(?P<call_type>[\w\.]+)/(?P<harvester_id>[\w\.]+)/$', 'get_fb_harvester_post_list'),
     (r'^get_fb_otherpost_list/(?P<call_type>[\w\.]+)/(?P<userfid>[\w\.]+)/$', 'get_fb_otherpost_list'),
     (r'^get_fb_comment_list/(?P<call_type>[\w\.]+)/(?P<userfid>[\w\.]+)/$', 'get_fb_comment_list'),
+    (r'^get_fb_harvester_comment_list/(?P<call_type>[\w\.]+)/(?P<harvester_id>[\w\.]+)/$', 'get_fb_harvester_comment_list'),
     (r'^get_fb_postcomment_list/(?P<call_type>[\w\.]+)/(?P<postfid>[\w\.]+)/$', 'get_fb_postcomment_list'),
     (r'^get_fb_likes_list/(?P<call_type>[\w\.]+)/(?P<postfid>[\w\.]+)/$', 'get_fb_likes_list'),
 
@@ -49,6 +52,9 @@ urlpatterns = patterns('snh.views',
     (r'^get_otherwall_chart/(?P<harvester_id>\d+)/(?P<userfid>[\w\.]+)/$', 'get_otherwall_chart'),
     (r'^get_comment_chart/(?P<harvester_id>\d+)/(?P<userfid>[\w\.]+)/$', 'get_comment_chart'),
     (r'^get_commentpost_chart/(?P<harvester_id>\d+)/(?P<postfid>[\w\.]+)/$', 'get_commentpost_chart'),
+
+    (r'^dwld_fb_posts_csv/', 'dwld_fb_posts_csv'),
+    (r'^dwld_fb_comments_csv/', 'dwld_fb_comments_csv'),
 
     #DAILYMOTION
     (r'^dm/(?P<harvester_id>\d+)$', 'dm'),

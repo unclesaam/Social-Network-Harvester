@@ -35,7 +35,7 @@ if debugging: print "DEBBUGING ENABLED IN %s"%__name__
 #
 # TWITTER
 #
-status_fields = [['fid','text'],
+tw_status_fields = [['fid','text'],
     ['created_at','favorited'],
     ['retweet_count','retweeted'],
     ['truncated','text_urls'],
@@ -70,7 +70,7 @@ def tw(request, harvester_id):
                                                     u'harvester_id':harvester_id,
                                                     u'user_list': user_list,
                                                     u'stags_list': stags_list,
-                                                    'status_fields':status_fields
+                                                    'status_fields':tw_status_fields
                                                   })
 
 @login_required(login_url=u'/login/')
@@ -87,7 +87,7 @@ def tw_user_detail(request, harvester_id, screen_name):
                                                     u'user':user,
                                                     u'status_list': status_list,
                                                     u'mention_list': mention_list,
-                                                    'status_fields': status_fields
+                                                    'status_fields': tw_status_fields
                                                   })
 @login_required(login_url=u'/login/')
 def tw_search_detail(request, harvester_id, search_id):
@@ -101,7 +101,7 @@ def tw_search_detail(request, harvester_id, search_id):
                                                     u'harvester_id':harvester_id,
                                                     u'search':search,
                                                     u'status_list':status_list,
-                                                    'status_fields': status_fields,
+                                                    'status_fields': tw_status_fields,
                                                   })
 @login_required(login_url=u'/login/')
 def tw_status_detail(request, harvester_id, status_id):
@@ -203,7 +203,9 @@ def get_tw_harvester_status_list(request, call_type, harvester_id):
                             4 : u'retweeted',
                             5 : u'source',
                             }
-    try:
+    if harvester_id == '0':
+        querySet = TWStatus.objects.all()
+    else:
         harvester = get_list_or_404(TwitterHarvester, pmk_id=harvester_id)[0]
         #querySet = [user.postedStatuses.all() for user in harvester.twusers_to_harvest.all()]
 
@@ -211,9 +213,6 @@ def get_tw_harvester_status_list(request, call_type, harvester_id):
         conditionList = [Q(user=user) for user in harvester.twusers_to_harvest.all()]
         conditionList += [Q(TWSearch_hit=search) for search in harvester.twsearch_to_harvest.all()]
         querySet = TWStatus.objects.filter(reduce(lambda x, y: x | y, conditionList)).distinct()
-
-    except ObjectDoesNotExist:
-        pass
 
     #call to generic function from utils
     return get_datatables_records(request, querySet, columnIndexNameMap, call_type)
@@ -412,11 +411,14 @@ def dwld_tw_status_csv(request):
 
     elif 'harvester_id' in request.GET:
         harvester_id = request.GET['harvester_id']
-        harvester = get_object_or_404(TwitterHarvester, pmk_id=harvester_id)
-        # merge two conditional filter in queryset:
-        conditionList = [Q(user=user) for user in harvester.twusers_to_harvest.all()]
-        conditionList += [Q(TWSearch_hit=search) for search in harvester.twsearch_to_harvest.all()]
-        statuses = TWStatus.objects.filter(reduce(lambda x, y: x | y, conditionList)).distinct()
+        if harvester_id == '0':   #tous les harvesters.
+            statuses = TWStatus.objects.all()
+        else:
+            harvester = get_object_or_404(TwitterHarvester, pmk_id=harvester_id)
+            # merge two conditional filter in queryset:
+            conditionList = [Q(user=user) for user in harvester.twusers_to_harvest.all()]
+            conditionList += [Q(TWSearch_hit=search) for search in harvester.twsearch_to_harvest.all()]
+            statuses = TWStatus.objects.filter(reduce(lambda x, y: x | y, conditionList)).distinct()
 
     elif 'TWUser_id' in request.GET:
         TWUser_id = request.GET['TWUser_id']

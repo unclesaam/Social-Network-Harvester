@@ -13,7 +13,7 @@ from snh.models.common import *
 import snhlogger
 
 
-from settings import DEBUGCONTROL, dLogger
+from settings import DEBUGCONTROL, dLogger, DEFAULT_API_APPS
 debugging = DEBUGCONTROL['youtubemodel']
 if debugging: print "DEBBUGING ENABLED IN %s"%__name__
 
@@ -24,7 +24,7 @@ class YoutubeHarvester(AbstractHaverster):
     last_harvested_user = models.ForeignKey('YTUser',  related_name='last_harvested_user', null=True)
     current_harvested_user = models.ForeignKey('YTUser', related_name='current_harvested_user',  null=True)
     download_videos = models.BooleanField(default=False)
-    dev_key = models.TextField(null=True)
+    dev_key = models.TextField(null=True, blank=True, default=DEFAULT_API_APPS['youtube']['dev_key'])
     client = None
     haverst_deque = None
 

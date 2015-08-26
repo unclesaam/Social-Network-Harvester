@@ -1,4 +1,4 @@
-var iDisplayLength = 100
+var iDisplayLength = 20
 var sPaginationType = "full_numbers";
 var sDom = 'Tp<"clear">lfrtip';
 var aaSorting = [[ 0, "desc" ]];

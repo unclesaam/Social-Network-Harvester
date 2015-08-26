@@ -26,7 +26,13 @@
               } ]
             },
         });
+        $('#centerPopupOutter').click(function() {
+           $('#centerPopupOutter').hide();
+        });
 
+        $('#centerPopupInner').click(function(event){
+           event.stopPropagation();
+        });
         $('#ToolTables_search_table_0').unbind('click' )
         $('#ToolTables_search_table_0').click(function(){
             document.getElementById('centerPopupInner').innerHTML = '\

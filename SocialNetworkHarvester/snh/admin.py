@@ -10,6 +10,7 @@ from snh.models.dailymotionmodel import DMUser, DailyMotionHarvester
 from snh.models.youtubemodel import YTUser, YTVideo, YoutubeHarvester
 from django.contrib.auth.models import User as BaseUser
 from fandjango.models import User as FanUser, OAuthToken
+from settings import dLogger
 
 #############
 class TwitterHarvesterAdmin(admin.ModelAdmin):
@@ -44,6 +45,13 @@ class TwitterHarvesterAdmin(admin.ModelAdmin):
     #related_lookup_fields = {
     #    'm2m': ['twusers_to_harvest','twsearch_to_harvest',],
     #}
+
+    def formfield_for_manytomany(self, db_field, request, **kwargs):
+        if db_field.name == "twusers_to_harvest":
+            conditionList = [models.Q(fid__isnull=True), models.Q(followers_count__gte=1000)]
+            kwargs["queryset"] = TWUser.objects.filter(reduce(lambda x, y: x | y, conditionList)).distinct()[:10000]
+        return super(TwitterHarvesterAdmin, self).formfield_for_manytomany(db_field, request, **kwargs)
+
     filter_horizontal = ('twusers_to_harvest','twsearch_to_harvest',)
 
 class TWUserAdmin(admin.ModelAdmin):
@@ -107,7 +115,6 @@ class TWStatusAdmin(admin.ModelAdmin):
     filter_horizontal = ('hash_tags','user_mentions')
 
 admin.site.register(TWStatus, TWStatusAdmin)
-
 admin.site.register(TwitterHarvester, TwitterHarvesterAdmin)
 admin.site.register(TWUser, TWUserAdmin)
 admin.site.register(TWSearch, TWSearchAdmin)
@@ -133,12 +140,14 @@ class FacebookHarvesterAdmin(admin.ModelAdmin):
         }),
     )
 
-    # define the raw_id_fields
     #raw_id_fields = ('fbusers_to_harvest',)
-    # define the related_lookup_fields
-    #related_lookup_fields = {
-    #    'm2m': ['fbusers_to_harvest',],
-    #}
+    #related_lookup_fields = {'m2m': ['fbusers_to_harvest',],}
+
+    def formfield_for_manytomany(self, db_field, request, **kwargs):
+        if db_field.name == "fbusers_to_harvest":
+            kwargs["queryset"] = FBUser.objects.exclude(username__isnull=True)
+        return super(FacebookHarvesterAdmin, self).formfield_for_manytomany(db_field, request, **kwargs)
+
     filter_horizontal = ('fbusers_to_harvest',)
 
 
@@ -149,6 +158,7 @@ class FBUserAdmin(admin.ModelAdmin):
                 u'username', 
                 u'error_triggered', 
             ]
+    list_display = ('name',)   
 
 class FBPostAdmin(admin.ModelAdmin):
     list_per_page = 500
@@ -302,6 +312,10 @@ class YoutubeHarvesterAdmin(admin.ModelAdmin):
         }),
     )
 
+    def formfield_for_manytomany(self, db_field, request, **kwargs):
+        if db_field.name == "ytusers_to_harvest":
+            kwargs["queryset"] = YTUser.objects.filter(username__isnull=False)
+        return super(YoutubeHarvesterAdmin, self).formfield_for_manytomany(db_field, request, **kwargs)
     filter_horizontal = ('ytusers_to_harvest',)
 
 class YTUserAdmin(admin.ModelAdmin):

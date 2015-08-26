@@ -205,6 +205,7 @@
     </tbody>
 </table>
 <script type="text/javascript" src="https://www.google.com/jsapi"></script>
+<script>google.load('visualization', '1', {packages: ['annotatedtimeline']});</script>
 <script type="text/javascript">
     function buildChart($url_to_get, $dest_tag){
         var jsonData = $.ajax({
@@ -219,8 +220,6 @@
                 }
               });
     }
-
-    google.load('visualization', '1', {packages: ['annotatedtimeline']});
     buildChart("{% url snh.views.get_commentpost_chart harvester_id post.fid %}", 'commentpost_chart')
 </script>
 

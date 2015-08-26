@@ -14,7 +14,7 @@ from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 import snhlogger
 logger = snhlogger.init_logger(__name__, "facebook_model.log")
 
-from settings import DEBUGCONTROL, dLogger
+from settings import DEBUGCONTROL, dLogger, DEFAULT_API_APPS
 debugging = DEBUGCONTROL['facebookmodel']
 if debugging: print "DEBBUGING ENABLED IN %s"%__name__
 
@@ -23,12 +23,11 @@ class FacebookHarvester(AbstractHaverster):
     class Meta:
         app_label = "snh"
 
-    app_id = models.CharField(max_length=255) #TODO: permettre que chaque Harvester aie sa propre app.
+    app_id = models.CharField(max_length=255, blank=True,default=DEFAULT_API_APPS['facebook']['app_id']) #TODO: permettre que chaque Harvester aie sa propre app.
     client = None
-    fbusers_to_harvest = models.ManyToManyField('FBUser', related_name='fbusers_to_harvest')
+    fbusers_to_harvest = models.ManyToManyField('FBUser', related_name='harvester_in_charge')
     update_likes = models.BooleanField()
 
-    #a bug or my limited knowledge of the framework.. cannot import fandjango.models here :(
     def set_client(self, client):
         self.client = client
 
@@ -116,9 +115,9 @@ class FBUser(models.Model):
 
     def __unicode__(self):
         if self.username:
-            return unicode(self.username)
+            return self.username.encode('unicode-escape')
         elif self.name:
-            return unicode(self.name)
+            return self.name.encode('unicode-escape')
         else:
             return unicode(self.fid)
 
@@ -198,10 +197,13 @@ class FBUser(models.Model):
     def update_from_facebook(self, fb_user):
         if debugging: 
             dLogger.log("<FBUser: %s>::update_from_facebook()"%self.name)
-            #dLogger.log("    fb_user: %s"%fb_user)
+            #dLogger.pretty(fb_user)
 
         if 'body' in fb_user:
             fb_user = json.loads(fb_user['body'])
+        if 'error' in fb_user:
+            raise(BaseException(fb_user['error']))
+
         model_changed = False
         props_to_check = {
                             u"fid":u"id",
@@ -281,7 +283,8 @@ class FBUser(models.Model):
             try:
                 self.save()
             except:
-                self.name = self.name.encode('unicode-escape')
+                if self.name:
+                    self.name = self.name.encode('unicode-escape')
                 if self.about:
                     self.about = self.about.encode('unicode-escape')
             if debugging: dLogger.log("    updated user data: %s"%self)
@@ -297,10 +300,10 @@ class FBPost(models.Model):
         return "%s - %s"%(self.user, self.ftype)
 
     pmk_id =  models.AutoField(primary_key=True)
-    user = models.ForeignKey('FBUser')
+    user = models.ForeignKey('FBUser') #person on which wall the post apears =/= ffrom
 
     fid = models.CharField(max_length=255, null=True, unique=True)
-    ffrom = models.ForeignKey('FBUser', related_name='fbpost.from', null=True)
+    ffrom = models.ForeignKey('FBUser', related_name='postedStatuses', null=True) #person who posted this =/= user
     #to = models.ManyToManyField('FBUser', related_name='fbpost.to', null=True)
     message = models.TextField(null=True)
     message_tags_raw = models.TextField(null=True) #not supported but saved
@@ -536,9 +539,9 @@ class FBPost(models.Model):
             try:
                 self.save()
             except:
-                self.message = facebook_model['message'].encode('unicode-escape')
-                self.name = self.name.encode('unicode-escape')
-                if debugging: dLogger.log("    Message needed unicode-escaping: '%s' (user: %s)"%(self.message, self.ffrom))
+                if self.message: self.message = self.message.encode('unicode-escape')
+                if self.name: self.name = self.name.encode('unicode-escape')
+                if self.description: self.description = self.description.encode('unicode-escape')
                 self.save()
             if debugging: dLogger.log("    Message updated: %s"%self)
    

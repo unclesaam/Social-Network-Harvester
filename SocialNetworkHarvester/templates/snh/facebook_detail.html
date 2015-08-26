@@ -95,46 +95,86 @@
                 },
             });
 
-		var oTable3 = $('#comments_table').dataTable(
-            {
-                "iDisplayLength": iDisplayLength, 
-                "sPaginationType": sPaginationType,
-                "sDom": sDom,
-                "aaSorting": aaSorting,
-                "bAutoWidth": bAutoWidth,
-		        "bServerSide": bServerSide, 
-		        "sAjaxSource": "{% url snh.views.get_fb_comment_list 'web' user.fid  %}",
-                "aoColumnDefs": aoColumnDefs,
-                "fnRowCallback": function( nRow, aData, iDisplayIndex ) {
-                    //from
-                    ($('td:eq(1)', nRow).html() == "None") ? from = aData[8] : from = aData[1];
-                    $('td:eq(1)', nRow).html(  '<a href="/fb_user_detail/{{ harvester_id }}/fid/'+aData[9]+'">'+from+'</a>' );
-                    //to (post_ffrom)
-                    $('td:eq(2)', nRow).html(  '<a href="/fb_user_detail/{{ harvester_id }}/fid/'+aData[10]+'">'+aData[2]+'</a>' );
-                    //post
-                    $('td:eq(3)', nRow).html(  '<a href="/fb_post_detail/{{ harvester_id }}/'+aData[3]+'">'+aData[3]+'</a>' );
-                },
-		        "aoColumns": [ 
-                    { "bVisible":    true },    //0 : u'created_time/updated_time',
-                    { "bVisible":    true },    //1 : u'ffrom__username',
-                    { "bVisible":    true },    //2 : u'post__ffrom__name',
-                    { "bVisible":    true },    //3 : u'post__fid',
-                    { "bVisible":    true },    //4 : u'message',
-                    { "bVisible":    true },    //5 : u'likes',
-                    { "bVisible":    false },    //6 : u'user_likes',
-                    { "bVisible":    false },    //7 : u'ftype',
-                    { "bVisible":    false },    //8 : u'ffrom__name',
-                    { "bVisible":    false },    //9 : u'ffrom__fid',
-                    { "bVisible":    false },    //10: u'post__ffrom__fid',
-                ],
-                "oTableTools": {
-                  "aButtons": [ {
-                    "sExtends": "download",
-                    "sUrl": "{% url snh.views.get_fb_comment_list 'csv' user.fid  %}",
-                  } ]
-                },
+		var oTable3 = $('#comments_table').dataTable({
+            "iDisplayLength": iDisplayLength, 
+            "sPaginationType": sPaginationType,
+            "sDom": sDom,
+            "aaSorting": aaSorting,
+            "bAutoWidth": bAutoWidth,
+	        "bServerSide": bServerSide, 
+	        "sAjaxSource": "{% url snh.views.get_fb_comment_list 'web' user.fid  %}",
+            "aoColumnDefs": aoColumnDefs,
+            "fnRowCallback": function( nRow, aData, iDisplayIndex ) {
+                //from
+                ($('td:eq(1)', nRow).html() == "None") ? from = aData[8] : from = aData[1];
+                $('td:eq(1)', nRow).html(  '<a href="/fb_user_detail/{{ harvester_id }}/fid/'+aData[9]+'">'+from+'</a>' );
+                //to (post_ffrom)
+                $('td:eq(2)', nRow).html(  '<a href="/fb_user_detail/{{ harvester_id }}/fid/'+aData[10]+'">'+aData[2]+'</a>' );
+                //post
+                $('td:eq(3)', nRow).html(  '<a href="/fb_post_detail/{{ harvester_id }}/'+aData[3]+'">'+aData[3]+'</a>' );
+            },
+	        "aoColumns": [ 
+                { "bVisible":    true },    //0 : u'created_time/updated_time',
+                { "bVisible":    true },    //1 : u'ffrom__username',
+                { "bVisible":    true },    //2 : u'post__ffrom__name',
+                { "bVisible":    true },    //3 : u'post__fid',
+                { "bVisible":    true },    //4 : u'message',
+                { "bVisible":    true },    //5 : u'likes',
+                { "bVisible":    false },    //6 : u'user_likes',
+                { "bVisible":    false },    //7 : u'ftype',
+                { "bVisible":    false },    //8 : u'ffrom__name',
+                { "bVisible":    false },    //9 : u'ffrom__fid',
+                { "bVisible":    false },    //10: u'post__ffrom__fid',
+            ],
+            "oTableTools": {
+              "aButtons": [ {
+                "sExtends": "download",
+                "sUrl": "{% url snh.views.get_fb_comment_list 'csv' user.fid  %}",
+              } ]
+            },
 
+        });
+        $('#centerPopupOutter').click(function() {
+           $('#centerPopupOutter').hide();
+        });
+
+        $('#centerPopupInner').click(function(event){
+           event.stopPropagation();
+        });
+        $('#ToolTables_post_table_0').unbind('click' )
+        $('#ToolTables_post_table_0').click(function(){
+            document.getElementById('centerPopupInner').innerHTML = '\
+                <br><center>Please select the fields to include:</center><br><hr>\
+                <form action="/dwld_fb_posts_csv" method="GET">\
+                    <table>\
+                        <tr><td><input type="checkbox" id="checkAll"></td><td><b> Select/deselect all</b></td></tr>\
+                        {% for fieldlist in status_fields %}\
+                        <tr>\
+                            {% for field in fieldlist %}\
+                                {% if field == "" %}\
+                                <td></td><td></td>\
+                                {% else %}\
+                                    <td><input type="checkbox" name="fields" value={{ field }}></td><td> {{ field }}</td>\
+                                {% endif %}\
+                            {% endfor %}\
+                        </tr>\
+                        {% endfor %}\
+                    </table>\
+                    <input type="hidden" name="FBUser_id" value="{{ user.pmk_id }}">\
+                    <input type="submit" id="submitButton" value="submit">\
+                </form>\
+            ';
+            $('#checkAll').click(function(event) {   
+                var checkBox = this
+                $(':checkbox').each(function() {
+                    this.checked = checkBox.checked;                        
+                });
             });
+            $('#submitButton').click(function(){
+                document.getElementById('centerPopupOutter').style.display = 'None';
+            })
+            document.getElementById('centerPopupOutter').style.display = 'inline-block';
+        })
 	} );
 </script>
 {% endblock %}
@@ -255,6 +295,7 @@
     </tbody>
 </table>
 <script type="text/javascript" src="https://www.google.com/jsapi"></script>
+<script type='text/javascript'>google.load('visualization', '1', {packages: ['annotatedtimeline']});</script>
 <script type="text/javascript">
     function buildChart($url_to_get, $dest_tag){
         var jsonData = $.ajax({
@@ -268,10 +309,7 @@
                     annotatedtimeline.draw(data, {'displayAnnotations': false});
                 }
               });
-    }
-
-    google.load('visualization', '1', {packages: ['annotatedtimeline']});
-    
+    }    
     buildChart("{% url snh.views.get_wall_chart harvester_id user.fid %}", 'wall_chart')
     buildChart("{% url snh.views.get_otherwall_chart harvester_id user.fid %}", 'otherwall_chart')
     buildChart("{% url snh.views.get_comment_chart harvester_id user.fid %}", 'comment_chart')

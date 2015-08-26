@@ -51,7 +51,7 @@ def generate_csv_response(d):
     response = HttpResponse(mimetype='text/csv')
     response['Content-Disposition'] = 'attachment; filename=output.csv'
 
-    uw = UnicodeWriter(response)
+    uw = UnicodeWriter(response, encoding='UTF-8')
     cols = d["sColumns"].split(",")
     uw.writerow(cols)
     for line in d["aaData"]:

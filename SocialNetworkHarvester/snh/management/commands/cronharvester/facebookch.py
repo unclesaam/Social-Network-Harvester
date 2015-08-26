@@ -21,6 +21,7 @@ from django.core import serializers
 
 import snhlogger
 logger = snhlogger.init_logger(__name__, "facebook.log")
+logger.info(' '*400)
 
 from settings import DEBUGCONTROL, dLogger, FACEBOOK_APPLICATION_ID, FACEBOOK_APPLICATION_SECRET_KEY
 debugging = DEBUGCONTROL['facebookch']
@@ -47,7 +48,7 @@ def run_facebook_harvester():
     client = facebook.GraphAPI(access_token=sessionKey[0].get_access_token())
     extendedToken = client.extend_access_token(app_id=FACEBOOK_APPLICATION_ID, app_secret=FACEBOOK_APPLICATION_SECRET_KEY)
     sessionKey[0].set_access_token(extendedToken['access_token']) # Insure that the token will be valid for another two months
-    
+
     all_harvesters = sort_harvesters_by_priority(FacebookHarvester.objects.all())
     for harvester in all_harvesters:
         harvester.harvest_in_progress = False
@@ -58,6 +59,9 @@ def run_facebook_harvester():
             harvester.set_client(client)
             logger.info(u"The harvester %s is %s" % (unicode(harvester), "active" if harvester.is_active else "inactive"))
             if harvester.is_active:
+                if harvester.harvester_name == 'FBUser Updater':
+                    harvester.fbusers_to_harvest.add(*FBUser.objects.all())
+                    harvester.save()
                 run_harvester_v3(harvester)
         if debugging: dLogger.log('Harvest has ended for all harvesters')
     except:
@@ -156,6 +160,8 @@ def gbp_core(harvester, bman_chunk, error_map, next_bman_list, failed_list):
         #if debugging: dLogger.log("    urlized_batch: %s"%urlized_batch)
         batch_result = harvester.api_call("request", {'path':'','post_args':{"batch":urlized_batch}})
 
+        #dLogger.pretty(batch_result)
+
         for (counter, fbobj) in enumerate(batch_result):
             bman_obj = bman_chunk[counter]
     
@@ -200,7 +206,7 @@ def gbp_core(harvester, bman_chunk, error_map, next_bman_list, failed_list):
 def generic_batch_processor_v2(harvester, bman_list):
     if debugging: 
         dLogger.log("generic_batch_processor_v2()")
-        dLogger.log("    bman_list: %s"%bman_list)
+        #dLogger.log("    bman_list: %s"%bman_list)
 
     error_map = {}
     next_bman_list = []
@@ -296,15 +302,24 @@ def update_user_from_batch(harvester, snhuser, fbuser):
         #dLogger.log("fbuser: %s"%fbuser)
 
     snhuser.update_from_facebook(fbuser)
+    #Recycling an unused field to store the last updated user. Not a good solution. To be revised.
+    harvester.dont_harvest_further_than = snhuser.pk
+    harvester.save()
     return None
 
 @dLogger.debug
 def update_user_batch(harvester):
     if debugging: dLogger.log("update_user_batch()")
 
-    all_users = harvester.fbusers_to_harvest.all()
-    batch_man = []
+    #get 10000 unupdated FBUsers
+    all_users = harvester.fbusers_to_harvest.filter(pk__gt=harvester.dont_harvest_further_than)
+    if all_users.count() == 0:
+        harvester.dont_harvest_further_than = 0
+        harvester.save()
+        all_users = harvester.fbusers_to_harvest.filter(pk__gt=harvester.dont_harvest_further_than)
+    all_users = all_users.filter(pk__lt=harvester.dont_harvest_further_than+10000)
 
+    batch_man = []
     for snhuser in all_users:
         if not snhuser.error_triggered:
             uid = snhuser.fid if snhuser.fid else snhuser.username
@@ -314,11 +329,6 @@ def update_user_batch(harvester):
             batch_man.append({"snh_obj":snhuser,"retry":0,"request":d, "callback":update_user_from_batch})
         else:
             logger.info(u"Skipping user update: %s(%s) because user has triggered the error flag." % (unicode(snhuser), snhuser.fid if snhuser.fid else "0"))
-
-    #usage = psutil.virtual_memory()
-    logger.info(u"Will harvest users for %s" % (harvester,))
-
-    #if debugging: dLogger.log("    batch_man: %s"%batch_man)
     generic_batch_processor_v2(harvester, batch_man)
 
 #@dLogger.debug
@@ -365,6 +375,7 @@ place,story,story_tags,object_id,application,updated_time,picture,link,source,ic
         feed_count = len(fbfeed_page['data'])
     else:
         if debugging: dLogger.log("    Error: %s"%fbfeed_page['error'])
+        logger.error()
         feed_count = None
     too_old = False
 
@@ -556,7 +567,7 @@ class ThreadStatus(threading.Thread):
                 #if debugging: dLogger.log("    deleted FBStatus result %s"%fbpost)
                 qsize = self.queue.qsize()
                 if debugging: dLogger.log("    %s Posts left in queue"%qsize)
-                if qsize % 100 == 0: logger.debug("    less than %s posts left in queue"%self.queue.qsize())
+                if qsize % 100 == 0: logger.info("    less than %s posts left in queue"%self.queue.qsize())
                 #signals to queue job is done
             except ObjectDoesNotExist:
                 logger.exception("DEVED %s %s" % (fbpost.parent, fbpost.ftype))
@@ -632,7 +643,7 @@ class ThreadComment(threading.Thread):
                     #if debugging: dLogger.log("    deleted fbcomment result %s"%fbcomment)
                     qsize = self.queue.qsize()
                     if debugging: dLogger.log("    %s Comments left in queue"%qsize)
-                    if qsize % 1000 == 0: logger.debug("    less than %s comments left in queue"%qsize)
+                    if qsize % 1000 == 0: logger.info("    less than %s comments left in queue"%qsize)
                 else:
                     logger.error(u"ThreadComment %s. fid is none! %s." % (self, fid))
                 #signals to queue job is done
@@ -716,6 +727,7 @@ def compute_new_comment(harvester):
         t.start()
       
     commentqueue.join()
+    del commentqueue
 
 @dLogger.debug
 def compute_results(harvester):
@@ -739,7 +751,8 @@ def run_harvester_v3(harvester):
     try:
         compute_results(harvester)
         update_user_batch(harvester)
-        update_user_statuses_batch(harvester)
+        if harvester.harvester_name != 'FBUser Updater':
+            update_user_statuses_batch(harvester)
         compute_results(harvester)
     except:
         logger.exception(u"EXCEPTION: %s" % harvester)

@@ -14,7 +14,7 @@ import snhlogger
 import re
 
 
-from settings import DEBUGCONTROL, dLogger
+from settings import DEBUGCONTROL, dLogger, DEFAULT_API_APPS
 debugging = DEBUGCONTROL['twittermodel']
 if DEBUGCONTROL['twittermodel']: print "DEBBUGING ENABLED IN %s"%__name__
 
@@ -28,10 +28,10 @@ class TwitterHarvester(AbstractHaverster):
     client = None
     tt_client = None
 
-    consumer_key = models.CharField(max_length=255,null=True)
-    consumer_secret = models.CharField(max_length=255,null=True)
-    access_token_key = models.CharField(max_length=255,null=True)
-    access_token_secret = models.CharField(max_length=255,null=True)
+    consumer_key = models.CharField(max_length=255,null=True, blank=True, default=DEFAULT_API_APPS['twitter']['consumer_key'])
+    consumer_secret = models.CharField(max_length=255,null=True, blank=True, default=DEFAULT_API_APPS['twitter']['consumer_secret'])
+    access_token_key = models.CharField(max_length=255,null=True, blank=True, default=DEFAULT_API_APPS['twitter']['token_key'])
+    access_token_secret = models.CharField(max_length=255,null=True, blank=True, default=DEFAULT_API_APPS['twitter']['token_secret'])
 
     #remaining_hits = models.IntegerField(null=True)
 

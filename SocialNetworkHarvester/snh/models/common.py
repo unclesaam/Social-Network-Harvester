@@ -34,12 +34,12 @@ class AbstractHaverster(models.Model):
 
     current_harvest_start_time = models.DateTimeField(null=True)
 
-    max_retry_on_fail = models.IntegerField(null=True)
+    max_retry_on_fail = models.IntegerField(null=True, blank=True,default=1)
 
-    dont_harvest_further_than = models.IntegerField(null=True)
+    dont_harvest_further_than = models.IntegerField(null=True, default=0)
 
-    harvest_window_from = models.DateTimeField(null=True)
-    harvest_window_to = models.DateTimeField(null=True)
+    harvest_window_from = models.DateTimeField(null=True, default=datetime.min)
+    harvest_window_to = models.DateTimeField(null=True, default=datetime.max)
 
     full_harvest_on_next_run = models.BooleanField()
 
