@@ -300,8 +300,12 @@ def update_user_from_batch(harvester, snhuser, fbuser):
     if debugging: 
         dLogger.log("update_user_from_batch()")
         #dLogger.log("fbuser: %s"%fbuser)
-
-    snhuser.update_from_facebook(fbuser)
+    try:
+        snhuser.update_from_facebook(fbuser)
+    except BaseException:
+        logger.info('update failed for user %s'%snhuser)
+        snhuser.error_triggered = True
+        snhuser.save()
     #Recycling an unused field to store the last updated user. Not a good solution. To be revised.
     harvester.dont_harvest_further_than = snhuser.pk
     harvester.save()
