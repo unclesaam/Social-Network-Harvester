@@ -57,19 +57,12 @@ tw_status_fields = [['fid','text'],
 @login_required(login_url=u'/login/')
 def tw(request, harvester_id):
     twitter_harvesters = TwitterHarvester.objects.all()
-    if harvester_id == '0': 
-        user_list = TWUser.objects.all()
-        stags_list = [(obj, len(obj.status_list.all())) for obj in TWSearch.objects.all()]
-    else:
-        harvester = get_object_or_404(TwitterHarvester, pk=harvester_id)
-        user_list = harvester.twusers_to_harvest.all()
-        stags_list = [(obj, len(obj.status_list.all())) for obj in harvester.twsearch_to_harvest.all()]
     return  render_to_response(u'snh/twitter.html',{
                                                     u'tw_selected':True,
                                                     u'all_harvesters':twitter_harvesters,
                                                     u'harvester_id':harvester_id,
-                                                    u'user_list': user_list,
-                                                    u'stags_list': stags_list,
+                                                    #u'user_list': user_list,
+                                                    #u'stags_list': stags_list,
                                                     'status_fields':tw_status_fields
                                                   })
 
@@ -85,8 +78,6 @@ def tw_user_detail(request, harvester_id, screen_name):
                                                     u'all_harvesters':twitter_harvesters,
                                                     u'harvester_id':harvester_id,
                                                     u'user':user,
-                                                    u'status_list': status_list,
-                                                    u'mention_list': mention_list,
                                                     'status_fields': tw_status_fields
                                                   })
 @login_required(login_url=u'/login/')
