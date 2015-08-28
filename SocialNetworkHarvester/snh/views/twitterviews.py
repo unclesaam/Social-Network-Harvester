@@ -78,8 +78,8 @@ def tw_user_detail(request, harvester_id, screen_name):
     twitter_harvesters = TwitterHarvester.objects.all()
     user = get_list_or_404(TWUser, screen_name=screen_name)[0]
 
-    status_list = [status.digest_source() for status in user.postedStatuses.all()]
-    mention_list = [status.digest_source() for status in user.mentionedInStatuses.all()]
+    #status_list = [status.digest_source() for status in user.postedStatuses.all()]
+    #mention_list = [status.digest_source() for status in user.mentionedInStatuses.all()]
     return  render_to_response(u'snh/twitter_detail.html',{
                                                     u'tw_selected':True,
                                                     u'all_harvesters':twitter_harvesters,
@@ -94,13 +94,13 @@ def tw_search_detail(request, harvester_id, search_id):
     twitter_harvesters = TwitterHarvester.objects.all()
     search = get_list_or_404(TWSearch, pmk_id=search_id)[0]
 
-    status_list = [status.digest_source() for status in search.status_list.all()]
+    #status_list = [status.digest_source() for status in search.status_list.all()]
     return  render_to_response(u'snh/twitter_search_detail.html',{
                                                     u'tw_selected':True,
                                                     u'all_harvesters':twitter_harvesters,
                                                     u'harvester_id':harvester_id,
                                                     u'search':search,
-                                                    u'status_list':status_list,
+                                                    #u'status_list':status_list,
                                                     'status_fields': tw_status_fields,
                                                   })
 @login_required(login_url=u'/login/')

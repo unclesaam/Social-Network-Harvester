@@ -398,4 +398,8 @@ besoin. J'implémente une django-view à part pour cette fonction.
 26 aout 2015:
 - Test d'une update à la collecte de facebook. Les FBUsers sont maintenant updatés avec des infos pertinentes. (si disponibles.)
 - Ajout de comptes à la collecte Twitter, Fournis par David Dumouchel.
-- fin de journée (6h)
+- fin de journée (7h)
+
+27 aout 2015:
+- Ajout d'une mécanique permettant le download de large fichiers CSV, sans tuer le serveur. 
+- Fin de journée (6h)

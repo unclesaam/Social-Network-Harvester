@@ -63,6 +63,7 @@
             })
             document.getElementById('centerPopupOutter').style.display = 'inline-block';
         })
+        buildChart("{% url snh.views.get_search_status_chart harvester_id search.term %}", 'status_chart')
 	});
 
 
@@ -95,15 +96,6 @@
         </tr>
     </thead>
     <tbody>
-        {% for status, appName, href in status_list %}
-            <tr>
-                <td>{{ status.created_at }}</td>
-                <td><a href="/tw_status_detail/{{ harvester_id }}/{{ status.fid }}/">{{ status.fid }}</a></td>
-                <td><a href="/tw_user_detail/{{ harvester_id }}/{{ status.user }}">{{ status.user }}</a></td>
-                <td>{{ status.text }}</td>
-                <td><a href="{{ href }}">{{ appName }}</a></td>
-            </tr>
-        {% endfor %}
     </tbody>
 </table>
 <script type="text/javascript" src="https://www.google.com/jsapi"></script>
@@ -123,8 +115,6 @@
               });
     }
 
-    buildChart("{% url snh.views.get_search_status_chart harvester_id search.term %}", 'status_chart')
-    //buildChart("/get_status_chart/7/premierministre/", 'status_chart')
 </script>
 
 {% endblock %}
