@@ -151,7 +151,7 @@
                         {% for fieldlist in status_fields %}\
                         <tr>\
                             {% for field in fieldlist %}\
-                                {% if field == "" %}\
+                                {% if field == None %}\
                                 <td></td><td></td>\
                                 {% else %}\
                                     <td><input type="checkbox" name="fields" value={{ field }}></td><td> {{ field }}</td>\
@@ -229,7 +229,9 @@
     </tbody>
 </table>
 <h3>{{ user.name }}'s wall</h3>
-<div  id='wall_chart' style='margin:0 auto; width: 1024px; height: 240px;'></div>
+{% if wall_chart %}
+<div  id='wall_chart' style='margin:0 auto; width: 100%; height: 240px;'></div>
+{% endif %}
 <table id="post_table" class="pretty">
     <thead>
         <tr>
@@ -252,7 +254,9 @@
     </tbody>
 </table>
 <h3>{{ user.name }} posts on other's wall</h3>
-<div  id='otherwall_chart' style='margin:0 auto; width: 1024px; height: 240px;'></div>
+{% if otherwall_chart %}
+<div  id='otherwall_chart' style='margin:0 auto; width: 100%; height: 240px;'></div>
+{% endif %}
 <table id="other_post_table" class="pretty">
     <thead>
         <tr>
@@ -278,7 +282,9 @@
 </table>
 
 <h3>{{ user.name }} comments</h3>
-<div  id='comment_chart' style='margin:0 auto; width: 1024px; height: 240px;'></div>
+{% if comment_chart %}
+<div  id='comment_chart' style='margin:0 auto; width: 100%; height: 240px;'></div>
+{% endif %}
 <table id="comments_table" class="pretty">
     <thead>
         <tr>
@@ -310,8 +316,14 @@
                 }
               });
     }    
+    {% if wall_chart %}
     buildChart("{% url snh.views.get_wall_chart harvester_id user.fid %}", 'wall_chart')
+    {% endif %}
+    {% if otherwall_chart %}
     buildChart("{% url snh.views.get_otherwall_chart harvester_id user.fid %}", 'otherwall_chart')
+    {% endif %}
+    {% if comment_chart %}
     buildChart("{% url snh.views.get_comment_chart harvester_id user.fid %}", 'comment_chart')
+    {% endif %}
 </script>
 {% endblock %}

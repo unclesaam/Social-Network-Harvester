@@ -46,10 +46,10 @@ class UnicodeWriter:
         for row in rows:
             self.writerow(row)
 
-def generate_csv_response(d):
+def generate_csv_response(d, filename='output.csv'):
     # Create the HttpResponse object with the appropriate CSV header.
     response = HttpResponse(mimetype='text/csv')
-    response['Content-Disposition'] = 'attachment; filename=output.csv'
+    response['Content-Disposition'] = 'attachment; filename=%s'%filename
 
     uw = UnicodeWriter(response, encoding='UTF-8')
     cols = d["sColumns"].split(",")
@@ -273,127 +273,3 @@ def format_serialized_obj(obj, translations):
                 obj[translations[key]] = obj[key]
             del obj[key]
     return obj
-
-
-'''
-{u'created_at': u'2014-04-07 20:00:31',
- u'favorited': False,
- 'hashtags': [u'QC2014', u'OpNat', u'r\xe9veil'],
- 'id': 453261056668758018L,
- u'retweet_count': 7,
- u'retweeted': False,
- u'source': u'<a href="https://about.twitter.com/products/tweetdeck" rel="nofollow">TweetDeck</a>',
- u'text': u'RAPPEL : Ce soir 19h00, soir\xe9e \xe9lectorale d\u2019Option nationale,  Petit Imp\xe9rial \xe0 Qu\xe9bec. \nVenez en grand nombre !\n#OpNat #qc2014',
- u'text_urls': [],
- u'truncated': False,
- u'user': {u'created_at': u'2011-09-25 22:47:14',
-           u'description': u"Option nationale est un parti politique qu\xe9b\xe9cois fond\xe9 en 2011 dont l'objectif premier est de r\xe9aliser l'ind\xe9pendance du Qu\xe9bec. #opnat #polqc",
-           u'favourites_count': 480,
-           u'followers_count': 20579,
-           u'friends_count': 1924,
-           'id': 380008096,
-           u'lang': u'fr',
-           u'listed_count': 354,
-           u'location': u'',
-           u'name': u'Option nationale',
-           u'profile_background_color': u'0BE0E0',
-           u'profile_background_image_url': None,
-           u'profile_background_tile': True,
-           u'profile_image_url': <URL: https://pbs.twimg.com/profile_images/503409676436766720/xZGlmFXo_normal.jpeg>,
-           u'profile_link_color': u'1021DE',
-           u'profile_sidebar_fill_color': u'DDEEF6',
-           u'profile_text_color': u'333333',
-           u'protected': False,
-           u'screen_name': u'OptionNationale',
-           u'statuses_count': 4512,
-           u'time_zone': u'Eastern Time (US & Canada)',
-           u'url': 1273,
-           u'utc_offset': -14400,
-           u'was_aborted': False},
- u'user_mentions': []}
-
-{
-    "contributors": null, 
-    "truncated": false, 
-    "text": "I've harvested 777 of food!  http://t.co/OJUUOrnF1S #android, #androidgames, #gameinsight", 
-    "is_quote_status": false, 
-    "in_reply_to_status_id": null, 
-    "id": 580049016777359360, 
-    "favorite_count": 0, 
-    "source": "<a href=\"http://bit.ly/tribez_itw\" rel=\"nofollow\">The Tribez for Android</a>", 
-    "retweeted": false, 
-    "coordinates": null, 
-    "entities": {
-        "symbols": [], 
-        "user_mentions": [], 
-        "hashtags": [
-            {"indices": [52, 60], "text": "android"}, 
-            {"indices": [62, 75], "text": "androidgames"},
-            {"indices": [77, 89], "text": "gameinsight"}
-        ], 
-        "urls": [
-            {"url": "http://t.co/OJUUOrnF1S", 
-            "indices": [29, 51], 
-            "expanded_url": "http://gigam.es/imtw_Tribez", 
-            "display_url": "gigam.es/imtw_Tribez"}
-        ]
-    }, 
-    "in_reply_to_screen_name": null, 
-    "in_reply_to_user_id": null, 
-    "retweet_count": 0, 
-    "id_str": "580049016777359360", 
-    "favorited": false, 
-    "user": {
-        "follow_request_sent": false, 
-        "has_extended_profile": false, 
-        "profile_use_background_image": true, 
-        "id": 154773744, 
-        "verified": false, 
-        "profile_text_color": "333333", 
-        "profile_image_url_https": "https://pbs.twimg.com/profile_images/479243659011821569/-ym_TiL__normal.jpeg", 
-        "profile_sidebar_fill_color": "DDEEF6", 
-        "is_translator": false, 
-        "geo_enabled": true, 
-        "entities": {
-            "description": {"urls": []}
-        }, 
-        "followers_count": 723, 
-        "protected": false, 
-        "location": "", 
-        "default_profile_image": false, 
-        "id_str": "154773744", 
-        "lang": "id", 
-        "utc_offset": 28800, 
-        "statuses_count": 14997, 
-        "description": "@ayudiane \u2665\u2665\u2665", 
-        "friends_count": 353, 
-        "profile_link_color": "0084B4", 
-        "profile_image_url": "http://pbs.twimg.com/profile_images/479243659011821569/-ym_TiL__normal.jpeg", 
-        "notifications": false, 
-        "profile_background_image_url_https": "https://pbs.twimg.com/profile_background_images/398501591/Braking_glass.jpg", 
-        "profile_background_color": "C0DEED", 
-        "profile_banner_url": "https://pbs.twimg.com/profile_banners/154773744/1364036903", 
-        "profile_background_image_url": "http://pbs.twimg.com/profile_background_images/398501591/Braking_glass.jpg", 
-        "name": "Abidardha ", 
-        "is_translation_enabled": false, 
-        "profile_background_tile": true, 
-        "favourites_count": 6, 
-        "screen_name": "abidardha", 
-        "url": null, 
-        "created_at": "Sat Jun 12 04:40:20 +0000 2010", 
-        "contributors_enabled": false, 
-        "time_zone": "Hong Kong", 
-        "profile_sidebar_border_color": "C0DEED", 
-        "default_profile": false, 
-        "following": false, 
-        "listed_count": 0
-    }, 
-    "geo": null, 
-    "in_reply_to_user_id_str": null, 
-    "possibly_sensitive": false, 
-    "lang": "en", 
-    "created_at": "Mon Mar 23 16:50:37 +0000 2015", 
-    "in_reply_to_status_id_str": null, 
-    "place": null
-}
-'''

@@ -300,11 +300,9 @@ class FBPost(models.Model):
         return "%s - %s"%(self.user, self.ftype)
 
     pmk_id =  models.AutoField(primary_key=True)
-    user = models.ForeignKey('FBUser') #person on which wall the post apears =/= ffrom
-
+    user = models.ForeignKey('FBUser', related_name='postsOnWall') #person on which wall the post apears =/= ffrom
     fid = models.CharField(max_length=255, null=True, unique=True)
     ffrom = models.ForeignKey('FBUser', related_name='postedStatuses', null=True) #person who posted this =/= user
-    #to = models.ManyToManyField('FBUser', related_name='fbpost.to', null=True)
     message = models.TextField(null=True)
     message_tags_raw = models.TextField(null=True) #not supported but saved
     picture = models.ForeignKey('URL', related_name="fbpost.picture", null=True)
@@ -561,7 +559,7 @@ class FBComment(models.Model):
     pmk_id =  models.AutoField(primary_key=True)
 
     fid = models.CharField(max_length=255, null=True, unique=True)
-    ffrom = models.ForeignKey('FBUser', related_name="fbcomment.ffrom", null=True)
+    ffrom = models.ForeignKey('FBUser', related_name="postedComments", null=True)
     message = models.TextField(max_length=255, null=True)
     created_time = models.DateTimeField(null=True)
     likes = models.IntegerField(null=True)

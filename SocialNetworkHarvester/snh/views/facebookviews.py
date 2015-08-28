@@ -28,6 +28,7 @@ from snh.models.dailymotionmodel import *
 from snh.utils import get_datatables_records, generate_csv_response
 
 from settings import FACEBOOK_APPLICATION_ID, dLogger
+import re
 
 import snhlogger
 logger = snhlogger.init_logger(__name__, "view.log")
@@ -46,7 +47,6 @@ def test_fb_token(request):
     if not token:
         token = FacebookSessionKey.objects.create()
     else: token = token[0]
-    print token.get_access_token()
     return  render_to_response(u'snh/test_token.html',
         {   'appId': FACEBOOK_APPLICATION_ID,
             'currentToken': token.get_access_token()})
@@ -129,23 +129,35 @@ def fb(request, harvester_id):
 def fb_user_detail(request, harvester_id, username):
     facebook_harvesters = FacebookHarvester.objects.all()
     user = get_list_or_404(FBUser, username=username)[0]
+    wall_chart = user.postedStatuses.count() > 1
+    otherwall_chart = user.postsOnWall.exclude(user=user).count() > 1
+    comment_chart = user.postedComments.count() > 1
     return  render_to_response(u'snh/facebook_detail.html',{
                                                     u'fb_selected':True,
                                                     u'all_harvesters':facebook_harvesters,
                                                     u'harvester_id':harvester_id,
                                                     u'user':user,
                                                     'status_fields': izip_longest(*fb_posts_fields),
+                                                    'wall_chart':wall_chart,
+                                                    'otherwall_chart':otherwall_chart,
+                                                    'comment_chart':comment_chart,
                                                   })
 @login_required(login_url=u'/login/')
 def fb_userfid_detail(request, harvester_id, userfid):
     facebook_harvesters = FacebookHarvester.objects.all()
     user = get_list_or_404(FBUser, fid=userfid)[0]
+    wall_chart = user.postedStatuses.count() > 1
+    otherwall_chart = user.postsOnWall.exclude(user=user).count() > 1
+    comment_chart = user.postedComments.count() > 1
     return  render_to_response(u'snh/facebook_detail.html',{
                                                     u'fb_selected':True,
                                                     u'all_harvesters':facebook_harvesters,
                                                     u'harvester_id':harvester_id,
                                                     u'user':user,
                                                     'status_fields': izip_longest(*fb_posts_fields),
+                                                    'wall_chart':wall_chart,
+                                                    'otherwall_chart':otherwall_chart,
+                                                    'comment_chart':comment_chart,
                                                     })
 
 @login_required(login_url=u'/login/')
@@ -175,15 +187,51 @@ def dwld_fb_posts_csv(request):
     dLogger.log('sColumns: %s'%sColumns)
     aadata = []
 
+    start, end = 0, None
+    if 'range' in request.GET:
+        rng = request.GET['range']
+        start, end = re.split('-', rng)
+
+    harvester_id, FBUser_id = None, None
+
     if 'harvester_id' in request.GET:
-        harvester = get_object_or_404(FacebookHarvester, pmk_id=request.GET['harvester_id'])
-        # merge two conditional filter in queryset:
-        conditions = [Q(user=user) for user in harvester.fbusers_to_harvest.all()]
-        statuses = FBPost.objects.filter(reduce(lambda x, y: x | y, conditions)).distinct()
+        harvester_id = request.GET['harvester_id']
+        if harvester_id == '0':
+            statuses = FBPost.objects.all()[start:end]
+            filename='all_FBPosts'
+        else:
+            harvester = get_object_or_404(FacebookHarvester, pmk_id=harvester_id)
+            # merge two conditional filter in queryset:
+            conditions = [Q(user=user) for user in harvester.fbusers_to_harvest.all()]
+            statuses = FBPost.objects.filter(reduce(lambda x, y: x | y, conditions)).distinct()[start:end]
+            filename = '%s_FBPosts'%re.sub(' ', '_', unicode(harvester))
+
 
     elif 'FBUser_id' in request.GET:
-        user = get_object_or_404(FBUser, pmk_id=request.GET['FBUser_id'])
-        statuses = user.postedStatuses.all()
+        FBUser_id = request.GET['FBUser_id']
+        user = get_object_or_404(FBUser, pmk_id=FBUser_id)
+        statuses = user.postedStatuses.all()[start:end]
+        filename = '%s_FBPosts'%re.sub(' ', '_', unicode(user))
+
+    if end:
+        filename += '_%s-%s'%(start,int(end)-1)
+
+
+    count = statuses.count()
+    step_size = 10000
+    if count > step_size:
+        files = []
+        for i in range(0, count, step_size):
+            url = '/dwld_fb_posts_csv?range=%s-%s'%(i,i+step_size)
+            if FBUser_id:
+                url += '&FBUser_id=%s'%FBUser_id
+            elif harvester_id:
+                url += '&harvester_id=%s'%harvester_id
+            for field in fields:
+                url += '&fields=%s'%field
+            files.append( ('%s_%s-%s.csv'%(filename,i,i+step_size-1), url))
+        context = {'files': files}
+        return render_to_response('snh/multiple_files_download.html', context)
 
     for status in statuses:
         adata = []
@@ -193,7 +241,10 @@ def dwld_fb_posts_csv(request):
             if 'user__' in column:
                 value = getattr(user, re.sub('user__', '', column))
             elif 'ffrom__' in column:
-                value = getattr(ffrom, re.sub('ffrom__', '', column))
+                if ffrom:
+                    value = getattr(ffrom, re.sub('ffrom__', '', column))
+                else:
+                    value = 'None'
             elif column in ['likes_from',]:
                 manager = getattr(status, column)
                 value = manager.all()
@@ -203,7 +254,7 @@ def dwld_fb_posts_csv(request):
         aadata.append(adata)
 
     data = {'sColumns': sColumns, 'aaData': aadata}
-    return generate_csv_response(data)
+    return generate_csv_response(data, filename=filename+'.csv')
 
 @login_required(login_url=u'/login/')
 def dwld_fb_comments_csv(request):
@@ -220,11 +271,37 @@ def dwld_fb_comments_csv(request):
     dLogger.log('sColumns: %s'%sColumns)
     aadata = []
 
+    start, end = 0,None
+    if 'range' in request.GET:
+        rng = request.GET['range']
+        start, end = re.split('-', rng)
+
     if 'harvester_id' in request.GET:
         harvester_id = request.GET['harvester_id']
-        harvester = get_object_or_404(FacebookHarvester, pmk_id=harvester_id)
-        # merge two conditional filter in queryset:
-        comments = FBComment.objects.filter(post__user__harvester_in_charge=harvester).distinct()
+        if harvester_id == '0':
+            comments = FBComment.objects.all()[start:end]
+            filename='all_FBComments'
+        else:
+            harvester = get_object_or_404(FacebookHarvester, pmk_id=harvester_id)
+            # merge two conditional filter in queryset:
+            comments = FBComment.objects.filter(post__user__harvester_in_charge=harvester).distinct()[start:end]
+            filename='%s_FBComments'%re.sub(' ', '_', unicode(harvester))
+
+    if end:
+        filename += '_%s-%s'%(start,int(end)-1)         
+
+    count = comments.count()
+    step_size = 10000
+    if count > step_size:
+        files = []
+        for i in range(0, count, step_size):
+            url = '/dwld_fb_comments_csv?harvester_id=%s&range=%s-%s'%(harvester_id,i,i+step_size)
+            for field in fields:
+                url += '&fields=%s'%field
+            files.append( ('%s_%s-%s.csv'%(filename,i,i+step_size-1), url))
+        context = {'files': files}
+        return render_to_response('snh/multiple_files_download.html', context)
+
 
     for comment in comments:
         adata = []
@@ -236,14 +313,16 @@ def dwld_fb_comments_csv(request):
             elif 'post__' in column:
                 value = getattr(post, re.sub('post__', '', column))
             elif 'ffrom__' in column:
-                value = getattr(ffrom, re.sub('ffrom__', '', column))
+                if ffrom:
+                    value = getattr(ffrom, re.sub('ffrom__', '', column))
+                else: 
+                    value = 'None'
             else:
                 value = getattr(comment, column)
             adata.append(unicode(value))
         aadata.append(adata)
-
     data = {'sColumns': sColumns, 'aaData': aadata}
-    return generate_csv_response(data)
+    return generate_csv_response(data, filename=filename+'.csv')
 
 #
 # Facebook AJAX

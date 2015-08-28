@@ -15,7 +15,6 @@ from snh.models.facebookmodel import *
 from snh.models.youtubemodel import *
 from snh.models.dailymotionmodel import *
 
-
 import os
 import snhlogger
 logger = snhlogger.init_logger(__name__, "view.log")

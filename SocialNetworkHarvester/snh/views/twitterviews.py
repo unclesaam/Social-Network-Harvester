@@ -402,29 +402,58 @@ def dwld_tw_status_csv(request):
     for column in columns:
         sColumns += str(column)+','
 
+    start, end = 0,None
+    if 'range' in request.GET:
+        rng = request.GET['range']
+        start, end = re.split('-', rng)
+
     aadata = []
-    dLogger.log('    request.GET: %s'%request.GET)
+    search_id,harvester_id,TWUser_id = None,None,None
     if 'search_id' in request.GET:
         search_id = request.GET['search_id']
         search = get_object_or_404(TWSearch, pk=search_id)
-        statuses = search.status_list.all()
+        statuses = search.status_list.all()[start:end]
+        filename = '%s_TWStatuses'%re.sub(' ', '_',unicode(search))
 
     elif 'harvester_id' in request.GET:
         harvester_id = request.GET['harvester_id']
         if harvester_id == '0':   #tous les harvesters.
-            statuses = TWStatus.objects.all()
+            statuses = TWStatus.objects.all()[start:end]
+            filename = 'all_TWStatuses'
         else:
             harvester = get_object_or_404(TwitterHarvester, pmk_id=harvester_id)
             # merge two conditional filter in queryset:
             conditionList = [Q(user=user) for user in harvester.twusers_to_harvest.all()]
             conditionList += [Q(TWSearch_hit=search) for search in harvester.twsearch_to_harvest.all()]
-            statuses = TWStatus.objects.filter(reduce(lambda x, y: x | y, conditionList)).distinct()
+            statuses = TWStatus.objects.filter(reduce(lambda x, y: x | y, conditionList)).distinct()[start:end]
+            filename = '%s_TWStatuses'%re.sub(' ', '_',unicode(harvester))
 
     elif 'TWUser_id' in request.GET:
         TWUser_id = request.GET['TWUser_id']
         user = get_object_or_404(TWUser, pmk_id=TWUser_id)
-        statuses = user.postedStatuses.all()
+        statuses = user.postedStatuses.all()[start:end]
+        filename = '%s_TWStatuses'%re.sub(' ', '_',unicode(user))
 
+    if end:
+        filename += '_%s-%s'%(start,int(end)-1)   
+
+    count = statuses.count()
+    step_size = 10000
+    if count > step_size:
+        files = []
+        for i in range(0, count, step_size):
+            url = '/dwld_tw_status_csv?range=%s-%s'%(i,i+step_size)
+            if search_id:
+                url += '&search_id=%s'%search_id
+            elif harvester_id:
+                url += '&harvester_id=%s'%harvester_id
+            elif TWUser_id:
+                url += '&TWUser_id=%s'%TWUser_id
+            for field in columns:
+                url += '&fields=%s'%field
+            files.append( ('%s_%s-%s.csv'%(filename,i,i+step_size-1), url))
+        context = {'files': files}
+        return render_to_response('snh/multiple_files_download.html', context)
 
     for status in statuses:
         #dLogger.log('    status: %s'%status)
@@ -442,6 +471,5 @@ def dwld_tw_status_csv(request):
             adata.append(unicode(value))
         aadata.append(adata)
 
-
     data = {'sColumns': sColumns, 'aaData': aadata}
-    return generate_csv_response(data)
+    return generate_csv_response(data, filename=filename+'.csv')

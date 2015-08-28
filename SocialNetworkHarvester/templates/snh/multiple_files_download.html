@@ -1,0 +1,21 @@
+{% extends "snh/snh_base.html" %}
+{% block extrahead %}
+<style>
+	.myList {
+		list-style-type:disc;
+		font-size:12px;
+	}
+</style>
+{% endblock %}
+
+{% block content %}
+<h3>This file is too large to be downloaded in a single set. Please download the following files separately instead.</h3>
+<p></p>
+<div style='min-height:500px;'>
+	<ul>
+	{% for filename, url in files %}
+		<li class='myList'><a href='{{ url }}'>{{ filename }}</a></li>
+	{% endfor %}
+	</ul>
+</div>
+{% endblock %}
