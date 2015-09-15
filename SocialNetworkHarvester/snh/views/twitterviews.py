@@ -53,6 +53,10 @@ tw_status_fields = [['fid','text'],
     ['user__profile_background_image_url','user__profile_image_url'],
     ['user__profile_link_color','user__profile_sidebar_fill_color']]
 
+choiceYears = [i for i in range(2000,2021)]
+choiceMonths = [i for i in range(1,13)]
+choiceDays = [i for i in range(1,32)]
+
 
 @login_required(login_url=u'/login/')
 def tw(request, harvester_id):
@@ -63,7 +67,10 @@ def tw(request, harvester_id):
                                                     u'harvester_id':harvester_id,
                                                     #u'user_list': user_list,
                                                     #u'stags_list': stags_list,
-                                                    'status_fields':tw_status_fields
+                                                    'status_fields':tw_status_fields,
+                                                    'years':choiceYears,
+                                                    'months':choiceMonths,
+                                                    'days':choiceDays,
                                                   })
 
 @login_required(login_url=u'/login/')
@@ -78,7 +85,10 @@ def tw_user_detail(request, harvester_id, screen_name):
                                                     u'all_harvesters':twitter_harvesters,
                                                     u'harvester_id':harvester_id,
                                                     u'user':user,
-                                                    'status_fields': tw_status_fields
+                                                    'status_fields': tw_status_fields,
+                                                    'years':choiceYears,
+                                                    'months':choiceMonths,
+                                                    'days':choiceDays,
                                                   })
 @login_required(login_url=u'/login/')
 def tw_search_detail(request, harvester_id, search_id):
@@ -93,6 +103,9 @@ def tw_search_detail(request, harvester_id, search_id):
                                                     u'search':search,
                                                     #u'status_list':status_list,
                                                     'status_fields': tw_status_fields,
+                                                    'years':choiceYears,
+                                                    'months':choiceMonths,
+                                                    'days':choiceDays
                                                   })
 @login_required(login_url=u'/login/')
 def tw_status_detail(request, harvester_id, status_id):
@@ -403,30 +416,53 @@ def dwld_tw_status_csv(request):
     if 'search_id' in request.GET:
         search_id = request.GET['search_id']
         search = get_object_or_404(TWSearch, pk=search_id)
-        statuses = search.status_list.all()[start:end]
+        statuses = search.status_list.all()
         filename = '%s_TWStatuses'%re.sub(' ', '_',unicode(search))
 
     elif 'harvester_id' in request.GET:
         harvester_id = request.GET['harvester_id']
         if harvester_id == '0':   #tous les harvesters.
-            statuses = TWStatus.objects.all()[start:end]
+            statuses = TWStatus.objects.all()
             filename = 'all_TWStatuses'
         else:
             harvester = get_object_or_404(TwitterHarvester, pmk_id=harvester_id)
             # merge two conditional filter in queryset:
             conditionList = [Q(user=user) for user in harvester.twusers_to_harvest.all()]
             conditionList += [Q(TWSearch_hit=search) for search in harvester.twsearch_to_harvest.all()]
-            statuses = TWStatus.objects.filter(reduce(lambda x, y: x | y, conditionList)).distinct()[start:end]
+            statuses = TWStatus.objects.filter(reduce(lambda x, y: x | y, conditionList)).distinct()
             filename = '%s_TWStatuses'%re.sub(' ', '_',unicode(harvester))
 
     elif 'TWUser_id' in request.GET:
         TWUser_id = request.GET['TWUser_id']
         user = get_object_or_404(TWUser, pmk_id=TWUser_id)
-        statuses = user.postedStatuses.all()[start:end]
+        statuses = user.postedStatuses.all()
         filename = '%s_TWStatuses'%re.sub(' ', '_',unicode(user))
 
+    startYear = request.GET['startYear']
+    startMonth = request.GET['startMonth']
+    startDay = request.GET['startDay']
+    stopYear = request.GET['stopYear']
+    stopMonth = request.GET['stopMonth']
+    stopDay = request.GET['stopDay']
+
+    try:
+        startDate = datetime(year=int(startYear),
+            month=int(startMonth),day=int(startDay),)
+        stopDate = datetime(year=int(stopYear),
+            month=int(stopMonth),day=int(stopDay),)
+    except:
+        return render_to_response('500.html', {'referer':request.META.get('HTTP_REFERER'),
+            'message': 'Please enter a valid date'})
+
+    statuses = statuses.filter(created_at__gte=startDate, created_at__lte=stopDate)[start:end]
+
+    filename += '_%s-%s-%s_to_%s-%s-%s'%(
+        startYear,startMonth,startDay,
+        stopYear,stopMonth,stopDay
+        )
+
     if end:
-        filename += '_%s-%s'%(start,int(end)-1)   
+        filename += '_(%s-%s)'%(start,int(end)-1)   
 
     count = statuses.count()
     step_size = 10000
@@ -442,7 +478,11 @@ def dwld_tw_status_csv(request):
                 url += '&TWUser_id=%s'%TWUser_id
             for field in columns:
                 url += '&fields=%s'%field
-            files.append( ('%s_%s-%s.csv'%(filename,i,i+step_size-1), url))
+            for (key,value) in {'startYear':startYear,'startMonth':startMonth,
+            'startDay':startDay,'stopYear':stopYear,
+            'stopMonth':stopMonth,'stopDay':stopDay}.iteritems():
+                url += '&'+key+'='+value
+            files.append( ('%s_(%s-%s).csv'%(filename,i,i+step_size-1), url))
         context = {'files': files}
         return render_to_response('snh/multiple_files_download.html', context)
 

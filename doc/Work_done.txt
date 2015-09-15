@@ -56,7 +56,7 @@
 
 3 avril 2015:
 - Set up de fandjango, test des fonctionnalités
-- Installation d'Apache (about time, I know...)
+- Installation d'Apache
 - Mise en place d'un certificat SSL via apache (got to learn first)
 - Fin de journée (3h)
 
@@ -162,7 +162,7 @@
 
 2 juin 2015:
 - Optimisation de l'utilisation des ressources Twitter
-- Code d'un algo permettant de collecter les infos de tout les utilisateurs (pas juste ceux harvestés)
+- Code d'un algo permettant de collecter les infos de tous les utilisateurs (pas juste ceux harvestés)
 - fin de journée (6h)
 
 3 juin 2015:
@@ -353,7 +353,7 @@
 - Debug de la procédure de traitement des FBResults (multithread) qui est mal optimisée pour une grosse Database
 - Début de code d'une option de selection des champs lors du download en CSV des tweets. 
 - Débugging et compréhjension de la structure javascript et des 'tableTools' utilisées par Pier-Yves. Celles-ci sont trop limitées pour nos 
-besoin. J'implémente une django-view à part pour cette fonction.
+besoins. J'implémente une django-view à part pour cette fonction.
 - fins de journées (4h) (6h)
 
 29 juillet 2015: 
@@ -402,4 +402,16 @@ besoin. J'implémente une django-view à part pour cette fonction.
 
 27 aout 2015:
 - Ajout d'une mécanique permettant le download de large fichiers CSV, sans tuer le serveur. 
-- Fin de journée (6h)
+- Fin de journée (7h)
+
+28 au 30 aout 2015:
+- Rédaction de mon rapport de stage
+- Supervision de la collecte. Apparement, un cronjob se bloque s'il prend trop de temps à s'éxécuter. Mystère à résoudre.
+- Fins de journées (~ 20h)
+
+13-14 septembre 2015:
+- Implémenté la possibilité de faire des requêtes limitées dans le temps. Exemple: Downloader un .CSV des tweets dans une période sélécetionnée.
+- Chasse aux bugs.
+- Rencontre avec Mr. Giasson, discussion à propos du contrat de la session.
+- Début de rédaction du rapport.
+- Fin de journées (4h) (6h)

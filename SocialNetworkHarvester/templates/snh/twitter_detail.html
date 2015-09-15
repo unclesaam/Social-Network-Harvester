@@ -62,21 +62,59 @@
         $('#ToolTables_status_table_0').unbind('click' )
         $('#ToolTables_status_table_0').click(function(){
             document.getElementById('centerPopupInner').innerHTML = '\
-                <br><center>Please select the fields to include:</center><br><hr>\
-                <form action="/dwld_tw_status_csv" method="GET">\
-                    <table>\
-                        <tr><td><input type="checkbox" id="checkAll"></td><td><b> Select/deselect all</b></td></tr>\
-                        {% for fieldlist in status_fields %}\
-                        <tr>\
-                            {% for field in fieldlist %}\
-                            <td><input type="checkbox" name="fields" value={{ field }}></td><td> {{ field }}</td>\
-                            {% endfor %}\
-                        </tr>\
+            <br><center>Select the time-range:</center><br>\
+            <div style="text-align:left"><table><tr>\
+                <td>Start date:</td><td style="width:10px"></td>\
+                <td><select name="startYear" form="requestForm">\
+                    {% for year in years %}\
+                    <option value="{{year}}">{{year}}</option>\
+                    {% endfor %}\
+                </select></td>\
+                <td><select name="startMonth" form="requestForm">\
+                    {% for month in months %}\
+                    <option value="{{month}}">{{month}}</option>\
+                    {% endfor %}\
+                </select></td>\
+                <td><select name="startDay" form="requestForm">\
+                    {% for day in days %}\
+                    <option value="{{day}}">{{day}}</option>\
+                    {% endfor %}\
+                </select></td>\
+                </tr>\
+                <tr>\
+                <td>End date:</td><td></td>\
+                <td><select name="stopYear" form="requestForm">\
+                    {% for year in years %}\
+                    <option value="{{year}}">{{year}}</option>\
+                    {% endfor %}\
+                </select></td>\
+                <td><select name="stopMonth" form="requestForm">\
+                    {% for month in months %}\
+                    <option value="{{month}}">{{month}}</option>\
+                    {% endfor %}\
+                </select></td>\
+                <td><select name="stopDay" form="requestForm">\
+                    {% for day in days %}\
+                    <option value="{{day}}">{{day}}</option>\
+                    {% endfor %}\
+                </select></td>\
+                </tr>\
+            </table></div>\
+            <br><center>Please select the fields to include:</center><br><br>\
+            <form action="/dwld_tw_status_csv" method="GET" id="requestForm">\
+                <table>\
+                    <tr><td><input type="checkbox" id="checkAll"></td><td><b> Select/deselect all</b></td></tr>\
+                    {% for fieldlist in status_fields %}\
+                    <tr>\
+                        {% for field in fieldlist %}\
+                        <td><input type="checkbox" name="fields" value={{ field }}></td><td> {{ field }}</td>\
                         {% endfor %}\
-                    </table>\
-                    <input type="hidden" name="TWUser_id" value="{{ user.pmk_id }}">\
-                    <input type="submit" id="submitButton" value="submit">\
-                </form>\
+                    </tr>\
+                    {% endfor %}\
+                </table>\
+                <input type="hidden" name="TWUser_id" value="{{ user.pmk_id }}">\
+                <input type="submit" id="submitButton" value="submit">\
+            </form>\
             ';
             $('#checkAll').click(function(event) {   
                 var checkBox = this
@@ -95,7 +133,7 @@
 {% block submenu %}
 <table class="tableheader">
     <tr>
-        <td {% if harvester_id == "0" %}class="submenu-selection"{% endif %}><a href="/tw/0">All users</a></td>
+        <td {% if harvester_id == "0" %}class="submenu-selection"{% endif %}><a href="/tw/0">All data</a></td>
         {% for h in all_harvesters %}
         <td  {% ifequal harvester_id h.pmk_id|slugify %}class="submenu-selection"{% endifequal %}><a href="/tw/{{ h.pmk_id }}">{{ h }}</a></td>
         {% endfor %}

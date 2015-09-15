@@ -49,7 +49,7 @@ def run_twitter_harvester():
             if harvester.is_active:    
                 harvester.start_new_harvest()
                 harvester.update_client_stats()
-                
+                '''
                 if harvester.remaining_user_lookup_hits <= 0:
                     warn = u"The harvester %s has exceeded the user lookup rate limit. Need to wait? %s" % (unicode(harvester), harvester.get_stats())
                     logger.warning(warn)
@@ -63,7 +63,7 @@ def run_twitter_harvester():
                 else:
                     run_harvester_timeline(harvester)
                     harvester.update_client_stats()
-
+                '''
                 if harvester.remaining_search_hits <= 0:
                     warn = u"The harvester %s has exceeded the search rate limit. Need to wait? %s" % (unicode(harvester), harvester.get_stats())
                     logger.warning(warn)
@@ -346,6 +346,7 @@ def update_statuses(harvester, snh_search, status_id_list):
         except Exception as e:
             if debugging: dLogger.exception(e)
             logger.exception('AN ERROR HAS OCCURED WHILE SAVING TWEET TO DB:')
+            print snh_user
     snh_search.latest_status_harvested = snh_status
     snh_search.save()
 

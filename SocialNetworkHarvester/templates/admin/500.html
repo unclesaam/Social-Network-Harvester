@@ -1,1 +1,20 @@
-ERROR 500: Server error!
+{% extends "snh/snh_base.html" %}
+
+
+{% block content %}
+<div style='min-height:500px'>
+	<center>
+		<br><br>
+		<h1><strong>ERROR 500: Server error!</strong></h1>
+
+		{% if message %}
+		<p>{{ message }}</p>
+		{% endif %}
+
+		{% if referer %}
+		<br><a href="{{ referer }}">Go back</a>
+		{% endif %}
+
+	</center>
+</div>
+{% endblock %}

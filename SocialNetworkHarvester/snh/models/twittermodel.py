@@ -648,6 +648,8 @@ class TWStatus(models.Model):
                     usermention = None
                     try:
                         usermention = self.get_existing_user({"fid":tw_mention['id']})
+                        if not usermention: 
+                            usermention = self.get_existing_user({'screen_name':tw_mention['screen_name']})
                         #if debugging: dLogger.log("    usermention: %s"%usermention)
                         if not usermention:
                             usermention = TWUser(

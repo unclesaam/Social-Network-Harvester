@@ -55,7 +55,7 @@
 {% block submenu %}
 <table class="tableheader">
     <tr>
-        <td {% if harvester_id == "0" %}class="submenu-selection"{% endif %}><a href="/yt/0">All users</a></td>
+        <td {% if harvester_id == "0" %}class="submenu-selection"{% endif %}><a href="/yt/0">All data</a></td>
         {% for h in all_harvesters %}
         <td  {% ifequal harvester_id h.pmk_id|slugify %}class="submenu-selection"{% endifequal %}><a href="/yt/{{ h.pmk_id }}">{{ h }}</a></td>
         {% endfor %}

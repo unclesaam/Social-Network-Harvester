@@ -34,6 +34,7 @@ import snhlogger
 logger = snhlogger.init_logger(__name__, "view.log")
 
 
+
 #
 # FACEBOOK TOKEN
 #
@@ -78,14 +79,16 @@ fb_posts_fields = [
     'user__timezone_raw','user__updated_time','user__verified','user__bio','user__birthday',
     'user__education_raw','user__email','user__hometown','user__interested_in_raw',
     'user__location_raw','user__political','user__favorite_athletes_raw','user__favorite_teams_raw',
-    'user__quotes','user__relationship_status','user__religion','user__significant_other_raw',
-    'user__video_upload_limits_raw','user__work_raw','user__category','user__likes',
-    'user__about','user__phone','user__checkins','user__picture','user__talking_about_count',],
+    'user__quotes',],
 
-    ['ffrom__name','ffrom__username','ffrom__website','ffrom__link','ffrom__first_name',
+    ['user__relationship_status','user__religion','user__significant_other_raw',
+    'user__video_upload_limits_raw','user__work_raw','user__category','user__likes',
+    'user__about','user__phone','user__checkins','user__picture','user__talking_about_count',
+    'ffrom__name','ffrom__username','ffrom__website','ffrom__link','ffrom__first_name',
     'ffrom__last_name','ffrom__gender','ffrom__locale','ffrom__languages_raw','ffrom__third_party_id',
-    'ffrom__installed_raw','ffrom__timezone_raw','ffrom__updated_time','ffrom__verified','ffrom__bio',
-    'ffrom__birthday','ffrom__education_raw','ffrom__email','ffrom__hometown','ffrom__interested_in_raw',
+    'ffrom__installed_raw','ffrom__timezone_raw','ffrom__updated_time',],
+
+    ['ffrom__verified','ffrom__bio','ffrom__birthday','ffrom__education_raw','ffrom__email','ffrom__hometown','ffrom__interested_in_raw',
     'ffrom__location_raw','ffrom__political','ffrom__favorite_athletes_raw','ffrom__favorite_teams_raw',
     'ffrom__quotes','ffrom__relationship_status','ffrom__religion','ffrom__significant_other_raw',
     'ffrom__video_upload_limits_raw','ffrom__work_raw','ffrom__category','ffrom__likes','ffrom__about',
@@ -113,6 +116,10 @@ fb_comments_fields = [
     'ffrom__phone','ffrom__checkins','ffrom__picture','ffrom__talking_about_count',],
     ]
 
+choiceYears = [i for i in range(2000,2021)]
+choiceMonths = [i for i in range(1,13)]
+choiceDays = [i for i in range(1,32)]
+
 @login_required(login_url=u'/login/')
 def fb(request, harvester_id):
     facebook_harvesters = FacebookHarvester.objects.all()
@@ -123,6 +130,9 @@ def fb(request, harvester_id):
                                                     u'harvester_id':harvester_id,
                                                     'status_fields': izip_longest(*fb_posts_fields),
                                                     'comment_fields': izip_longest(*fb_comments_fields),
+                                                    'years':choiceYears,
+                                                    'months':choiceMonths,
+                                                    'days':choiceDays,
                                                   })
 
 @login_required(login_url=u'/login/')
@@ -138,6 +148,9 @@ def fb_user_detail(request, harvester_id, username):
                                                     u'harvester_id':harvester_id,
                                                     u'user':user,
                                                     'status_fields': izip_longest(*fb_posts_fields),
+                                                    'years':choiceYears,
+                                                    'months':choiceMonths,
+                                                    'days':choiceDays,
                                                     'wall_chart':wall_chart,
                                                     'otherwall_chart':otherwall_chart,
                                                     'comment_chart':comment_chart,
@@ -155,6 +168,9 @@ def fb_userfid_detail(request, harvester_id, userfid):
                                                     u'harvester_id':harvester_id,
                                                     u'user':user,
                                                     'status_fields': izip_longest(*fb_posts_fields),
+                                                    'years':choiceYears,
+                                                    'months':choiceMonths,
+                                                    'days':choiceDays,
                                                     'wall_chart':wall_chart,
                                                     'otherwall_chart':otherwall_chart,
                                                     'comment_chart':comment_chart,
@@ -197,21 +213,44 @@ def dwld_fb_posts_csv(request):
     if 'harvester_id' in request.GET:
         harvester_id = request.GET['harvester_id']
         if harvester_id == '0':
-            statuses = FBPost.objects.all()[start:end]
+            statuses = FBPost.objects.all()
             filename='all_FBPosts'
         else:
             harvester = get_object_or_404(FacebookHarvester, pmk_id=harvester_id)
             # merge two conditional filter in queryset:
             conditions = [Q(user=user) for user in harvester.fbusers_to_harvest.all()]
-            statuses = FBPost.objects.filter(reduce(lambda x, y: x | y, conditions)).distinct()[start:end]
+            statuses = FBPost.objects.filter(reduce(lambda x, y: x | y, conditions)).distinct()
             filename = '%s_FBPosts'%re.sub(' ', '_', unicode(harvester))
 
 
     elif 'FBUser_id' in request.GET:
         FBUser_id = request.GET['FBUser_id']
         user = get_object_or_404(FBUser, pmk_id=FBUser_id)
-        statuses = user.postedStatuses.all()[start:end]
+        statuses = user.postedStatuses.all()
         filename = '%s_FBPosts'%re.sub(' ', '_', unicode(user))
+
+    startYear = request.GET['startYear']
+    startMonth = request.GET['startMonth']
+    startDay = request.GET['startDay']
+    stopYear = request.GET['stopYear']
+    stopMonth = request.GET['stopMonth']
+    stopDay = request.GET['stopDay']
+
+    try:
+        startDate = datetime(year=int(startYear),
+            month=int(startMonth),day=int(startDay))
+        stopDate = datetime(year=int(stopYear),
+            month=int(stopMonth),day=int(stopDay))
+    except:
+        return render_to_response('500.html', {'referer':request.META.get('HTTP_REFERER'),
+            'message': 'Please enter a valid date'})
+
+    statuses = statuses.filter(created_time__gte=startDate, created_time__lte=stopDate)[start:end]
+
+    filename += '_%s-%s-%s_to_%s-%s-%s'%(
+        startYear,startMonth,startDay,
+        stopYear,stopMonth,stopDay
+        )
 
     if end:
         filename += '_%s-%s'%(start,int(end)-1)
@@ -229,6 +268,10 @@ def dwld_fb_posts_csv(request):
                 url += '&harvester_id=%s'%harvester_id
             for field in fields:
                 url += '&fields=%s'%field
+            for (key,value) in {'startYear':startYear,'startMonth':startMonth,
+                    'startDay':startDay,'stopYear':stopYear,
+                    'stopMonth':stopMonth,'stopDay':stopDay}.iteritems():
+                url += '&'+key+'='+value
             files.append( ('%s_%s-%s.csv'%(filename,i,i+step_size-1), url))
         context = {'files': files}
         return render_to_response('snh/multiple_files_download.html', context)
@@ -279,13 +322,36 @@ def dwld_fb_comments_csv(request):
     if 'harvester_id' in request.GET:
         harvester_id = request.GET['harvester_id']
         if harvester_id == '0':
-            comments = FBComment.objects.all()[start:end]
+            comments = FBComment.objects.all()
             filename='all_FBComments'
         else:
             harvester = get_object_or_404(FacebookHarvester, pmk_id=harvester_id)
             # merge two conditional filter in queryset:
-            comments = FBComment.objects.filter(post__user__harvester_in_charge=harvester).distinct()[start:end]
+            comments = FBComment.objects.filter(post__user__harvester_in_charge=harvester).distinct()
             filename='%s_FBComments'%re.sub(' ', '_', unicode(harvester))
+
+    startYear = request.GET['startYear']
+    startMonth = request.GET['startMonth']
+    startDay = request.GET['startDay']
+    stopYear = request.GET['stopYear']
+    stopMonth = request.GET['stopMonth']
+    stopDay = request.GET['stopDay']
+
+    try:
+        startDate = datetime(year=int(startYear),
+            month=int(startMonth),day=int(startDay))
+        stopDate = datetime(year=int(stopYear),
+            month=int(stopMonth),day=int(stopDay))
+    except:
+        return render_to_response('500.html', {'referer':request.META.get('HTTP_REFERER'),
+            'message': 'Please enter a valid date'})
+
+    comments = comments.filter(created_time__gte=startDate, created_time__lte=stopDate)[start:end]
+
+    filename += '_%s-%s-%s_to_%s-%s-%s'%(
+        startYear,startMonth,startDay,
+        stopYear,stopMonth,stopDay
+        )
 
     if end:
         filename += '_%s-%s'%(start,int(end)-1)         
@@ -298,6 +364,10 @@ def dwld_fb_comments_csv(request):
             url = '/dwld_fb_comments_csv?harvester_id=%s&range=%s-%s'%(harvester_id,i,i+step_size)
             for field in fields:
                 url += '&fields=%s'%field
+            for (key,value) in {'startYear':startYear,'startMonth':startMonth,
+                    'startDay':startDay,'stopYear':stopYear,
+                    'stopMonth':stopMonth,'stopDay':stopDay}.iteritems():
+                url += '&'+key+'='+value
             files.append( ('%s_%s-%s.csv'%(filename,i,i+step_size-1), url))
         context = {'files': files}
         return render_to_response('snh/multiple_files_download.html', context)
