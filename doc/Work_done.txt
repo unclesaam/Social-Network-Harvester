@@ -415,3 +415,10 @@ besoins. J'implémente une django-view à part pour cette fonction.
 - Rencontre avec Mr. Giasson, discussion à propos du contrat de la session.
 - Début de rédaction du rapport.
 - Fin de journées (4h) (6h)
+
+15 septembre-9 octobre 2015:
+- Design de site web. Création et placement des éléments de l'interface.
+
+9 octobre 2015:
+- Début de développement d'une API-maison (AspirAPI) pour permettre de manipuler de grande quantité de données à l'aide d'un script sur une machine locale
+- Devrait théoriquement permettre de créer un harvester à distance, lui ajouter des TWUsers

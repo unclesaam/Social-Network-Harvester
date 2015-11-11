@@ -14,6 +14,7 @@ from snh.models.twittermodel import *
 from snh.models.facebookmodel import *
 from snh.models.youtubemodel import *
 from snh.models.dailymotionmodel import *
+import apiviews
 
 import os
 import snhlogger
@@ -113,3 +114,4 @@ def toggle_harvester(request):
     harvester.save()
 
     return redirect('/')
+

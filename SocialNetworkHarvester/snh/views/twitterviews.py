@@ -1,5 +1,16 @@
 # coding=UTF-8
 
+
+#========================== TODO ================================
+# - Implémenter une structure de donnée qui conserve en mémoire le nombre de tweet par date (liste?) pour les users/searchs, afin d'accéler le loading des graphes.
+
+
+
+
+
+
+
+
 from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render_to_response, get_object_or_404, get_list_or_404, redirect, HttpResponseRedirect
@@ -56,7 +67,8 @@ tw_status_fields = [['fid','text'],
 choiceYears = [i for i in range(2000,2021)]
 choiceMonths = [i for i in range(1,13)]
 choiceDays = [i for i in range(1,32)]
-
+present = dt.datetime.now()
+now = [present.year, present.month, present.day]
 
 @login_required(login_url=u'/login/')
 def tw(request, harvester_id):
@@ -71,6 +83,7 @@ def tw(request, harvester_id):
                                                     'years':choiceYears,
                                                     'months':choiceMonths,
                                                     'days':choiceDays,
+                                                    "now":now,
                                                   })
 
 @login_required(login_url=u'/login/')
@@ -89,6 +102,7 @@ def tw_user_detail(request, harvester_id, screen_name):
                                                     'years':choiceYears,
                                                     'months':choiceMonths,
                                                     'days':choiceDays,
+                                                    "now":now,
                                                   })
 @login_required(login_url=u'/login/')
 def tw_search_detail(request, harvester_id, search_id):
@@ -105,7 +119,8 @@ def tw_search_detail(request, harvester_id, search_id):
                                                     'status_fields': tw_status_fields,
                                                     'years':choiceYears,
                                                     'months':choiceMonths,
-                                                    'days':choiceDays
+                                                    'days':choiceDays,
+                                                    "now":now,
                                                   })
 @login_required(login_url=u'/login/')
 def tw_status_detail(request, harvester_id, status_id):

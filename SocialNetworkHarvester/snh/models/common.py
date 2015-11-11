@@ -38,7 +38,7 @@ class AbstractHaverster(models.Model):
 
     dont_harvest_further_than = models.IntegerField(null=True, default=0)
 
-    harvest_window_from = models.DateTimeField(null=True, default=datetime.min)
+    harvest_window_from = models.DateTimeField(null=True, default=datetime(1900,01,01))
     harvest_window_to = models.DateTimeField(null=True, default=datetime.max)
 
     full_harvest_on_next_run = models.BooleanField()
@@ -47,7 +47,7 @@ class AbstractHaverster(models.Model):
     def start_new_harvest(self):
         if debugging: dLogger.log('start_new_harvest()')
 
-        self.current_harvest_start_time = datetime.utcnow()
+        self.current_harvest_start_time = datetime.now()
         self.current_harvest_call_count = 0
         self.harvest_in_progress = True
         self.save()
@@ -57,7 +57,7 @@ class AbstractHaverster(models.Model):
         if debugging: dLogger.log('start_new_harvest()')
 
         self.last_harvest_start_time = self.current_harvest_start_time
-        self.last_harvest_end_time = datetime.utcnow()
+        self.last_harvest_end_time = datetime.now()
         self.current_harvest_start_time = None
         self.last_harvest_call_count = self.current_harvest_call_count
         self.last_user_harvest_was_aborted = bool(self.get_current_harvested_user())

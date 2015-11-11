@@ -62,6 +62,7 @@ def fb_update_client_token(request):
     else:
         currentSessionKey = currentSessionKey[0]
     currentSessionKey.set_access_token(token)
+    return HttpResponse('Done.')
 
 
 #

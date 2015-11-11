@@ -103,4 +103,7 @@ urlpatterns = patterns('snh.views',
     #(r'^facebook/(?P<harvester_id>\d+)/$', 'facebook'),
     (r'^event_logs/$', 'get_event_logs'),
     (r'^event_logs/(?P<logfile>[\w.]+)$', 'get_event_logs'),
+
+
+    (r'^api/1.0/(?P<command>[\w.]+)$', 'api_one_zero'),
 )

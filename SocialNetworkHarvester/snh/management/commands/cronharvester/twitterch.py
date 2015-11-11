@@ -40,6 +40,8 @@ def run_twitter_harvester():
         harvester.harvest_in_progress = False
         harvester.save()
 
+    logger.info('Will run in order: %s'%harvester_list)
+
     try:
         for harvester in harvester_list:
             logger.info(u"The harvester %s is %s" % 
@@ -49,7 +51,7 @@ def run_twitter_harvester():
             if harvester.is_active:    
                 harvester.start_new_harvest()
                 harvester.update_client_stats()
-                '''
+                
                 if harvester.remaining_user_lookup_hits <= 0:
                     warn = u"The harvester %s has exceeded the user lookup rate limit. Need to wait? %s" % (unicode(harvester), harvester.get_stats())
                     logger.warning(warn)
@@ -63,7 +65,7 @@ def run_twitter_harvester():
                 else:
                     run_harvester_timeline(harvester)
                     harvester.update_client_stats()
-                '''
+                
                 if harvester.remaining_search_hits <= 0:
                     warn = u"The harvester %s has exceeded the search rate limit. Need to wait? %s" % (unicode(harvester), harvester.get_stats())
                     logger.warning(warn)
@@ -338,7 +340,7 @@ def update_statuses(harvester, snh_search, status_id_list):
         except:
             snh_status = TWStatus.objects.create(fid=tw_status['id_str'], user=snh_user)
             if debugging: dLogger.log('    new status created: %s'%snh_status)
-            logger.info('New status created from search: %s'%snh_status)
+            logger.debug('New status created from search: %s'%snh_status)
 
         try:
             snh_status.update_from_rawtwitter(tw_status, snh_user, harvester.keep_raw_statuses)
@@ -457,7 +459,7 @@ def update_user_batch(harvester, user_batch):
 def run_harvester_timeline(harvester):
     if debugging: dLogger.log( "run_harvester_timeline(harvester: %s)"%(harvester))
 
-    logger.info(u"START REST: %s Stats:%s" % (harvester,unicode(harvester.get_stats())))
+    logger.info(u"Start Timeline: %s Stats:%s" % (harvester,unicode(harvester.get_stats())))
 
     try:
         user = harvester.get_next_user_to_harvest()
@@ -470,7 +472,7 @@ def run_harvester_timeline(harvester):
 
             if not user.error_triggered:
 
-                logger.info(u"Start: %s:%s(%d). Hits to go: %d" % (harvester, unicode(user), user.fid if user.fid else 0, harvester.remaining_user_timeline_hits))
+                logger.debug(u"Start: %s:%s(%d). Hits to go: %d" % (harvester, unicode(user), user.fid if user.fid else 0, harvester.remaining_user_timeline_hits))
                 get_latest_statuses(harvester, user)
             else:
                 logger.info(u"Skipping: %s:%s(%d) because user has triggered the error flag." % (harvester, unicode(user), user.fid if user.fid else 0))
@@ -488,13 +490,13 @@ def run_harvester_timeline(harvester):
             aborted_user.was_aborted = True
             aborted_user.save()
     
-    logger.info(u"End REST: %s Stats:%s" % (harvester,unicode(harvester.get_stats())))
+    logger.info(u"End Timeline: %s Stats:%s" % (harvester,unicode(harvester.get_stats())))
 
 @dLogger.debug
 def run_harvester_search(harvester):
     if debugging: dLogger.log ("run_harvester_search(harvester: %s)"%(harvester))
             
-    logger.info(u"START SEARCH API: %s Stats:%s" % (harvester,unicode(harvester.get_stats())))
+    logger.info(u"START SEARCH: %s Stats:%s" % (harvester,unicode(harvester.get_stats())))
     try:
         all_twsearch = harvester.twsearch_to_harvest.all()
         search_all_terms(harvester, all_twsearch)
@@ -505,7 +507,7 @@ def run_harvester_search(harvester):
     finally:
         logger.info(u"End SEARCH API: %s Stats:%s" % (harvester,unicode(harvester.get_stats())))
         
-    logger.info(u"End: %s Stats:%s" % (harvester,unicode(harvester.get_stats())))
+    logger.info(u"End SEARCH: %s Stats:%s" % (harvester,unicode(harvester.get_stats())))
 
 
 @dLogger.debug
@@ -514,7 +516,7 @@ def run_users_update(harvester):
 
     logger.info(u"START user update: %s Stats:%s" % (harvester,unicode(harvester.get_stats())))
     while harvester.remaining_user_lookup_hits > 0:
-        logger.info(u"New user batch to update. User lookup hits to go: %s" %(harvester.remaining_user_lookup_hits))
+        logger.debug(u"New user batch to update. User lookup hits to go: %s" %(harvester.remaining_user_lookup_hits))
         user_batch = harvester.get_next_user_batch_to_update()
         if user_batch:
             update_user_batch(harvester, user_batch)

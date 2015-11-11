@@ -58,6 +58,22 @@ class TwitterHarvester(AbstractHaverster):
 
     keep_raw_statuses = models.BooleanField(default=False)
 
+    api_params = {
+        'name':                         'harvester_name',
+        'enabled':                      'is_active',
+        'retry_user_after_abortion':    'retry_user_after_abortion',
+        'max_retry_on_fail':            'max_retry_on_fail',
+        'harvest_window_from':          'harvest_window_from',
+        'harvest_window_to':            'harvest_window_to',
+        'consumer_key':                 'consumer_key',
+        'consumer_secret':              'consumer_secret',
+        'access_token_key':             'access_token_key',
+        'access_token_secret':          'access_token_secret',
+        'twusers_to_harvest':           'twusers_to_harvest',
+        'twsearch_to_harvest':          'twsearch_to_harvest',
+        'keep_raw_statuses':            'keep_raw_statuses'
+    }
+
     @dLogger.debug
     def get_client(self):
         #if debugging: dLogger.log("get_client()")
@@ -227,6 +243,16 @@ class TwitterHarvester(AbstractHaverster):
                                     }
         return parent_stats
 
+    def to_dict(self):
+        dictObject = {}
+        for param in self.api_params:
+            attr = getattr(self, self.api_params[param])
+            if isinstance(attr, datetime):
+                attr = attr.strftime('%Y-%m-%dT%H:%M:%SZ')
+            elif attr.__class__.__name__ == 'ManyRelatedManager':
+                attr = [str(elem) for elem in attr.all()]
+            dictObject[param] = attr
+        return dictObject
             
 class TWSearch(models.Model):
 

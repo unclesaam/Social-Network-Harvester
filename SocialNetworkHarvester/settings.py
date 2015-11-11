@@ -10,7 +10,7 @@ import MySQLdb as Database
 PROJECT_PATH = os.path.abspath(os.path.split(__file__)[0])
 LOG_LEVEL = logging.INFO
 
-PROD = True
+PROD = False
 
 dLogger = DebugLogger('debug'+__name__, os.path.join(PROJECT_PATH,"log/debugLogger.log"), '<%(thread)d>%(message)s')
 ADMINS = (
@@ -46,7 +46,8 @@ if PROD: #en mode production:
                     'twitterch':        False,
                     'dailymotionch':    False,
                     'youtubech':        False,
-                    'twitterview':      False
+                    'twitterview':      False,
+                    'apiviews':         False,
                     }
 
     DOWNLOADED_VIDEO_PATH = '/mnt/video/2015/'
@@ -85,7 +86,8 @@ else: # en mode développement:
                     'twitterch':        True,
                     'dailymotionch':    True,
                     'youtubech':        True,
-                    'twitterview':      True
+                    'twitterview':      True,
+                    'apiviews':         True,
                     }
     # For videos downloaded from youtube and dailymotion. Also contains the 
     # related captions files when available
