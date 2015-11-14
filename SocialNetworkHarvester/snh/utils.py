@@ -46,6 +46,20 @@ class UnicodeWriter:
         for row in rows:
             self.writerow(row)
 
+@dLogger.debug
+def generate_csv_stream(request, dataLength, data, filename='output.csv'):
+    dLogger.log("generate_csv_stream()")
+    def data():
+        for i in xrange(dataLength):
+            csvfile = StringIO.StringIO()
+            csvwriter = csv.writer(csvfile)
+            csvwriter.writerow(data[i])
+            yield csvfile.getvalue()
+
+    response = HttpResponse(data(), mimetype="text/csv")
+    response["Content-Disposition"] = "attachment; filename=%s"%filename
+    return response
+
 def generate_csv_response(d, filename='output.csv'):
     # Create the HttpResponse object with the appropriate CSV header.
     response = HttpResponse(mimetype='text/csv')

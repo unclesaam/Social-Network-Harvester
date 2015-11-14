@@ -120,6 +120,8 @@ fb_comments_fields = [
 choiceYears = [i for i in range(2000,2021)]
 choiceMonths = [i for i in range(1,13)]
 choiceDays = [i for i in range(1,32)]
+present = dt.datetime.now()
+now = [present.year, present.month, present.day]
 
 @login_required(login_url=u'/login/')
 def fb(request, harvester_id):
@@ -134,6 +136,7 @@ def fb(request, harvester_id):
                                                     'years':choiceYears,
                                                     'months':choiceMonths,
                                                     'days':choiceDays,
+                                                    "now":now,
                                                   })
 
 @login_required(login_url=u'/login/')
@@ -152,6 +155,7 @@ def fb_user_detail(request, harvester_id, username):
                                                     'years':choiceYears,
                                                     'months':choiceMonths,
                                                     'days':choiceDays,
+                                                    "now":now,
                                                     'wall_chart':wall_chart,
                                                     'otherwall_chart':otherwall_chart,
                                                     'comment_chart':comment_chart,

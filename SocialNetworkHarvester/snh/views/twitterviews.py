@@ -37,6 +37,7 @@ logger = snhlogger.init_logger(__name__, "view.log")
 import time
 import types
 import re
+import csv, codecs, cStringIO
 
 from settings import DEBUGCONTROL, dLogger
 debugging = DEBUGCONTROL['twitterview']
@@ -479,11 +480,12 @@ def dwld_tw_status_csv(request):
     if end:
         filename += '_(%s-%s)'%(start,int(end)-1)   
 
-    count = statuses.count()
+    dataLength = statuses.count()
+    '''
     step_size = 10000
-    if count > step_size:
+    if dataLength > step_size:
         files = []
-        for i in range(0, count, step_size):
+        for i in range(0, dataLength, step_size):
             url = '/dwld_tw_status_csv?range=%s-%s'%(i,i+step_size)
             if search_id:
                 url += '&search_id=%s'%search_id
@@ -500,22 +502,54 @@ def dwld_tw_status_csv(request):
             files.append( ('%s_(%s-%s).csv'%(filename,i,i+step_size-1), url))
         context = {'files': files}
         return render_to_response('snh/multiple_files_download.html', context)
+        '''
 
-    for status in statuses:
-        #dLogger.log('    status: %s'%status)
-        adata = []
-        user = status.user
-        for column in columns:
-            if 'user__' in column:
-                value = getattr(user, re.sub('user__', '', column))
-            elif column in ['text_urls', 'hash_tags', 'user_mentions']:
-                manager = getattr(status, column)
-                value = manager.all()
-            else:
-                value = getattr(status, column)
-            #dLogger.log('    %s: %s'%(column, value))
-            adata.append(unicode(value))
-        aadata.append(adata)
+    response = HttpResponse(dataStream(columns, statuses), mimetype="text/csv")
+    response["Content-Disposition"] = "attachment; filename=%s"%filename+'.csv'
+    response['Content-Length'] = dataLength*850 #approximate size in bytes (1 line = ~850 bytes for a conservative approximation)
+    return response
 
-    data = {'sColumns': sColumns, 'aaData': aadata}
-    return generate_csv_response(data, filename=filename+'.csv')
+
+@dLogger.debug
+def getFormatedData(status, columns):
+    #if debugging: dLogger.log('    status: %s'%status)
+    adata = []
+    user = status.user
+    for column in columns:
+        if 'user__' in column:
+            value = getattr(user, re.sub('user__', '', column))
+        elif column in ['text_urls', 'hash_tags', 'user_mentions']:
+            manager = getattr(status, column)
+            value = manager.all()
+        else:
+            value = getattr(status, column)
+        #if debugging: dLogger.log('    %s: %s'%(column, value))
+        adata.append(unicode(value).encode('utf8'))
+        #if debugging: dLogger.log('    adata: '+str(adata))
+    return adata
+
+'''
+    CSV streaming solution.
+    Code found @ http://stackoverflow.com/questions/5146539/streaming-a-csv-file-in-django (thanks again Stackoverflow!)
+'''
+def dataStream(columns, statuses):
+
+    csvfile = cStringIO.StringIO()
+    csvwriter = csv.writer(csvfile)
+
+    def read_and_flush():
+        csvfile.seek(0)
+        data = csvfile.read()
+        csvfile.seek(0)
+        csvfile.truncate()
+        return data
+
+    firstLine = True
+    for i in range(statuses.count()):
+        if firstLine:
+            csvwriter.writerow(columns)
+            firstLine = False
+        else:
+            csvwriter.writerow(getFormatedData(statuses[i], columns))
+        data = read_and_flush()
+        yield data

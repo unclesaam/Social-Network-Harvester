@@ -59,17 +59,29 @@
                 <td>End date:</td><td></td>\
                 <td><select name="stopYear" form="requestForm">\
                     {% for year in years %}\
-                    <option value="{{year}}">{{year}}</option>\
+                        {% if year == now.0 %}\
+                            <option value="{{year}}" selected="selected">{{year}}</option>\
+                        {% else %}\
+                            <option value="{{year}}">{{year}}</option>\
+                        {% endif %}\
                     {% endfor %}\
                 </select></td>\
                 <td><select name="stopMonth" form="requestForm">\
                     {% for month in months %}\
-                    <option value="{{month}}">{{month}}</option>\
+                        {% if month == now.1 %}\
+                            <option value="{{month}}" selected="selected">{{month}}</option>\
+                        {% else %}\
+                            <option value="{{year}}">{{year}}</option>\
+                        {% endif %}\
                     {% endfor %}\
                 </select></td>\
                 <td><select name="stopDay" form="requestForm">\
                     {% for day in days %}\
-                    <option value="{{day}}">{{day}}</option>\
+                        {% if day == now.2 %}\
+                            <option value="{{day}}" selected="selected">{{day}}</option>\
+                        {% else %}\
+                            <option value="{{day}}">{{day}}</option>\
+                        {% endif %}\
                     {% endfor %}\
                 </select></td>\
                 </tr>\

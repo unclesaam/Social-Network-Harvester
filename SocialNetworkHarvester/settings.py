@@ -46,7 +46,7 @@ if PROD: #en mode production:
                     'twitterch':        False,
                     'dailymotionch':    False,
                     'youtubech':        False,
-                    'twitterview':      False,
+                    'twitterview':      True,
                     'apiviews':         False,
                     }
 
