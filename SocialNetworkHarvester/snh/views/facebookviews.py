@@ -28,7 +28,7 @@ from snh.models.dailymotionmodel import *
 
 from snh.utils import get_datatables_records, generate_csv_response
 
-from settings import FACEBOOK_APPLICATION_ID, dLogger
+from settings import FACEBOOK_APPLICATION_ID, FACEBOOK_APPLICATION_SECRET_KEY, dLogger
 import re
 import csv, codecs, cStringIO
 
@@ -50,9 +50,6 @@ def test_fb_token(request):
     if not token:
         token = FacebookSessionKey.objects.create()
     else: token = token[0]
-    client = facebook.GraphAPI(access_token=token.get_access_token())
-    extendedToken = client.extend_access_token(app_id=FACEBOOK_APPLICATION_ID, app_secret=FACEBOOK_APPLICATION_SECRET_KEY)
-    sessionKey[0].set_access_token(extendedToken['access_token']) # Insure that the token will be valid for another two months
     return  render_to_response(u'snh/test_token.html',
         {   'appId': FACEBOOK_APPLICATION_ID,
             'currentToken': token.get_access_token()})
@@ -66,7 +63,9 @@ def fb_update_client_token(request):
         currentSessionKey = FacebookSessionKey.objects.create()
     else:
         currentSessionKey = currentSessionKey[0]
-    currentSessionKey.set_access_token(token)
+    client = facebook.GraphAPI(access_token=currentSessionKey.get_access_token())
+    extendedToken = client.extend_access_token(app_id=FACEBOOK_APPLICATION_ID, app_secret=FACEBOOK_APPLICATION_SECRET_KEY)
+    currentSessionKey.set_access_token(extendedToken['access_token']) # Insure that the token will be valid for another two months
     return HttpResponse('Done.')
 
 
