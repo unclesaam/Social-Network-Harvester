@@ -379,7 +379,7 @@ place,story,story_tags,object_id,application,updated_time,picture,link,source,ic
         feed_count = len(fbfeed_page['data'])
     else:
         if debugging: dLogger.log("    Error: %s"%fbfeed_page['error'])
-        logger.error()
+        logger.error("Error: %s"%fbfeed_page['error'])
         feed_count = None
     too_old = False
 

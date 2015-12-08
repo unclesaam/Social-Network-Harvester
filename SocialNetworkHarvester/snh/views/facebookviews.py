@@ -17,6 +17,7 @@ import gviz_api
 import datetime as dt
 from django.http import HttpResponse
 from itertools import izip_longest
+import facebook
 
 from django.utils import simplejson
 
@@ -29,6 +30,7 @@ from snh.utils import get_datatables_records, generate_csv_response
 
 from settings import FACEBOOK_APPLICATION_ID, dLogger
 import re
+import csv, codecs, cStringIO
 
 import snhlogger
 logger = snhlogger.init_logger(__name__, "view.log")
@@ -48,6 +50,9 @@ def test_fb_token(request):
     if not token:
         token = FacebookSessionKey.objects.create()
     else: token = token[0]
+    client = facebook.GraphAPI(access_token=token.get_access_token())
+    extendedToken = client.extend_access_token(app_id=FACEBOOK_APPLICATION_ID, app_secret=FACEBOOK_APPLICATION_SECRET_KEY)
+    sessionKey[0].set_access_token(extendedToken['access_token']) # Insure that the token will be valid for another two months
     return  render_to_response(u'snh/test_token.html',
         {   'appId': FACEBOOK_APPLICATION_ID,
             'currentToken': token.get_access_token()})
@@ -262,6 +267,7 @@ def dwld_fb_posts_csv(request):
 
 
     count = statuses.count()
+    '''
     step_size = 10000
     if count > step_size:
         files = []
@@ -280,8 +286,19 @@ def dwld_fb_posts_csv(request):
             files.append( ('%s_%s-%s.csv'%(filename,i,i+step_size-1), url))
         context = {'files': files}
         return render_to_response('snh/multiple_files_download.html', context)
+    
+    path = "F:\Libraries\Documents\ASPIRA\Quebec 2012 fb data\Elections_Quebec_2012_FBPosts_2000-1-1_to_2015-12-5.csv"
+    f = open("F:\Libraries\Documents\ASPIRA\Quebec 2012 fb data\Elections_Quebec_2012_FBPosts_2000-1-1_to_2015-12-5.csv",'wb')
+    csvWriter = csv.writer(f, delimiter=',')
 
+    #dLogger.log(columns)
+    csvWriter.writerow(columns)
+
+    num = 0
+    print('')
+    BAR_LENGTH = 20
     for status in statuses:
+        num+=1
         adata = []
         user = status.user
         ffrom = status.ffrom
@@ -298,11 +315,21 @@ def dwld_fb_posts_csv(request):
                 value = manager.all()
             else:
                 value = getattr(status, column)
-            adata.append(unicode(value))
-        aadata.append(adata)
+            adata.append(unicode(value).encode('utf-8'))
+        csvWriter.writerow(adata)
+        if num % 100 == 0:
+            print '\r',
+            print 'Progress:[%s%s]%i%%'%('#'*(num*BAR_LENGTH//count),
+                ' '*(BAR_LENGTH - num*BAR_LENGTH//count),int(num*100/count)),
+    print('completed')
 
-    data = {'sColumns': sColumns, 'aaData': aadata}
-    return generate_csv_response(data, filename=filename+'.csv')
+
+
+    '''
+    response = HttpResponse(dataStream(columns, statuses), mimetype="text/csv")
+    response["Content-Disposition"] = "attachment; filename=%s"%filename+'.csv'
+    response['Content-Length'] = count*1500 #approximate size in bytes 
+    return response
 
 @login_required(login_url=u'/login/')
 def dwld_fb_comments_csv(request):
@@ -360,8 +387,9 @@ def dwld_fb_comments_csv(request):
 
     if end:
         filename += '_%s-%s'%(start,int(end)-1)         
-
+    
     count = comments.count()
+    '''
     step_size = 10000
     if count > step_size:
         files = []
@@ -376,8 +404,21 @@ def dwld_fb_comments_csv(request):
             files.append( ('%s_%s-%s.csv'%(filename,i,i+step_size-1), url))
         context = {'files': files}
         return render_to_response('snh/multiple_files_download.html', context)
+    '''
+    '''
 
+    path = "F:\Libraries\Documents\ASPIRA\Quebec 2012 fb data\Elections_Quebec_2012_FBComments_2000-1-1_to_2015-12-05.csv"
+    f = open(path,'wb')
+    csvWriter = csv.writer(f, delimiter=',')
 
+    #dLogger.log(columns)
+    csvWriter.writerow(columns)
+    num = 0
+    print('')
+    BAR_LENGTH = 20
+    print 'Progress:[%s%s]%i%%'%('#'*(num*BAR_LENGTH//count),
+            ' '*(BAR_LENGTH - num*BAR_LENGTH//count),int(num*100/count)),
+    
     for comment in comments:
         adata = []
         post = comment.post
@@ -394,10 +435,78 @@ def dwld_fb_comments_csv(request):
                     value = 'None'
             else:
                 value = getattr(comment, column)
-            adata.append(unicode(value))
+            adata.append(unicode(value).encode('utf-8'))
+
         aadata.append(adata)
-    data = {'sColumns': sColumns, 'aaData': aadata}
-    return generate_csv_response(data, filename=filename+'.csv')
+        csvWriter.writerow(adata)
+        if num % 100 == 0:
+            print '\r',
+            print 'Progress:[%s%s]%i%%'%('#'*(num*BAR_LENGTH//count),
+                ' '*(BAR_LENGTH - num*BAR_LENGTH//count),int(num*100/count)),
+    return HttpResponse('done')
+    '''
+
+    response = HttpResponse(dataStream(columns, comments), mimetype="text/csv")
+    response["Content-Disposition"] = "attachment; filename=%s"%filename+'.csv'
+    response['Content-Length'] = count*1500 #approximate size in bytes 
+    return response
+    
+
+@dLogger.debug
+def getFormatedFbData(element, columns): # element can be a status or comment
+    #if debugging: dLogger.log('    element: %s'%element)
+    adata = []
+    if hasattr(element, 'user'):
+        user = element.user
+    if hasattr(element, 'ffrom'):
+        ffrom = element.ffrom
+    if hasattr(element, 'post'):
+        post = element.post
+    for column in columns:
+        if column == 'post__likes_from':
+            value = post.likes_from.all()
+        elif 'post__' in column:
+                value = getattr(post, re.sub('post__', '', column))
+        elif 'user__' in column:
+            value = getattr(user, re.sub('user__', '', column))
+        elif 'ffrom__' in column:
+            if ffrom:
+                value = getattr(ffrom, re.sub('ffrom__', '', column))
+            else:
+                value = 'None'
+        elif column in ['likes_from',]:
+            manager = getattr(element, column)
+            value = manager.all()
+        else:
+            value = getattr(element, column)
+        adata.append(unicode(value).encode('utf-8'))
+    return adata
+
+'''
+    CSV streaming solution.
+    Code found @ http://stackoverflow.com/questions/5146539/streaming-a-csv-file-in-django (thanks again Stackoverflow!)
+'''
+def dataStream(columns, statuses):
+
+    csvfile = cStringIO.StringIO()
+    csvwriter = csv.writer(csvfile)
+
+    def read_and_flush():
+        csvfile.seek(0)
+        data = csvfile.read()
+        csvfile.seek(0)
+        csvfile.truncate()
+        return data
+
+    firstLine = True
+    for i in range(statuses.count()):
+        if firstLine:
+            csvwriter.writerow(columns)
+            firstLine = False
+        else:
+            csvwriter.writerow(getFormatedFbData(statuses[i], columns))
+        data = read_and_flush()
+        yield data
 
 #
 # Facebook AJAX
