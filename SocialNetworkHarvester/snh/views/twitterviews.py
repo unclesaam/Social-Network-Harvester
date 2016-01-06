@@ -5,12 +5,6 @@
 # - Implémenter une structure de donnée qui conserve en mémoire le nombre de tweet par date (liste?) pour les users/searchs, afin d'accéler le loading des graphes.
 
 
-
-
-
-
-
-
 from django.contrib.auth import logout
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render_to_response, get_object_or_404, get_list_or_404, redirect, HttpResponseRedirect

@@ -52,7 +52,7 @@ def test_fb_token(request):
     else: token = token[0]
     return  render_to_response(u'snh/test_token.html',
         {   'appId': FACEBOOK_APPLICATION_ID,
-            'currentToken': token.get_access_token()})
+            'currentToken': token.get_access_token()}) 
 
 @csrf_exempt
 @login_required(login_url=u'/login/')
