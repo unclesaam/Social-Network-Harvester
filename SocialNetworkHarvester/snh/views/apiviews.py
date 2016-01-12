@@ -54,7 +54,8 @@ def CreateTwitterUserList(context):
             newUser = TWUser.objects.get(screen_name=user['screen_name'])
         except ObjectDoesNotExist:
             newUser = TWUser.objects.create(screen_name=user['screen_name'])
-        harv.twusers_to_harvest.add(newUser)
+        if not harv.twusers_to_harvest.get(newUser):
+            harv.twusers_to_harvest.add(newUser)
         user_id_list.append(newUser.pk)
     harv.save()
 
@@ -159,17 +160,26 @@ def api_one_zero(request, command):
             return error('UnauthentifiedError', 'You must use an authentification token to use AspirAPI')
     except Exception as e:
         dLogger.exception('Error occured in an API view')
+        dLogger.log(request)
         return error('UnknownServerError', 'An error has occured while proceeding the request',command)
 
 def command_management(command, request):
     if command in AVAILABLE_GET_COMMANDS:
         return AVAILABLE_GET_COMMANDS[command](json.loads(dict(request.GET).keys()[0]))
     elif command in AVAILABLE_POST_COMMANDS:
-        return AVAILABLE_POST_COMMANDS[command](json.loads(dict(request.POST).keys()[0]))
+        return AVAILABLE_POST_COMMANDS[command](jsonLoader(request.POST))
     else:
         return error('InvalidRequestError', 'Invalid request')
 
 
+
+def jsonLoader(request):
+    dictio = dict(request)
+    key = dictio.keys()[0]
+    #dLogger.log(key)
+    #dLogger.log(len(key))
+    j = json.loads(key)
+    return j
 
 
 

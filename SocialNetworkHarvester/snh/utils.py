@@ -205,6 +205,16 @@ def get_datatables_records(request, querySet, columnIndexNameMap, call_type='web
 
     return response
 
+def twUserAjaxTableError(text):
+    response = HttpResponse(json.dumps({"sColumns": "created_at,fid,text,retweet_count,retweeted,source", 
+            "iTotalRecords": 1, 
+            "aaData": [["test", "0", text, "0", "False", "test"]],
+            "sEcho": 0, 
+            "iTotalDisplayRecords": 1}), 
+        mimetype='application/javascript')
+    add_never_cache_headers(response)
+    return response
+
 def xml_formater(base):
     """
     Return a string formated as if it were an XML structure, Assuming 

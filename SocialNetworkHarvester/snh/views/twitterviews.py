@@ -23,7 +23,7 @@ from snh.models.facebookmodel import *
 from snh.models.youtubemodel import *
 from snh.models.dailymotionmodel import *
 
-from snh.utils import get_datatables_records, Twitter_raw_json_posts_data,generate_csv_response
+from snh.utils import get_datatables_records, Twitter_raw_json_posts_data,generate_csv_response, twUserAjaxTableError
 from datetime import datetime
 
 import snhlogger
@@ -32,6 +32,7 @@ import time
 import types
 import re
 import csv, codecs, cStringIO
+import json
 
 from settings import DEBUGCONTROL, dLogger
 debugging = DEBUGCONTROL['twitterview']
@@ -208,6 +209,7 @@ def get_tw_status_list(request, call_type, screen_name):
 
 @login_required(login_url=u'/login/')
 def get_tw_harvester_status_list(request, call_type, harvester_id):
+    dLogger.log('get_tw_harvester_status_list()')
     querySet = None
     columnIndexNameMap = {
                             0 : u'created_at',
@@ -221,7 +223,8 @@ def get_tw_harvester_status_list(request, call_type, harvester_id):
         querySet = TWStatus.objects.all()
     else:
         harvester = get_list_or_404(TwitterHarvester, pmk_id=harvester_id)[0]
-        #querySet = [user.postedStatuses.all() for user in harvester.twusers_to_harvest.all()]
+        if harvester.twusers_to_harvest.count() > 100:
+            return twUserAjaxTableError("Too many items to display")
 
         # merge two conditional filter in queryset:
         conditionList = [Q(user=user) for user in harvester.twusers_to_harvest.all()]
@@ -230,6 +233,7 @@ def get_tw_harvester_status_list(request, call_type, harvester_id):
 
     #call to generic function from utils
     return get_datatables_records(request, querySet, columnIndexNameMap, call_type)
+
 
 @login_required(login_url=u'/login/')
 def get_tw_statussearch_list(request, call_type, screen_name):

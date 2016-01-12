@@ -162,7 +162,6 @@ def manage_twitter_exception(retry_count, harvester, user, tex):
         logger.debug(u"%s:%s. Invalid query. Breaking." % (harvester, unicode(user)))
         need_a_break = True
     else:
-        print tex
         msg = u"Exception for the harvester %s for %s. Retry:%d. %s" % (harvester, unicode(user), retry_count, tex)
         logger.exception(msg)
         if debugging: dLogger.exception(msg)
@@ -348,7 +347,6 @@ def update_statuses(harvester, snh_search, status_id_list):
         except Exception as e:
             if debugging: dLogger.exception(e)
             logger.exception('AN ERROR HAS OCCURED WHILE SAVING TWEET TO DB:')
-            print snh_user
     snh_search.latest_status_harvested = snh_status
     snh_search.save()
 
