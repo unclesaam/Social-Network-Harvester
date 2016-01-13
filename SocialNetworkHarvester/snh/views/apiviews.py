@@ -54,7 +54,9 @@ def CreateTwitterUserList(context):
             newUser = TWUser.objects.get(screen_name=user['screen_name'])
         except ObjectDoesNotExist:
             newUser = TWUser.objects.create(screen_name=user['screen_name'])
-        if not harv.twusers_to_harvest.get(newUser):
+        try:
+            harv.twusers_to_harvest.get(screen_name=user['screen_name'])
+        except ObjectDoesNotExist:
             harv.twusers_to_harvest.add(newUser)
         user_id_list.append(newUser.pk)
     harv.save()
