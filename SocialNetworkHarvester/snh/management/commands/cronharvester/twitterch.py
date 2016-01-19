@@ -143,7 +143,7 @@ def manage_twitter_exception(retry_count, harvester, user, tex):
     retry_count += 1
     need_a_break = retry_count > harvester.max_retry_on_fail
 
-    if unicode(tex) == u"Not found":
+    if unicode(tex).find(u"Sorry, that page does not exist."):
         user.error_triggered = True
         user.save()
         need_a_break = True
@@ -161,10 +161,15 @@ def manage_twitter_exception(retry_count, harvester, user, tex):
     elif unicode(tex) == u"{u'error': u'Invalid query'}" or unicode(tex) == u"Invalid query":
         logger.debug(u"%s:%s. Invalid query. Breaking." % (harvester, unicode(user)))
         need_a_break = True
+    elif unicode(tex) == u"Not authorized":
+        logger.debug(u"Error occured in %s:%s, the user has disabled scrapping." % (harvester, unicode(user)))
+        need_a_break = True
     else:
         msg = u"Exception for the harvester %s for %s. Retry:%d. %s" % (harvester, unicode(user), retry_count, tex)
         logger.exception(msg)
         if debugging: dLogger.exception(msg)
+        user.error_triggered = True
+        user.save()
 
     return (retry_count, need_a_break)
 
@@ -180,7 +185,13 @@ def get_latest_statuses(harvester, user):
 
     try:
         logger.debug(u"%s:%s(%d)" % (harvester, unicode(user), user.fid if user.fid else 0))
-        lsp = get_latest_statuses_page(harvester, user)
+        try:
+            lsp = get_latest_statuses_page(harvester, user)
+        except:
+            logger.warning("User %s has returned an exception. Is now error-triggered."%(user, ))
+            user.error_triggered = True
+            user.save()
+            return latest_statuses
         #if debugging: dLogger.log( "    latest status page:%s"%lsp)
         if len(lsp) != 0:
             for status in lsp:
