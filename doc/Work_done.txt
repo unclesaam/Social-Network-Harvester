@@ -420,5 +420,36 @@ besoins. J'implémente une django-view à part pour cette fonction.
 - Design de site web. Création et placement des éléments de l'interface.
 
 9 octobre 2015:
-- Début de développement d'une API-maison (AspirAPI) pour permettre de manipuler de grande quantité de données à l'aide d'un script sur une machine locale
-- Devrait théoriquement permettre de créer un harvester à distance, lui ajouter des TWUsers
+- Début de développement d'une API-maison (AspirAPI) pour permettre de manipuler de grande quantité de données à l'aide d'un script sur une machine locale (Permettra de créer un harvester à distance, lui ajouter des TWUsers)
+
+Période du 10 octobre 2015 au 10 janvier 2016:
+- Mise au point d'une partie de l'AspirAPI, (seulement les routines permettant de créer de nouveaux harvesters Twitter et y ajouter des TWUsers en grand volume. D'autres methodes peuvent être ajoutées au fur et à mesure des besoins du GRCP.)
+- Création d'un document-guide pour les utilisateurs d'Aspira au GRCP (comment downloader des tweets, etc.)
+- Optimisation des downloads de larges fichiers, tel que l'ensemble des tweets d'un harvester.
+- TODO (AspirAPI):
+	- Implanter les routines de collecte (getTWUser, getTWTweet, etc) et d'autres routines permettant de modifier les objects existants.
+	- Ajouter d'autres routines semblables pour les équivalents Facebook et Youtube.
+	- Implanter une structure de sécurité "user-oriented" (atm, une clef statique est requise pour faire des appels à l'API. Une connexion en tant qu'admin devrait être nécéssaire afin d'obtenir une clef générée dynamiquement.)
+
+- Finition de l'interface devant servir à la version 1.0 de Aspira
+- Début d'implémentation sous django de l'interface, sans modèles de données.
+- Supervision et entretien des Collectes Aspira en cours. Assurance que le code de collecte fonctionne toujours tel que prévu, etc.
+- TODO (Aspira 1.0):
+	- Implanter les outils de visualisations de données (tableaux, graphes.) de facon dynamique avec django (Montés de façon statique pour la démonstration au GRCP)
+	- Développer une approche efficace pour la structure du site (quel modèle fait quoi, etc. Générer un document UML maybe?)
+	- Implanter les modèles de données (ainsi que toutes les fonctions du site, comme création/deletion/ajout/retrait à des groupes, etc.)
+	- Implanter les routines de collecte, mises à jour et optimisées.
+	- Tests, tests, tests.
+	- Migrer les données des anciens SNH (2013, 2015, etc.) vers la nouvelle version. (consolidation de toutes les données.)
+	- Cleanup du serveur de production. gg.
+
+Semaine du 10 janvier 2016:
+- Implantation d'une structure django pour les tableaux de données (ceux-ci devant se trouver en grand nombre dans Aspira)
+- Cleanup de la structure des fichiers statiques, afin d'alléger le code. 
+- Mise à jour de ce document.
+
+Semaine du 17 janvier 2016:
+- Ajout d'une méthode à l'AspirAPI: GetTwitterTweetList().
+- Génération d'un fichier excel pour Thierry de quelque statistiques des utilisateurs Twitter de l'election fédérale 2015.
+
+

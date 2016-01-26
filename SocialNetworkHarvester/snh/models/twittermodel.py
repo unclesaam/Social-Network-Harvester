@@ -278,7 +278,7 @@ class TWUser(models.Model):
 
     def __unicode__(self):
         if self.screen_name:
-            return self.screen_name.encode('utf-8')
+            return self.screen_name.encode('ascii', 'replace')
         elif self.fid:
             return 'TWUser %s'%self.fid
         else:

@@ -188,7 +188,7 @@ def get_latest_statuses(harvester, user):
         try:
             lsp = get_latest_statuses_page(harvester, user)
         except:
-            logger.warning("User %s has returned an exception. Is now error-triggered."%(user, ))
+            logger.warning("User %s is now error-triggered."%(user))
             user.error_triggered = True
             user.save()
             return latest_statuses

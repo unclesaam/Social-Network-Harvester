@@ -37,14 +37,18 @@ def index(request):
     youtube_harvesters = list(YoutubeHarvester.objects.filter(is_active=True))
     youtube_harvesters += list(YoutubeHarvester.objects.filter(is_active=False))
 
-    return  render_to_response(u'snh/index.html',{
-                                                    u'home_selected':True,
-                                                    u'twitter_harvesters':twitter_harvesters,
-                                                    u'facebook_harvesters':facebook_harvesters,
-                                                    u'dailymotion_harvesters':dailymotion_harvesters,
-                                                    u'youtube_harvesters':youtube_harvesters,
-                                                    'user': request.user,
-                                                  })
+    try:
+        return  render_to_response(u'snh/index.html',{
+                                                        u'home_selected':True,
+                                                        u'twitter_harvesters':twitter_harvesters,
+                                                        u'facebook_harvesters':facebook_harvesters,
+                                                        u'dailymotion_harvesters':dailymotion_harvesters,
+                                                        u'youtube_harvesters':youtube_harvesters,
+                                                        'user': request.user,
+                                                      })
+    except:
+        logger.exception('AN ERROR HAS OCCURED IN ROOTVIEWS!')
+        return Httpresponse('An error has occured, please contact the administrator (samuel.cloutier.5@ulaval.ca)')
 
 @csrf_exempt
 @login_required(login_url=u'/login/')
