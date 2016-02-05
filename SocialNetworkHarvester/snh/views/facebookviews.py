@@ -327,7 +327,7 @@ def dwld_fb_posts_csv(request):
     '''
     response = HttpResponse(dataStream(columns, statuses), mimetype="text/csv")
     response["Content-Disposition"] = "attachment; filename=%s"%filename+'.csv'
-    response['Content-Length'] = count*1500 #approximate size in bytes 
+    response['Content-Length'] = count*5000 #approximate size in bytes
     return response
 
 @login_required(login_url=u'/login/')

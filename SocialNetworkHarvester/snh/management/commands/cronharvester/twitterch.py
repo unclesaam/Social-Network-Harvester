@@ -12,6 +12,8 @@ from twython import *
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 from snh.models.twittermodel import *
 from django.core import serializers
+from elasticsearch import Elasticsearch
+
 
 
 
@@ -587,5 +589,30 @@ def custom_export():
 
 
 
+@dLogger.debug
+def esArchive():
+    es = Elasticsearch([{'host': '127.0.0.1', 'port': 9200}])
 
+    for harv in TwitterHarvester.objects.all():
+        response = es.index(index='twitterharvester', doc_type='document',id=harv.pk,
+            body=harv.to_dict()
+        )
+        dLogger.pretty(response)
 
+    for user in TWUser.objects.all():
+        response = es.index(index='twitteruser', doc_type='document',id=user.pk,
+            body=user.to_dict()
+        )
+        dLogger.pretty(response)
+
+    for status in TWStatus.objects.all():
+        response = es.index(index='twitterstatus', doc_type='document',id=status.pk,
+            body=status.to_dict()
+        )
+        dLogger.pretty(response)
+
+    for search in TWSearch.objects.all():
+        response = es.index(index='twitterhashtag', doc_type='document',id=search.pk,
+            body=search.to_dict()
+        )
+        dLogger.pretty(response)

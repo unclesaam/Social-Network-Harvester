@@ -2,3 +2,6 @@ SocialNetworkHarvester/py27env.bat
 *.log
 doc/
 *.bat
+*.pyc
+.idea/
+Social-Network-Harvester.iml

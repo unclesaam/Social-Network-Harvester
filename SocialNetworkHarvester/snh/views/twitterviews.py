@@ -105,19 +105,21 @@ def tw_search_detail(request, harvester_id, search_id):
     twitter_harvesters = TwitterHarvester.objects.all()
     search = get_list_or_404(TWSearch, pmk_id=search_id)[0]
 
-    #status_list = [status.digest_source() for status in search.status_list.all()]
+    # status_list = [status.digest_source() for status in search.status_list.all()]
     return  render_to_response(u'snh/twitter_search_detail.html',{
                                                     u'tw_selected':True,
                                                     u'all_harvesters':twitter_harvesters,
                                                     u'harvester_id':harvester_id,
                                                     u'search':search,
-                                                    #u'status_list':status_list,
+                                                    # u'status_list':status_list,
                                                     'status_fields': tw_status_fields,
                                                     'years':choiceYears,
                                                     'months':choiceMonths,
                                                     'days':choiceDays,
                                                     "now":now,
                                                   })
+
+
 @login_required(login_url=u'/login/')
 def tw_status_detail(request, harvester_id, status_id):
     twitter_harvesters = TwitterHarvester.objects.all()

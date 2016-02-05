@@ -265,11 +265,23 @@ class TWSearch(models.Model):
     def related_label(self):
         return u"%s (%s)" % (self.term, self.pmk_id)
 
+    def to_dict(self):
+        dictObject = {}
+        for param in self.params:
+            attr = getattr(self, param)
+            if isinstance(attr, datetime):
+                attr = attr.strftime('%Y-%m-%dT%H:%M:%SZ')
+            elif attr.__class__.__name__ == 'ManyRelatedManager':
+                attr = [str(elem) for elem in attr.all()]
+            dictObject[param] = attr
+        return dictObject
+
 
     pmk_id =  models.AutoField(primary_key=True)
     term = models.TextField(null=True)
     status_list = models.ManyToManyField('TWStatus', related_name='TWSearch_hit')
     latest_status_harvested = models.ForeignKey('TWStatus',  related_name='TWSearch.latest_status_harvested', null=True)
+    params = ['latest_status_harvested','status_list', 'term']
 
 class TWUser(models.Model):
 
@@ -286,6 +298,19 @@ class TWUser(models.Model):
 
     def related_label(self):
         return u"%s (%s)" % (self.screen_name, self.pmk_id)
+
+    def to_dict(self):
+        dictObject = {}
+        for param in self.params:
+            attr = getattr(self, param)
+            if isinstance(attr, datetime):
+                attr = attr.strftime('%Y-%m-%dT%H:%M:%SZ')
+            elif attr.__class__.__name__ == 'ManyRelatedManager':
+                attr = [str(elem) for elem in attr.all()]
+            elif isinstance(attr, models.Model):
+                attr = str(attr)
+            dictObject[param] = attr
+        return dictObject
 
     pmk_id =  models.AutoField(primary_key=True)
 
@@ -326,6 +351,14 @@ class TWUser(models.Model):
     was_aborted = models.BooleanField()
     last_harvested_status = models.ForeignKey('TWStatus',  related_name='TWStatus.last_harvested_status', null=True)
     last_valid_status_fid = models.CharField(max_length=255,null=True)
+
+    params = ['fid','name','screen_name','lang','description','harvester',
+    'location','time_zone','utc_offset','protected','favourites_count','followers_count',
+    'friends_count','statuses_count','listed_count','created_at','profile_background_color',
+    'profile_background_tile',
+    'profile_link_color','profile_sidebar_fill_color','profile_text_color',
+    'model_update_date','error_triggered','error_on_update','was_aborted',
+    'last_harvested_status','last_valid_status_fid',]
 
     @dLogger.debug
     def update_from_rawtwitter(self, twitter_model, twython=False):
@@ -535,6 +568,19 @@ class TWStatus(models.Model):
         else:
             return "status from %s"%self.user
 
+    def to_dict(self):
+        dictObject = {}
+        for param in self.params:
+            attr = getattr(self, param)
+            if isinstance(attr, datetime):
+                attr = attr.strftime('%Y-%m-%dT%H:%M:%SZ')
+            elif attr.__class__.__name__ == 'ManyRelatedManager':
+                attr = [str(elem) for elem in attr.all()]
+            elif isinstance(attr, models.Model):
+                attr = str(attr)
+            dictObject[param] = attr
+        return dictObject
+
     pmk_id =  models.AutoField(primary_key=True)
 
     user = models.ForeignKey('TWUser', related_name='postedStatuses', blank=True, null=True)
@@ -554,6 +600,9 @@ class TWStatus(models.Model):
 
     model_update_date = models.DateTimeField(null=True)
     error_on_update = models.BooleanField()
+    params = ['user','fid','created_at','favorited','retweet_count','retweeted',
+    'source','text','truncated','hash_tags','user_mentions',
+    'model_update_date','error_on_update',]
 
     """
     digest_source
