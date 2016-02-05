@@ -77,6 +77,7 @@ urlpatterns = patterns('snh.views',
     (r'^yt/(?P<harvester_id>\d+)$', 'yt'),
     (r'^yt_user_detail/(?P<harvester_id>\d+)/fid/(?P<userfid>.*)/$', 'yt_user_detail'),
     (r'^yt_video_detail/(?P<harvester_id>\d+)/(?P<videoid>.*)/$', 'yt_video_detail'),
+    (r'^downloadytvideo/(?P<videoid>.*)/$', 'download_yt_video'),
     #YOUTUBE AJAX
     (r'^get_yt_list/(?P<call_type>[\w\.]+)/(?P<harvester_id>\d+)/$', 'get_yt_list'),
     (r'^get_yt_video_list/(?P<call_type>[\w\.]+)/(?P<userfid>.*)/$', 'get_yt_video_list'),

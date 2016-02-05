@@ -6,6 +6,11 @@ from django.shortcuts import render_to_response, get_object_or_404, get_list_or_
 from django.core.exceptions import ObjectDoesNotExist
 from django import template
 from django.template.defaultfilters import stringfilter
+from settings import DOWNLOADED_VIDEO_PATH
+import os
+import re
+from django.core.servers.basehttp import FileWrapper
+from django.views.static import serve
 
 from fandjango.decorators import facebook_authorization_required
 from fandjango.models import User as FanUser
@@ -53,11 +58,10 @@ def yt_user_detail(request, harvester_id, userfid):
 def yt_video_detail(request, harvester_id, videoid):
     youtube_harvesters = YoutubeHarvester.objects.all()
     video = get_object_or_404(YTVideo, fid=videoid)
-    video_url = ""
+    video_url = None
     if video.video_file_path:
-        path_split = video.video_file_path.split(PROJECT_PATH)
-        if len(path_split) > 1:
-            video_url = path_split[1]
+        video_url = '/downloadytvideo/%s'%re.sub(r'(.*/)|(.*\\)','',video.video_file_path)
+
 
     return  render_to_response(u'snh/youtube_video.html',{
                                                     u'yt_selected':True,
@@ -67,6 +71,20 @@ def yt_video_detail(request, harvester_id, videoid):
                                                     u'video':video,
                                                     u'video_url':video_url,
                                                   })
+
+
+@login_required(login_url=u'/login/')
+def download_yt_video(request, videoid):
+    filename = "%s"%os.path.join(DOWNLOADED_VIDEO_PATH, videoid)
+    print 'filename: %s'%filename
+    '''
+    wrapper = FileWrapper(open(filename))
+    response = HttpResponse(wrapper, content_type='text/plain')
+    response['Content-Disposition'] = 'attachment; filename=%s' % os.path.basename(filename)
+    response['Content-Length'] = os.path.getsize(filename)
+    return response
+    '''
+    return serve(request, os.path.basename(filename), os.path.dirname(filename))
 
 #
 # Youtube AJAX

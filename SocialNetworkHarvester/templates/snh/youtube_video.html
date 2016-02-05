@@ -137,7 +137,11 @@
 	flowplayer("player", "/static/flowplayer-3.2.10.swf");
 </script>
 -->
-<iframe height='500px' width='700px' src="http://www.youtube.com/embed/{{ video.fid }}">Youtube Video Frame</iframe>
+    <iframe height='500px' width='700px' src="http://www.youtube.com/embed/{{ video.fid }}">Youtube Video Frame</iframe>
+    <br><a href="{{ video_url }}">Download low quality video</a><br>
+    <!--
+    <b>video url: {{ video_url }}</b>
+    -->
 </center>
 
 <h3>Comments</h3>
