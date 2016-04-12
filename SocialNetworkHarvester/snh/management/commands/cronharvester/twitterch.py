@@ -400,16 +400,17 @@ def collect_tweets_from_html(harvester,snh_search,max_id=None):
     until = datetime.strftime(harvester.harvest_window_to, '%Y-%m-%d')
 
     query = snh_search.term.encode('utf-8')
-    params = '%s #%s since:%s until:%s'%(query,query,since,until)
+    params = '%s since:%s until:%s' % (query, since, until)
     if max_id: params += ' max_id:%s'%max_id
-    safe_url = 'https://twitter.com/search?q=' + urllib.quote(params)
+    strUrl = 'https://twitter.com/hashtag/' + urllib.quote(params)
 
-    if debugging: dLogger.log('    URL: %s'%safe_url)
+    if debugging: dLogger.log('    URL: %s'%strUrl)
+    url = urllib2.Request(strUrl, headers={'User-Agent': 'Mozilla/5.0'})
     try:
-        data = urllib2.urlopen(safe_url)
+        data = urllib2.urlopen(url, timeout=5)
     except:
         time.sleep(1)
-        data = urllib2.urlopen(safe_url)
+        data = urllib2.urlopen(url, timeout=5)
     page = bs(data, "html.parser")
     tweetBox = page.find('ol', id='stream-items-id')
     tweets = tweetBox.findAll('li')
