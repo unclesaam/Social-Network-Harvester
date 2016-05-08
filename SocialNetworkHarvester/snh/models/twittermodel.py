@@ -212,8 +212,8 @@ class TwitterHarvester(AbstractHaverster):
             will be the first in the list. The other ones following him/her.
         '''
         if debugging: dLogger.log( "build_updater_sequence()")
-        all_users = list(self.created_users.all())
-        all_users += list(self.twusers_to_harvest.all())
+        all_users = list(self.created_users.filter(error_on_update=False))
+        all_users += list(self.twusers_to_harvest.filter(error_on_update=False))
         ordered_users = []
         if self.last_updated_user:
             startIndex = all_users.index(self.last_updated_user)

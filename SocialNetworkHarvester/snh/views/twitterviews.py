@@ -33,6 +33,8 @@ import types
 import re
 import csv, codecs, cStringIO
 import json
+from guppy import hpy
+from memory_profiler import memory_usage
 
 from settings import DEBUGCONTROL, dLogger
 debugging = DEBUGCONTROL['twitterview']
@@ -470,7 +472,7 @@ def dwld_tw_status_csv(request):
         return render_to_response('500.html', {'referer':request.META.get('HTTP_REFERER'),
             'message': 'Please enter a valid date'})
 
-    statuses = statuses.filter(created_at__gte=startDate, created_at__lte=stopDate)[start:end]
+    statuses = statuses.filter(created_at__gte=startDate, created_at__lte=stopDate).order_by('created_at')
 
     filename += '_%s-%s-%s_to_%s-%s-%s'%(
         startYear,startMonth,startDay,
@@ -518,6 +520,8 @@ def getFormatedData(status, columns):
     for column in columns:
         if 'user__' in column:
             value = getattr(user, re.sub('user__', '', column))
+        elif column == 'fid':
+            value = "_%i"%getattr(status, column)
         elif column in ['text_urls', 'hash_tags', 'user_mentions']:
             manager = getattr(status, column)
             value = manager.all()
@@ -532,24 +536,22 @@ def getFormatedData(status, columns):
     CSV streaming solution.
     Code found @ http://stackoverflow.com/questions/5146539/streaming-a-csv-file-in-django (thanks again Stackoverflow!)
 '''
+@dLogger.debug
 def dataStream(columns, statuses):
 
     csvfile = cStringIO.StringIO()
     csvwriter = csv.writer(csvfile)
 
-    def read_and_flush():
+    firstLine = True
+    for status in statuses.iterator():
+        data = None
+        if firstLine:
+            csvwriter.writerow(columns)
+            firstLine = False
+        csvwriter.writerow(getFormatedData(status, columns))
+
         csvfile.seek(0)
         data = csvfile.read()
         csvfile.seek(0)
         csvfile.truncate()
-        return data
-
-    firstLine = True
-    for i in range(statuses.count()):
-        if firstLine:
-            csvwriter.writerow(columns)
-            firstLine = False
-        else:
-            csvwriter.writerow(getFormatedData(statuses[i], columns))
-        data = read_and_flush()
         yield data

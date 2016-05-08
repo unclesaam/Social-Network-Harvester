@@ -78,7 +78,7 @@ if PROD: #en mode production:
 
 
 else: # en mode développement:
-    DEBUG = True
+    DEBUG = False
     DEBUGCONTROL = {'commonmodel':      True,
                     'facebookmodel':    True,
                     'dailymotionmodel': True,

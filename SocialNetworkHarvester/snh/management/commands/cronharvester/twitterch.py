@@ -7,6 +7,7 @@ import urllib
 import urllib2
 import json
 from bs4 import BeautifulSoup as bs
+import csv, codecs, cStringIO
 
 from twython import *
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
@@ -36,6 +37,7 @@ def run_twitter_harvester():
     if debugging: dLogger.log( "run_twitter_harvester()")
 
     #custom_export()
+    #return
 
     harvester_list = sort_harvesters_by_priority(TwitterHarvester.objects.all())
     for harvester in harvester_list:
@@ -513,7 +515,7 @@ def run_harvester_search(harvester):
         all_twsearch = harvester.twsearch_to_harvest.all()
         search_all_terms(harvester, all_twsearch)
     except twitter.TwitterError, e:
-        msg = u"ERROR for %s" % twsearch.term
+        msg = u"ERROR for %s" % harvester
         logger.exception(msg)    
         if debugging: dLogger.exception(msg)
     finally:
@@ -566,24 +568,30 @@ def custom_migration():
             setattr(harv, param, getattr(harv2, param))
         harv.save()
         if debugging: dLogger.log('copied %s'%harv)
-        
+
+@dLogger.debug
 def custom_export():
-    harv = TwitterHarvester.objects.get(pk=4)
-    harv.update_client_stats()
-    if debugging: dLogger.log(harv.get_client().GetRateLimitStatus('statuses')['resources']['statuses']['/statuses/lookup'])
+    if debugging: dLogger.log("custom_export()")
 
+    fileName = "C:\\Users\\Sam\\Desktop\\CDNPOLI\\CDNPoly.csv"
+    open(fileName, 'w').close()
+    f = open(fileName, 'w')
+    csvfile = cStringIO.StringIO()
+    csvwriter = csv.writer(csvfile)
+    columns = [u'fid', u'text', u'created_at', u'favorited', u'retweet_count', u'retweeted', u'truncated', u'text_urls',
+   u'hash_tags', u'user_mentions', u'source', u'user__screen_name', u'user__fid', u'user__name',
+   u'user__description', u'user__url', u'user__location', u'user__time_zone', u'user__utc_offset',
+   u'user__protected', u'user__favourites_count', u'user__followers_count', u'user__friends_count',
+   u'user__statuses_count', u'user__listed_count', u'user__created_at', u'user__lang',
+   u'user__profile_text_color', u'user__profile_background_color', u'user__profile_background_tile',
+   u'user__profile_background_image_url', u'user__profile_image_url', u'user__profile_link_color',
+   u'user__profile_sidebar_fill_color']
 
-    open("C:\Users\Sam\Desktop\\abvote.json", 'w').close()
-    f = open("C:\Users\Sam\Desktop\\abvote.json", 'w')
-
-    hashtag = TWSearch.objects.get(pk=31)
-    statuses = hashtag.status_list.all()
-    ids = [status.fid for status in statuses]
-
-    for twid in ids:
-        data = harv.api_call('GetStatus', {'id':twid, 'include_entities': 'False'})
-        js = json.dumps(data.AsDict(), ensure_ascii=False)
-        f.write(js.encode('utf-8', 'ignore'))
+    search = TWSearch.objects.get(pk=34)
+    statuses = search.status_list.order_by('created_at')[:100]
+    dLogger.log(statuses.count())
+    for status in statuses.iterator():
+        dLogger.log(status.created_at)
     f.close()
 
 
