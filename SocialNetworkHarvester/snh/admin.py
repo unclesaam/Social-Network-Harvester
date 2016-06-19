@@ -154,7 +154,8 @@ class FBUserAdmin(admin.ModelAdmin):
                 u'username', 
                 u'error_triggered', 
             ]
-    list_display = ('name',)   
+    list_display = ('name','username','fid')
+    search_fields = ('username','fid','name')
 
 class FBPostAdmin(admin.ModelAdmin):
     list_per_page = 500
@@ -307,12 +308,16 @@ class YoutubeHarvesterAdmin(admin.ModelAdmin):
             'fields' : ('ytusers_to_harvest',),
         }),
     )
+    raw_id_fields = ('ytusers_to_harvest',)
+    related_lookup_fields = {'m2m': ['ytusers_to_harvest', ], }
 
+    '''
     def formfield_for_manytomany(self, db_field, request, **kwargs):
         if db_field.name == "ytusers_to_harvest":
             kwargs["queryset"] = YTUser.objects.filter(username__isnull=False)
         return super(YoutubeHarvesterAdmin, self).formfield_for_manytomany(db_field, request, **kwargs)
     filter_horizontal = ('ytusers_to_harvest',)
+    '''
 
 class YTUserAdmin(admin.ModelAdmin):
     readonly_fields = (
@@ -336,6 +341,8 @@ class YTUserAdmin(admin.ModelAdmin):
             }
         )
     )
+    list_display = ('username',)
+    search_fields = ('username',)
 
 class YTVideoAdmin(admin.ModelAdmin):
     readonly_fields = (

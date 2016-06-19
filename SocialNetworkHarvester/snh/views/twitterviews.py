@@ -33,8 +33,6 @@ import types
 import re
 import csv, codecs, cStringIO
 import json
-from guppy import hpy
-from memory_profiler import memory_usage
 
 from settings import DEBUGCONTROL, dLogger
 debugging = DEBUGCONTROL['twitterview']

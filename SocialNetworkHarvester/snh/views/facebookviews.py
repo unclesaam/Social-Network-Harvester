@@ -75,7 +75,7 @@ def fb_update_client_token(request):
 
 fb_posts_fields = [
 
-    ['fid','message','message_tags_raw','picture','link','name','caption','description',
+    ['fid','message','created_time','message_tags_raw','picture','link','name','caption','description',
     'source','properties_raw','icon','ftype','likes_from','likes_count','comments_count',
     'shares_count','place_raw','story','story_tags_raw','object_id','application_raw',],
 
@@ -103,7 +103,7 @@ fb_posts_fields = [
 fb_comments_fields = [
     ['fid','message','created_time','likes','ftype',],
 
-    ['post__fid','post__message','post__message_tags_raw','post__picture','post__link',
+    ['post__fid','post__message', 'post__created_time','post__message_tags_raw','post__picture','post__link',
     'post__name','post__caption','post__description','post__source','post__properties_raw',
     'post__icon','post__ftype','post__likes_from','post__likes_count','post__comments_count',
     'post__shares_count','post__place_raw','post__story','post__story_tags_raw',
@@ -130,7 +130,7 @@ now = [present.year, present.month, present.day]
 @login_required(login_url=u'/login/')
 def fb(request, harvester_id):
     facebook_harvesters = FacebookHarvester.objects.all()
-
+    dLogger.log('facebook_harvesters: %s' % facebook_harvesters)
     return  render_to_response(u'snh/facebook.html',{
                                                     u'fb_selected':True,
                                                     u'all_harvesters':facebook_harvesters,
