@@ -74,19 +74,15 @@
         </div>
         <table class="tableheader" id="user-tools" cellpadding="5">
             <tr>
-                <td {% if home_selected %}class="menu-selection"{% endif %}><a href="/">Accueil</a></td>
-                <td {% if tw_selected %}class="menu-selection"{% endif %}><a href="/tw/0">Twitter</a></td>
-                <td {% if fb_selected %}class="menu-selection"{% endif %}><a href="/fb/0">Facebook</a></td>
-                <td {% if dm_selected %}class="menu-selection"{% endif %}><a href="/dm/0">Dailymotion</a></td>
-                <td {% if yt_selected %}class="menu-selection"{% endif %}><a href="/yt/0">Youtube</a></td>
+                <td {% if home_selected %}class="menu-selection" {% endif %} ><a href="/">Accueil</a></td>
+                <td class="{% if tw_selected %}menu-selection {% endif %}dropdown" l="tw"><a href="#">Twitter</a></td>
+                <td class="{% if fb_selected %}menu-selection {% endif %}dropdown" l="fb"><a href="#">Facebook</a></td>
+                <!--td class="{% if dm_selected %}menu-selection {% endif %}dropdown"><a href="#">Dailymotion</a></td-->
+                <td class="{% if yt_selected %}menu-selection {% endif %}dropdown" l="yt"><a href="#">Youtube</a></td>
                 <td><a href="/admin">Administration</a></td>
                 <td><a href="/logout">Logout</a></td>
             </tr>
-            <tr>
-                <td class="menu-selection" colspan=7>
-                    {% block submenu %}&nbsp;{% endblock %}
-                </td>
-            </tr>
+            <tr id="submenu"></tr>
         </table>
     </div>
     <!-- END Header -->

@@ -321,19 +321,22 @@ class YoutubeHarvesterAdmin(admin.ModelAdmin):
 
 class YTUserAdmin(admin.ModelAdmin):
     readonly_fields = (
+            'title',
             'subscriber_count',
             'video_count',
-            'view_count'
+            'view_count',
     )
     fieldsets = (   
         (None,    {
             u'fields': (
                 u'username',
+                'fid',
                 )
             }
         ),
         (u'Détails', {
-            u'fields': (  
+            u'fields': (
+                'title',
                 u'subscriber_count',
                 u'video_count',
                 u'view_count'
@@ -341,8 +344,8 @@ class YTUserAdmin(admin.ModelAdmin):
             }
         )
     )
-    list_display = ('username',)
-    search_fields = ('username',)
+    list_display = ('title','username','fid')
+    search_fields = ('title','username','fid')
 
 class YTVideoAdmin(admin.ModelAdmin):
     readonly_fields = (

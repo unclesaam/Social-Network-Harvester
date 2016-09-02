@@ -107,4 +107,5 @@ urlpatterns = patterns('snh.views',
 
 
     (r'^api/1.0/(?P<command>[\w.]+)$', 'api_one_zero'),
+    (r'^getHarvs$', 'getHarvs'),
 )

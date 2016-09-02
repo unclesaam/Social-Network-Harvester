@@ -54,4 +54,38 @@ TableTools.BUTTONS.download = {
 };
 
 
+lastMenuItemClicked = null;
+$(document).ready(function(){
+    $('.dropdown').click(function(elem){
+        $('.menu-selection').removeClass('menu-selection')
+        $(elem.currentTarget).addClass('menu-selection')
+        if($('#submenu').css('display') != 'none' && elem.currentTarget === lastMenuItemClicked){
+            $('#submenu').hide();
+        } else {
+            displayHarvesters(elem.currentTarget.getAttribute('l'));
+            lastMenuItemClicked = elem.currentTarget;
+        }
+    })
+})
 
+function displayHarvesters(type){
+    html = '<td class="menu-selection" colspan=6><table class="tableheader"><tr>'
+
+    $.ajax({
+        method:'GET',
+        url:'/getHarvs',
+        data:{
+            'platform':type
+        },
+        success:function(response){
+            html += '<td><a href="' + response['All data'] + '">All data</a></td>';
+            delete response['All data']
+            Object.keys(response).forEach(function(name){
+                html += '<td><a href="'+response[name]+'">'+name+'</a></td>'
+            })
+            html += '</tr></table></td>'
+            $('#submenu').html(html);
+            $('#submenu').show();
+        }
+    })
+}

@@ -1,6 +1,8 @@
 # coding=UTF-8
 
 from snh.models.twittermodel import *
+from snh.models.facebookmodel import *
+from snh.models.youtubemodel import *
 from django.views.decorators.csrf import csrf_exempt
 from django.shortcuts import render_to_response, get_object_or_404, get_list_or_404, redirect, HttpResponse
 from django.core.exceptions import ObjectDoesNotExist
@@ -253,6 +255,22 @@ def command_management(command, request):
     else:
         return InvalidRequestError(command)
 
+def getHarvs(request):
+    platform = request.GET['platform']
+    harvs = {}
+    if platform == 'tw':
+        harvs['All data'] = '/tw/0'
+        for harv in TwitterHarvester.objects.filter(is_active=True):
+            harvs[harv.harvester_name] = '/tw/%s' % harv.pmk_id
+    elif platform == 'fb':
+        harvs['All data'] = '/fb/0'
+        for harv in FacebookHarvester.objects.filter(is_active=True):
+            harvs[harv.harvester_name] = '/fb/%s' % harv.pmk_id
+    elif platform == 'yt':
+        harvs['All data'] = '/yt/0'
+        for harv in YoutubeHarvester.objects.filter(is_active=True):
+            harvs[harv.harvester_name] = '/yt/%s' % harv.pmk_id
+    return HttpResponse(json.dumps(harvs),content_type='application/json')
 
 
 def jsonLoader(request):

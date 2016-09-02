@@ -147,8 +147,9 @@ def update_users(harvester):
             response = harvester.api_call('channel_lookup',{'channelId':stringList})
             for ytUser in response[0]['items']:
                 update_user(harvester, ytUser)
-        except:
+        except exception as e:
             time.sleep(1)
+            dLogger.exception(e)
             if debugging: dLogger.log('    ERROR 500 received from youtube, retrying.')
             response = harvester.api_call('channel_lookup',{'channelId':stringList})
             for ytUser in response[0]['items']:

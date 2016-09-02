@@ -661,6 +661,11 @@ td, th {
 .submenu-selection {
     background: #9EC3E9;
 }
+
+#submenu {
+    display:None;
+}
+
 /* SIDEBAR */
 
 #content-related h3 {

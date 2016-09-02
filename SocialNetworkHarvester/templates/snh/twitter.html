@@ -163,16 +163,7 @@
 	} );
 </script>
 {% endblock %}
-{% block submenu %}
-<table class="tableheader">
-    <tr>
-        <td {% if harvester_id == "0" %}class="submenu-selection"{% endif %}><a href="/tw/0">All data</a></td>
-        {% for h in all_harvesters %}
-        <td  {% ifequal harvester_id h.pmk_id|slugify %}class="submenu-selection"{% endifequal %}><a href="/tw/{{ h.pmk_id }}">{{ h }}</a></td>
-        {% endfor %}
-    </tr>
-</table>
-{% endblock %}
+
 
 {% block content %}
 <h3>List of users</h3>
